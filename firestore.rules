@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Helper function to check if user is premium (from custom claims)
+    function isPremium() {
+      return isAuthenticated() && 
+             request.auth.token.get('isPremium', false) == true;
+    }
+    
+    // User documents
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Users can create their own profile (during signup)
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Users can update their own profile BUT NOT premium status
+      allow update: if isOwner(userId) && 
+                      !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['isPremium', 'plan', 'stripeCustomerId', 'stripeSubscriptionId']);
+      
+      // Only backend (via Admin SDK) can update premium status
+      // Users cannot delete their own account via Firestore
+      allow delete: if false;
+      
+      // Tasks subcollection
+      match /tasks/{taskId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Habits subcollection
+      match /habits/{habitId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Finance subcollection
+      match /finance/{financeId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Reports subcollection (Premium feature)
+      match /reports/{reportId} {
+        // Users can read their own reports
+        allow read: if isOwner(userId);
+        
+        // Only backend can create reports
+        allow write: if false;
+      }
+      
+      // Payments subcollection (read-only for users)
+      match /payments/{paymentId} {
+        // Users can read their payment history
+        allow read: if isOwner(userId);
+        
+        // Only backend (Stripe webhooks) can write payments
+        allow write: if false;
+      }
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

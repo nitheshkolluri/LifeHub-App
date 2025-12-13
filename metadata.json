@@ -1,0 +1,7 @@
+{
+  "name": "LifeHub",
+  "description": "An AI-powered micro-automation assistant that unifies tasks, habits, and finance tracking into a single, intelligent daily planner.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

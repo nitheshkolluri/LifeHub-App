@@ -1,0 +1,35 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+
+      - name: Check for hardcoded secrets (Basic grep)
+        run: |
+          if grep -r "AIzaSy" --include="*.ts" --include="*.tsx" --include="*.js" src/ backend/src/; then
+            echo "Potential API key found!"
+            exit 1
+          fi
+          if grep -r "sk_test" --include="*.ts" --include="*.tsx" --include="*.js" src/ backend/src/; then
+            echo "Potential Stripe Secret found!"
+            exit 1
+          fi
