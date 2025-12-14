@@ -32,6 +32,7 @@ out/
 .env
 .env.*
 !.env.example
+!.env.production
 *.local
 
 # Exception for local dev overrides if needed, but risky
