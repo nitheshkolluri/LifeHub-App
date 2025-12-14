@@ -30,16 +30,16 @@ const AppContent = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-     // Simple check to show onboarding once. In prod, store this in Firestore 'users' doc.
-     const hasSeen = localStorage.getItem('hasSeenOnboarding');
-     if (isAuthenticated && !hasSeen) {
-        setShowOnboarding(true);
-     }
+    // Simple check to show onboarding once. In prod, store this in Firestore 'users' doc.
+    const hasSeen = localStorage.getItem('hasSeenOnboarding');
+    if (isAuthenticated && !hasSeen) {
+      setShowOnboarding(true);
+    }
   }, [isAuthenticated]);
 
   const completeOnboarding = () => {
-     localStorage.setItem('hasSeenOnboarding', 'true');
-     setShowOnboarding(false);
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
   };
 
   if (isLoading) {
@@ -59,7 +59,7 @@ const AppContent = () => {
   }
 
   if (showOnboarding) {
-     return <Onboarding onComplete={completeOnboarding} />;
+    return <Onboarding onComplete={completeOnboarding} />;
   }
 
   const renderView = () => {
@@ -85,12 +85,18 @@ const AppContent = () => {
   );
 };
 
+import { UsageProvider } from './store/UsageContext';
+import { PaymentPrompt } from './components/PaymentPrompt';
+
 function App() {
   return (
     <AuthProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <UsageProvider>
+        <AppProvider>
+          <AppContent />
+          <PaymentPrompt />
+        </AppProvider>
+      </UsageProvider>
     </AuthProvider>
   );
 }
