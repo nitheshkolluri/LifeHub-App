@@ -60,6 +60,9 @@ ARG VITE_STRIPE_PUBLISHABLE_KEY
 # Build the application
 RUN npm run build
 
+# Stage 4: Production
+FROM nginx:alpine AS production
+
 # Copy nginx config template (Nginx automatically substitutes vars in templates/)
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 
