@@ -48,7 +48,7 @@ if (missingVars.length > 0) {
   `;
 
   console.error(errorMessage);
-  throw new Error('Firebase configuration incomplete. Check console for details.');
+  throw new Error(`Firebase configuration incomplete. Missing: ${missingVars.join(', ')}`);
 }
 
 // Firebase configuration using environment variables
