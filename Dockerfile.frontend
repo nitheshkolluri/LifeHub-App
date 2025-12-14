@@ -38,7 +38,7 @@ EXPOSE 3000
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # Stage 3: Build
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS build_stage
 WORKDIR /app
 
 # Copy dependencies
@@ -67,7 +67,7 @@ FROM nginx:alpine AS production
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 
 # Copy built files from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=build_stage /app/dist /usr/share/nginx/html
 
 # Expose port (Cloud Run sets PORT, standard is 8080)
 EXPOSE 8080
