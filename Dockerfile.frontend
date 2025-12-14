@@ -47,15 +47,17 @@ COPY --from=dependencies /app/node_modules ./node_modules
 # Copy source code
 COPY . .
 
-# Build arguments for environment variables
-ARG VITE_API_URL
-ARG VITE_FIREBASE_API_KEY
-ARG VITE_FIREBASE_AUTH_DOMAIN
-ARG VITE_FIREBASE_PROJECT_ID
-ARG VITE_FIREBASE_STORAGE_BUCKET
-ARG VITE_FIREBASE_MESSAGING_SENDER_ID
-ARG VITE_FIREBASE_APP_ID
-ARG VITE_STRIPE_PUBLISHABLE_KEY
+# Environment Variables for Build (Public Keys)
+ENV VITE_FIREBASE_API_KEY=AIzaSyA2SeEaod4ciM0oUufN-C0bT73MMr5jI8Y
+ENV VITE_FIREBASE_AUTH_DOMAIN=lifehub-d322e.firebaseapp.com
+ENV VITE_FIREBASE_PROJECT_ID=lifehub-d322e
+ENV VITE_FIREBASE_STORAGE_BUCKET=lifehub-d322e.appspot.com
+ENV VITE_FIREBASE_MESSAGING_SENDER_ID=868390342036
+ENV VITE_FIREBASE_APP_ID=1:868390342036:web:0cc18f05ee8d2065535381
+ENV VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51SZ6MN3GzoSJKmxmfN98dDBakrTcQ133ogxMYMpbXTVGQaj00k5lGbkx99ioQecpLuAYNByHao8wPpPzvxruwLrM0098YjYmKP
+
+# Default API URL (can be overridden, but needed for build)
+ENV VITE_API_URL=https://lifehub-backend-710009842508.us-central1.run.app/api
 
 # Build the application
 RUN npm run build
