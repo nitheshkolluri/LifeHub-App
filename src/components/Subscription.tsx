@@ -165,5 +165,6 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
           </div>
         </div>
       </div>
-      );
+    </div>
+  );
 };
