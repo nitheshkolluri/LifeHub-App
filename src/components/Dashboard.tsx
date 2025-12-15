@@ -47,7 +47,7 @@ const fluidStyles = `
 `;
 
 export const Dashboard = () => {
-   const { tasks, habits, finance, setView } = useApp();
+   const { tasks, habits, finance, setView, toggleTask, incrementHabit } = useApp();
    const { user } = useAuth();
    const [mounted, setMounted] = useState(false);
    useEffect(() => setMounted(true), []);
@@ -106,7 +106,24 @@ export const Dashboard = () => {
                {/* Backgrounds */}
                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
                <div className={`absolute inset-0 bg-gradient-to-br ${getMoodGradient()} opacity-90 transition-all duration-1000 pointer-events-none`} />
-               <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 ${getPulseColor()} rounded-full blur-3xl animate-pulse pointer-events-none transition-colors duration-1000`} />
+
+               {/* LIFE CORE VISUALIZATION (Orb + Satellites) */}
+               <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+                  <div className={`w-64 h-64 ${getPulseColor()} rounded-full blur-3xl animate-pulse transition-colors duration-1000 z-0`} />
+
+                  {/* Orbit Container */}
+                  <div className="orbit-container animate-[orbit_20s_linear_infinite] z-0 opacity-50">
+                     {activeHabits.map((h, i) => (
+                        <div
+                           key={h.id}
+                           className="satellite bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/20 shadow-lg"
+                           style={{ transform: `rotate(${i * (360 / Math.max(activeHabits.length, 1))}deg) translateX(100px) rotate(-${i * (360 / Math.max(activeHabits.length, 1))}deg)` }}
+                        >
+                           <Zap size={16} className="text-white" />
+                        </div>
+                     ))}
+                  </div>
+               </div>
 
                <div className="absolute inset-0 p-8 flex flex-col justify-between text-white z-10">
                   <div className="flex justify-between items-start cursor-pointer" onClick={() => setView(ViewState.TASKS)}>
