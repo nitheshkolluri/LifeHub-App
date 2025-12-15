@@ -137,6 +137,13 @@ export const Assistant = () => {
     await sendChatMessage(text);
   };
 
+  // -- DEFENSIVE: Ensure messages is a valid array --
+  const safeMessages = React.useMemo(() => {
+    if (Array.isArray(messages)) return messages;
+    console.warn("Assistant: messages is not an array", messages);
+    return [];
+  }, [messages]);
+
   if (showExitWarning) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-fade-in">
@@ -161,7 +168,7 @@ export const Assistant = () => {
               onClick={() => confirmExit(false)}
               className="w-full py-4 bg-white border-2 border-slate-100 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl transition-all"
             >
-              Just Exit
+              just Exit
             </button>
             <button
               onClick={() => setShowExitWarning(false)}
@@ -209,9 +216,9 @@ export const Assistant = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/40 border border-white/50 shadow-inner p-4 md:p-6 space-y-6 scroll-smooth backdrop-blur-sm">
-        {(Array.isArray(messages) ? messages : []).slice(1).map((msg) => (
+        {safeMessages.slice(1).map((msg) => (
           <div
-            key={msg.id}
+            key={msg.id || Math.random()}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}
           >
             <div className={`flex items-end max-w-[85%] md:max-w-[70%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
