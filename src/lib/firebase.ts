@@ -18,6 +18,14 @@ import { getFirestore } from "firebase/firestore";
  * - VITE_FIREBASE_MEASUREMENT_ID (optional)
  */
 
+// Helper to get environment variables (Runtime > Build time)
+const getEnv = (key: string) => {
+  if (typeof window !== 'undefined' && (window as any).env && (window as any).env[key]) {
+    return (window as any).env[key];
+  }
+  return import.meta.env[key];
+};
+
 // Validate required environment variables
 const requiredEnvVars = [
   'VITE_FIREBASE_API_KEY',
@@ -29,7 +37,7 @@ const requiredEnvVars = [
 ];
 
 const missingVars = requiredEnvVars.filter(
-  varName => !import.meta.env[varName]
+  varName => !getEnv(varName)
 );
 
 if (missingVars.length > 0) {
@@ -51,13 +59,6 @@ if (missingVars.length > 0) {
   throw new Error(`Firebase configuration incomplete. Missing: ${missingVars.join(', ')}`);
 }
 
-// Helper to get environment variables (Runtime > Build time)
-const getEnv = (key: string) => {
-  if (typeof window !== 'undefined' && (window as any).env && (window as any).env[key]) {
-    return (window as any).env[key];
-  }
-  return import.meta.env[key];
-};
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
