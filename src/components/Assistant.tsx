@@ -223,12 +223,18 @@ export const Assistant = () => {
 
       <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/40 border border-white/50 shadow-inner p-4 md:p-6 space-y-6 scroll-smooth backdrop-blur-sm">
         {(safeMessages || []).length > 0 ? (
-          safeMessages.slice(1).map((msg, idx) => (
+            safeMessages.slice(1).map((msg, idx) => (
             <div key={msg.id || idx} className={`flex ${ msg.role === 'user' ? 'justify-end' : 'justify-start' } animate - slide - up`}>
-              <div className={`flex items - end max - w - [85 %] md: max - w - [70 %] gap - 3 ${ msg.role === 'user' ? 'flex-row-reverse' : 'flex-row' } `}>
+                <div className={`flex items - end max - w - [85 %] md: max - w - [70 %] gap - 3 ${ msg.role === 'user' ? 'flex-row-reverse' : 'flex-row' } `}>
                 <div className={`w - 10 h - 10 rounded - 2xl flex items - center justify - center flex - shrink - 0 shadow - lg ${ msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600' } `}>
-                  {msg.role === 'user' ? <Icons.User size={18} /> : <Icons.Bot size={20} />}
+                    {msg.role === 'user' ? <Icons.User size={18} /> : <Icons.Bot size={20} />}
                 </div>
+                <div className={`px - 6 py - 4 rounded - 3xl text - [15px] leading - relaxed shadow - md ${ msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white' } `}>
+                    {msg.text}
+                </div>
+                </div>
+            </div>
+            ))
                 <div className={`px - 6 py - 4 rounded - 3xl text - [15px] leading - relaxed shadow - md ${ msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white' } `}>
                   {msg.text}
                 </div>
