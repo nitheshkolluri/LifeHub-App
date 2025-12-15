@@ -96,7 +96,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <header className="md:hidden glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/50">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center text-white">
-            <Sparkles size={16} fill="white" />
+            <BrainCircuit size={16} className="text-white" />
           </div>
           <span className="font-display font-bold text-lg text-slate-800">LifeHub</span>
         </div>
