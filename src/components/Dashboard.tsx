@@ -62,6 +62,12 @@ export const Dashboard = () => {
 
    if (!mounted) return null;
 
+   // -- Handlers --
+   const handleTaskToggle = (id: string, e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card navigation
+      toggleTask(id);
+   };
+
    return (
       <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10">
          <header className="mb-8 animate-fade-in-up">
@@ -77,19 +83,17 @@ export const Dashboard = () => {
          {/* BENTO GRID LAYOUT */}
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-stagger-in">
 
-            {/* 1. MAIN FOCUS (Tasks) - Large Card */}
+            {/* 1. MAIN FOCUS (Tasks) - Interactive */}
             <div
-               onClick={() => setView(ViewState.TASKS)}
-               className="md:col-span-2 relative h-64 md:h-80 bg-slate-900 rounded-[40px] overflow-hidden group cursor-pointer shadow-2xl shadow-indigo-200 hover:shadow-indigo-300 transition-all"
+               className="md:col-span-2 relative h-64 md:h-80 bg-slate-900 rounded-[40px] overflow-hidden group shadow-2xl shadow-indigo-200 hover:shadow-indigo-300 transition-all"
             >
-               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
-               <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-700 to-slate-900 opacity-90 group-hover:scale-105 transition-transform duration-700" />
-
-               {/* Orbital Visual */}
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/30 rounded-full blur-3xl animate-pulse" />
+               {/* Backgrounds */}
+               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
+               <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-700 to-slate-900 opacity-90 transition-transform duration-700 pointer-events-none" />
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/30 rounded-full blur-3xl animate-pulse pointer-events-none" />
 
                <div className="absolute inset-0 p-8 flex flex-col justify-between text-white z-10">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start cursor-pointer" onClick={() => setView(ViewState.TASKS)}>
                      <div>
                         <h2 className="text-3xl font-black tracking-tight">{Math.round(progress)}% Focused</h2>
                         <p className="text-indigo-200 font-medium">{pendingTasks.length} missions remaining</p>
@@ -99,12 +103,19 @@ export const Dashboard = () => {
                      </div>
                   </div>
 
-                  {/* Task List Preview */}
-                  <div className="space-y-3">
-                     {pendingTasks.slice(0, 2).map(t => (
-                        <div key={t.id} className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl backdrop-blur-sm border border-white/5">
-                           <div className={`w-3 h-3 rounded-full ${t.priority === 'high' ? 'bg-rose-500' : 'bg-emerald-400'}`} />
-                           <span className="font-bold text-sm truncate">{t.title}</span>
+                  {/* Interactive Task List */}
+                  <div className="space-y-3 z-20">
+                     {pendingTasks.slice(0, 3).map(t => (
+                        <div
+                           key={t.id}
+                           onClick={(e) => handleTaskToggle(t.id, e)}
+                           className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl backdrop-blur-sm border border-white/5 hover:bg-white/20 transition-colors cursor-pointer group/item"
+                        >
+                           <div className={`w-5 h-5 rounded-full border-2 border-white/30 flex items-center justify-center transition-colors group-hover/item:border-emerald-400 ${t.status === 'completed' ? 'bg-emerald-500 border-emerald-500' : ''}`}>
+                              {/* Checkbox visual */}
+                              <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                           </div>
+                           <span className="font-bold text-sm truncate group-hover/item:line-through transition-all">{t.title}</span>
                         </div>
                      ))}
                      {pendingTasks.length === 0 && (
@@ -117,14 +128,13 @@ export const Dashboard = () => {
                </div>
             </div>
 
-            {/* 2. HABIT ORBIT - Tall Card */}
+            {/* 2. HABIT ORBIT - Interactive */}
             <div
-               onClick={() => setView('HABITS' as any)}
-               className="relative h-64 md:h-80 bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-xl group cursor-pointer hover:border-emerald-200 transition-all"
+               className="relative h-64 md:h-80 bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-xl group hover:border-emerald-200 transition-all"
             >
-               <div className="absolute top-0 right-0 p-8 w-full h-full bg-gradient-to-b from-emerald-50/50 to-transparent" />
+               <div className="absolute top-0 right-0 p-8 w-full h-full bg-gradient-to-b from-emerald-50/50 to-transparent pointer-events-none" />
                <div className="absolute inset-0 p-8 flex flex-col">
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex justify-between items-center mb-6 cursor-pointer" onClick={() => setView('HABITS' as any)}>
                      <h3 className="text-xl font-black text-slate-800">Habits</h3>
                      <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl">
                         <Zap size={20} fill="currentColor" />
@@ -134,10 +144,17 @@ export const Dashboard = () => {
                   <div className="flex-1 flex flex-col justify-center space-y-4">
                      {activeHabits.length > 0 ? (
                         activeHabits.slice(0, 3).map(h => (
-                           <div key={h.id} className="flex items-center justify-between group-hover:translate-x-1 transition-transform">
+                           <div
+                              key={h.id}
+                              className="flex items-center justify-between cursor-pointer p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-colors"
+                              onClick={() => incrementHabit(h.id)} // Direct increment
+                           >
                               <span className="font-bold text-slate-600">{h.title}</span>
-                              <div className="h-2 w-24 bg-slate-100 rounded-full overflow-hidden">
-                                 <div className="h-full bg-emerald-500 w-1/3" />
+                              <div className="h-6 w-24 bg-slate-100 rounded-full overflow-hidden relative">
+                                 <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-400 z-10">
+                                    Tap to Fill
+                                 </div>
+                                 <div className="h-full bg-emerald-500 w-1/5 transition-all duration-300" />
                               </div>
                            </div>
                         ))
@@ -155,7 +172,7 @@ export const Dashboard = () => {
                </div>
             </div>
 
-            {/* 3. FINANCE SNAPSHOT (Small) */}
+            {/* 3. FINANCE SNAPSHOT (Interactive) */}
             <div
                onClick={() => setView('FINANCE' as any)}
                className="relative h-48 bg-slate-50 rounded-[40px] p-8 flex flex-col justify-between border border-dashed border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer group"
@@ -173,9 +190,12 @@ export const Dashboard = () => {
                </div>
 
                {nextBill ? (
-                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
-                     <p className="text-xs font-bold text-rose-500">Upcoming Bill</p>
-                     <p className="font-bold text-slate-700">{nextBill.title}</p>
+                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                     <div>
+                        <p className="text-xs font-bold text-rose-500">Upcoming Bill</p>
+                        <p className="font-bold text-slate-700">{nextBill.title}</p>
+                     </div>
+                     {/* <button className="text-[10px] bg-slate-900 text-white px-2 py-1 rounded">Pay</button> */}
                   </div>
                ) : (
                   <div className="flex items-center gap-2 text-emerald-600">
@@ -185,7 +205,7 @@ export const Dashboard = () => {
                )}
             </div>
 
-            {/* 4. AI ASSISTANT PROMPT (Small) */}
+            {/* 4. AI ASSISTANT PROMPT */}
             <div className="md:col-span-2 h-48 relative bg-gradient-to-r from-indigo-500 to-blue-500 rounded-[40px] p-1 overflow-hidden shadow-2xl shadow-blue-200 group">
                <div className="absolute inset-0 bg-white/10 backdrop-blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
                <div className="h-full bg-white/95 rounded-[36px] p-6 flex items-center gap-6 relative z-10">

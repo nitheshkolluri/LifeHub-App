@@ -3,20 +3,27 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
 import { useUsage } from '../store/UsageContext';
-import { Send, Bot, User, Mic, MicOff, X } from 'lucide-react';
+import { Send, Bot, User, Mic, MicOff, X, ArrowLeft, Save, AlertTriangle } from 'lucide-react';
 import { ViewState } from '../types';
 
 export const Assistant = () => {
-  const { messages, sendChatMessage, isLoadingAI, setView } = useApp();
+  const { messages, setMessages, sendChatMessage, isLoadingAI, setView } = useApp();
   const { usageCount, isPremium, setShowPaywall, incrementUsage } = useUsage();
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [saveToMemory, setSaveToMemory] = useState(false);
+  const [showExitWarning, setShowExitWarning] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   // Voice Logic Refs
   const recognitionRef = useRef<any>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textBeforeRef = useRef('');
+
+  // 1. Auto-Clear Chat on Mount
+  useEffect(() => {
+    setMessages([{ id: 'init', role: 'system', text: "Hello! I'm LifeHub. I'm here to listen. This chat will disappear when you leave, so let me know if you want me to remember anything." }]);
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -26,6 +33,24 @@ export const Assistant = () => {
   useEffect(() => {
     return () => stopListening();
   }, []);
+
+  // -- Handlers --
+  const handleExitRequest = () => {
+    if (messages.length > 1) {
+      setShowExitWarning(true);
+    } else {
+      setView(ViewState.DASHBOARD);
+    }
+  };
+
+  const confirmExit = (shouldSave: boolean) => {
+    if (shouldSave) {
+      // Logic to "Save" could go here (e.g. summarize to Brain Dump), 
+      // but for now we just acknowledge and exit as per user request just "toggle" memory
+      // API call to memory service could happen here
+    }
+    setView(ViewState.DASHBOARD);
+  };
 
   const stopListening = () => {
     if (recognitionRef.current) {
@@ -104,8 +129,6 @@ export const Assistant = () => {
     e.preventDefault();
     if (!input.trim() || isLoadingAI) return;
 
-    // Enforce Usage Limit - REMOVED per user request
-    // if (!isPremium && usageCount >= 3) { ... }
     incrementUsage();
 
     stopListening(); // Stop listening on send
@@ -114,20 +137,72 @@ export const Assistant = () => {
     await sendChatMessage(text);
   };
 
+  if (showExitWarning) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-fade-in">
+        <div className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl text-center space-y-6">
+          <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={32} />
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 mb-2">Leave Chat?</h3>
+            <p className="text-slate-500 font-medium">This thread will be lost forever. Do you want to save this context to your Memory?</p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => confirmExit(true)}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+              <Save size={18} />
+              <span>Save to Memory & Exit</span>
+            </button>
+            <button
+              onClick={() => confirmExit(false)}
+              className="w-full py-4 bg-white border-2 border-slate-100 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl transition-all"
+            >
+              Just Exit
+            </button>
+            <button
+              onClick={() => setShowExitWarning(false)}
+              className="text-sm font-bold text-slate-400 hover:text-slate-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] animate-slide-up relative">
 
-      {/* Mobile Header with Close Button */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="glass px-4 py-2 rounded-full flex items-center gap-2 shadow-sm">
-          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-          <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Assistant Online</span>
+      {/* Header with Memory Toggle & Exit */}
+      <div className="flex items-center justify-between mb-4 bg-white/60 backdrop-blur-md p-2 rounded-full border border-white/50 shadow-sm">
+        <button
+          onClick={handleExitRequest}
+          className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </button>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Session Mode</span>
+          {/* Memory Toggle */}
+          <button
+            onClick={() => setSaveToMemory(!saveToMemory)}
+            className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${saveToMemory ? 'bg-indigo-500 text-white shadow-indigo-200 shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+          >
+            <div className={`w-2 h-2 rounded-full ${saveToMemory ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
+            <span className="text-xs font-bold">{saveToMemory ? 'Memory ON' : 'Memory OFF'}</span>
+          </button>
         </div>
 
-        {/* Mobile-only close button */}
+        {/* Mobile-only close button -> Mapped to same Exit Request */}
         <button
-          onClick={() => setView(ViewState.DASHBOARD)}
-          className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-500 hover:bg-slate-50"
+          onClick={handleExitRequest}
+          className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50"
         >
           <X size={20} />
         </button>
