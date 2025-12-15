@@ -30,6 +30,21 @@ const LoadingView = () => (
 const AppContent = () => {
   const { currentView, showUpsell, setShowUpsell, setView } = useApp();
   const { user, loading } = useAuth();
+  const { showPaywall, setShowPaywall } = React.useContext(UsageContext) || { showPaywall: false, setShowPaywall: () => { } }; // Hack to get Usage context here
+
+  // Onboarding Logic
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  useEffect(() => {
+    if (user && !user.isPremium) {
+      // If potential new user (< 1 minute old)
+      if (user.createdAt) {
+        const age = Date.now() - (user.createdAt as any as number); // Safe cast after fix
+        if (age < 60000) {
+          setShowOnboarding(true);
+        }
+      }
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -62,16 +77,28 @@ const AppContent = () => {
     return <StripeSuccess />;
   }
 
+  // Unified Modal Logic
+  const isUpsellOpen = showUpsell || showPaywall;
+
   return (
     <Layout>
       {renderView()}
-      {showUpsell && <PaymentPrompt onClose={() => setShowUpsell(false)} />}
+
+      {/* Onboarding Modal */}
+      <SubscriptionModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        isOnboarding={true}
+      />
+
+      {/* Triggered Upsell Modal */}
+      {isUpsellOpen && !showOnboarding && <SubscriptionModal isOpen={true} />}
     </Layout>
   );
 };
 
-import { UsageProvider } from './store/UsageContext';
-import { PaymentPrompt } from './components/PaymentPrompt';
+import { UsageProvider, UsageContext } from './store/UsageContext'; // Import UsageContext for the hook to work
+// import { PaymentPrompt } from './components/PaymentPrompt'; // Removed
 
 function App() {
   return (
