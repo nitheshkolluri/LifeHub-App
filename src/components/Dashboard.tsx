@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
 import { VoiceRecorder } from './VoiceRecorder';
-import { CheckCircle2, DollarSign, Wind, ArrowRight, Zap, Droplets, Mountain, Globe } from 'lucide-react';
+import { CheckCircle2, DollarSign, Wind, ArrowRight, Zap, Droplets, Mountain, Globe, Bell } from 'lucide-react';
 import { ViewState } from '../types';
 
 // --- STYLES & ANIMATIONS ---
@@ -72,15 +72,15 @@ export const Dashboard = () => {
    const stressLevel = pendingTasks.length;
 
    const getMoodGradient = () => {
-      if (stressLevel >= 5) return 'from-rose-600 via-orange-700 to-slate-900'; // High Stress
-      if (stressLevel >= 3) return 'from-indigo-600 via-purple-700 to-slate-900'; // Medium Flow
-      return 'from-emerald-600 via-teal-700 to-slate-900'; // Zen/Low Stress
+      // ZEN DESIGN: Always peaceful, regardless of load.
+      // Subtle variations only to keep it alive, but never alarming.
+      if (stressLevel >= 8) return 'from-teal-600 via-emerald-700 to-slate-900'; // Deep Focus
+      if (stressLevel >= 4) return 'from-emerald-600 via-teal-700 to-slate-900'; // Flow
+      return 'from-sky-600 via-indigo-700 to-slate-900'; // Clarity
    };
 
    const getPulseColor = () => {
-      if (stressLevel >= 5) return 'bg-rose-500/30';
-      if (stressLevel >= 3) return 'bg-indigo-500/30';
-      return 'bg-emerald-500/30';
+      return 'bg-teal-500/20'; // Always calm teal
    };
 
    if (!mounted) return null;
@@ -93,17 +93,18 @@ export const Dashboard = () => {
 
 
    return (
-      <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10">
+      <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10 bg-slate-50/50">
          <header className="mb-8 animate-fade-in-up flex justify-between items-start">
             <div>
-               <h1 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+               <h1 className="text-3xl md:text-5xl font-light text-slate-800 tracking-tight">
+                  <span className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-indigo-600">
                      {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'},
                   </span><br />
-                  {user?.name ? user.name.split(' ')[0] : 'Explorer'}
+                  {user?.name ? user.name.split(' ')[0] : 'Mindful One'}
                </h1>
-               <p className="text-slate-500 font-medium mt-2">
-                  {stressLevel > 4 ? "Let's tackle this chaos together." : "Everything is in perfect balance."}
+               <p className="text-slate-500 font-medium mt-2 flex items-center gap-2">
+                  <Wind size={16} className="text-teal-500" />
+                  {stressLevel > 4 ? "Breathe. One step at a time." : "The current is calm today."}
                </p>
             </div>
             {/* NOTIFICATION BELL */}
@@ -117,10 +118,15 @@ export const Dashboard = () => {
                      new Notification("Test Alert", { body: "Notifications are working perfectly.", icon: "/icon-v2.png" });
                   }
                }}
-               className="p-3 bg-white rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm"
+               className="p-3 bg-white rounded-full text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-all shadow-sm border border-slate-100"
                title="Enable Alerts"
             >
-               <Zap size={20} />
+               <div className="relative">
+                  <Bell size={20} />
+                  {("Notification" in window && Notification.permission === "granted") && (
+                     <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white"></span>
+                  )}
+               </div>
             </button>
          </header>
 
@@ -129,10 +135,10 @@ export const Dashboard = () => {
 
             {/* 1. MAIN FOCUS (Tasks) - Interactive */}
             <div
-               className="md:col-span-2 relative h-64 md:h-80 bg-slate-900 rounded-[40px] overflow-hidden group shadow-2xl shadow-indigo-200 hover:shadow-indigo-300 transition-all"
+               className="md:col-span-2 relative h-64 md:h-80 bg-slate-900 rounded-[40px] overflow-hidden group shadow-2xl shadow-teal-900/20 hover:shadow-teal-900/30 transition-all"
             >
                {/* Backgrounds */}
-               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
+               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay pointer-events-none" />
                <div className={`absolute inset-0 bg-gradient-to-br ${getMoodGradient()} opacity-90 transition-all duration-1000 pointer-events-none`} />
 
                {/* LIFE CORE VISUALIZATION (Orb + Satellites) */}

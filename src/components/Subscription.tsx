@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../store/AuthContext';
 import { useApp } from '../store/AppContext';
 import { useUsage } from '../store/UsageContext';
-import { Check, Star, Zap, Shield, X, Loader2, Crown, Sparkles } from 'lucide-react';
+import { Check, Star, Zap, Shield, X, Loader2, Crown, Sparkles, ArrowRight } from 'lucide-react';
 import { getEnv } from '../utils/env';
 import { apiService } from '../services/api.service';
 
@@ -59,116 +59,99 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
   if (isOpen === false) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
-      <div className="relative w-full max-w-4xl bg-white rounded-[32px] shadow-2xl overflow-hidden animate-scale-in flex flex-col md:flex-row max-h-[90vh]">
+    <div className="relative w-full max-w-5xl bg-white shadow-2xl overflow-hidden animate-scale-in flex flex-col md:flex-row max-h-[90vh]">
 
-        {/* Left Side: Visual / Value Prop */}
-        <div className="bg-slate-900 w-full md:w-2/5 p-8 relative overflow-hidden flex flex-col justify-between text-white">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-800 opacity-90" />
-          <div className="absolute top-[-50%] left-[-50%] w-[150%] h-[150%] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+      {/* Left Side: Brand Narrative (Fortune 500 Style: Minimal, photographic feel) */}
+      <div className="bg-black w-full md:w-1/2 p-12 relative overflow-hidden flex flex-col justify-between text-white">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-black opacity-90" />
 
-          {/* Animated Orbs */}
-          <div className="absolute top-10 right-10 w-32 h-32 bg-rose-500 rounded-full blur-[60px] opacity-40 animate-pulse" />
-          <div className="absolute bottom-10 left-10 w-40 h-40 bg-indigo-400 rounded-full blur-[60px] opacity-40 animate-pulse" style={{ animationDelay: '1s' }} />
-
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md">
-                <Crown size={24} className="text-amber-300" />
-              </div>
-              <span className="font-bold tracking-widest uppercase text-xs opacity-80">LifeHub Premium</span>
-            </div>
-
-            <h2 className="text-4xl font-black tracking-tight leading-tight mb-4">
-              Unlock your<br />full potential.
-            </h2>
-            <p className="text-indigo-100 font-medium leading-relaxed opacity-90">
-              Experience clarity and focus without limits. Join elite performers organizing their life with AI.
-            </p>
+        <div className="relative z-10 space-y-6">
+          <div className="flex items-center gap-3 opacity-60">
+            <Crown size={20} />
+            <span className="text-xs font-bold tracking-[0.2em] uppercase">LifeHub Premium</span>
           </div>
 
-          <div className="relative z-10 mt-8 space-y-4">
-            {/* Testimonial or Trust */}
-            <div className="flex -space-x-2">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-indigo-900 bg-slate-200" />
-              ))}
-              <div className="w-8 h-8 rounded-full border-2 border-indigo-900 bg-indigo-500 text-[10px] flex items-center justify-center font-bold">
-                +1k
-              </div>
-            </div>
-            <p className="text-xs font-bold opacity-60 uppercase tracking-wider">Trusted by 1,000+ Users</p>
-          </div>
+          <h2 className="text-5xl font-light tracking-tight leading-tight">
+            Mastery <br />
+            <span className="font-bold">By Design.</span>
+          </h2>
+
+          <p className="text-slate-400 font-light text-lg leading-relaxed max-w-sm">
+            For those who demand precision. The ultimate suite for financial, habit, and task orchestration.
+          </p>
         </div>
 
-        {/* Right Side: Features & Pricing */}
-        <div className="flex-1 p-8 md:p-10 bg-white relative">
-          <button
-            onClick={handleClose}
-            className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors z-20"
-          >
-            <X size={24} />
-          </button>
-
-          <div className="space-y-8">
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-slate-800">
-                {isOnboarding ? 'Start your 7-Day Free Trial' : 'Upgrade to Pro'}
-              </h3>
-              <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full w-max">
-                <Sparkles size={14} fill="currentColor" />
-                <span className="text-xs font-bold uppercase tracking-wide">7 Days Free Trial Included</span>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                { title: "Unlimited AI Brain Dumps", desc: "No limits on voice or text processing." },
-                { title: "Financial Freedom", desc: "Track unlimited expenses and budgets." },
-                { title: "Advanced Analytics", desc: "Weekly rhythm reports and insights." }
-              ].map((feature, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check size={14} strokeWidth={3} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-800 text-sm">{feature.title}</h4>
-                    <p className="text-sm text-slate-500">{feature.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-6 border-t border-slate-100">
-              <div className="flex items-end gap-2 mb-6">
-                <span className="text-4xl font-black text-slate-900">$3.99</span>
-                <span className="text-slate-500 font-medium mb-1">/ month</span>
-                <span className="ml-auto text-xs font-bold bg-rose-100 text-rose-600 px-2 py-1 rounded-lg">SAVE 60%</span>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  onClick={handleUpgrade}
-                  disabled={loading}
-                  className="w-full bg-slate-900 hover:bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-slate-200 transition-all transform active:scale-95 flex items-center justify-center gap-2"
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : 'Start Free Trial'}
-                </button>
-
-                {isOnboarding ? (
-                  <button onClick={handleClose} className="w-full py-3 text-slate-400 text-sm font-bold hover:text-slate-600">
-                    Skip for now
-                  </button>
-                ) : (
-                  <p className="text-center text-xs text-slate-400">
-                    Secure payment via Stripe. Cancel anytime.
-                  </p>
-                )}
-              </div>
-            </div>
+        <div className="relative z-10 grid grid-cols-2 gap-8 mt-12 border-t border-white/10 pt-8">
+          <div>
+            <p className="text-3xl font-light">∞ <span className="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1">Limitless</span></p>
+            <p className="text-xs text-slate-500 mt-1">Data Storage</p>
+          </div>
+          <div>
+            <p className="text-3xl font-light">A.I. <span className="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1">Native</span></p>
+            <p className="text-xs text-slate-500 mt-1">Neural Integration</p>
           </div>
         </div>
       </div>
+
+      {/* Right Side: Tiers (Clean, Corporate) */}
+      <div className="flex-1 p-12 bg-white flex flex-col justify-center relative">
+        <button
+          onClick={handleClose}
+          className="absolute top-8 right-8 p-2 rounded-full hover:bg-slate-50 text-slate-400 hover:text-black transition-colors"
+        >
+          <X size={24} strokeWidth={1.5} />
+        </button>
+
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 uppercase tracking-widest mb-1">Select Tier</h3>
+            <p className="text-slate-400 font-light">Choose your level of engagement.</p>
+          </div>
+
+          {/* Tiers */}
+          <div className="space-y-4">
+            {/* Monthly */}
+            <div className="group border border-slate-200 p-6 flex items-center justify-between cursor-pointer hover:border-black transition-all">
+              <div>
+                <p className="font-bold text-lg text-slate-900">Standard</p>
+                <p className="text-slate-400 text-sm">Monthly billing</p>
+              </div>
+              <div className="text-right">
+                <p className="font-light text-2xl text-slate-900">$3.99</p>
+              </div>
+            </div>
+
+            {/* Annual */}
+            {/* Highlighted Tier */}
+            <div className="group border-2 border-black bg-slate-50 p-6 flex items-center justify-between cursor-pointer relative overflow-hidden" onClick={handleUpgrade}>
+              <div className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">
+                Preferred
+              </div>
+              <div>
+                <p className="font-bold text-lg text-slate-900">Executive</p>
+                <p className="text-slate-500 text-sm">Annual billing (Save 20%)</p>
+              </div>
+              <div className="text-right">
+                <p className="font-light text-2xl text-slate-900">$39.99</p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleUpgrade}
+            disabled={loading}
+            className="w-full bg-black hover:bg-slate-800 text-white py-5 font-bold tracking-widest text-sm uppercase transition-all flex items-center justify-center gap-3"
+          >
+            {loading ? <Loader2 className="animate-spin" /> : 'Begin Subscription'}
+            <ArrowRight size={16} />
+          </button>
+
+          <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest">
+            Cancel anytime via Profile • Secure Stripe Processing
+          </p>
+        </div>
+      </div>
     </div>
+    </div >
   );
 };

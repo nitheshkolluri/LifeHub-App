@@ -48,7 +48,8 @@ export const UsageProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
 
             // Unlock if ANY condition is true
-            setIsPremium(localPremium || accountPremium || isTrial);
+            // MONETIZATION UPDATE: Force Premium for everyone (Free App)
+            setIsPremium(true);
         }
     }, [user]);
 
@@ -59,7 +60,7 @@ export const UsageProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [usageCount, isPremium]);
 
     const incrementUsage = () => {
-        if (isPremium) return;
+        // if (isPremium) return;
 
         // Logic Disabled to make Assistant Free
         // if (usageCount >= FREE_TIER_LIMIT) {
