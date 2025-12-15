@@ -2,16 +2,14 @@ import Stripe from 'stripe';
 import { logger } from '../utils/logger';
 
 // Initialize Stripe
-const stripeSecretKey = process.env.NODE_ENV === 'production'
-    ? process.env.STRIPE_SECRET_KEY_PRODUCTION
-    : process.env.STRIPE_SECRET_KEY;
+// Initialize Stripe
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY_PRODUCTION || process.env.STRIPE_SECRET_KEY;
 
 if (!stripeSecretKey) {
-    logger.error('Stripe secret key not found in environment variables');
-    throw new Error('STRIPE_SECRET_KEY is required');
+    logger.warn('STRIPE_SECRET_KEY not found - Payments will fail until configured');
 }
 
-export const stripe = new Stripe(stripeSecretKey, {
+export const stripe = new Stripe(stripeSecretKey || 'sk_test_placeholder', {
     apiVersion: '2023-10-16',
     typescript: true,
     appInfo: {
