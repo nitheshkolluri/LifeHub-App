@@ -1,0 +1,19 @@
+{
+    "name": "LifeHub - AI Assistant",
+    "short_name": "LifeHub",
+    "description": "Your AI-powered second brain for tasks, habits, and finance.",
+    "theme_color": "#4f46e5",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
