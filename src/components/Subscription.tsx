@@ -108,49 +108,62 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
             <p className="text-slate-400 font-light">Choose your level of engagement.</p>
           </div>
 
-          {/* Tiers */}
-          <div className="space-y-4">
-            {/* Monthly */}
-            <div className="group border border-slate-200 p-6 flex items-center justify-between cursor-pointer hover:border-black transition-all">
-              <div>
-                <p className="font-bold text-lg text-slate-900">Standard</p>
-                <p className="text-slate-400 text-sm">Monthly billing</p>
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 uppercase tracking-widest mb-1">Account Tier</h3>
+              <p className="text-slate-400 font-light">Current vs Potential</p>
+            </div>
+
+            {/* Comparison Table */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Free Tier */}
+              <div className="border border-slate-200 p-4 opacity-50">
+                <p className="font-bold text-sm text-slate-900 mb-2">Basic (Free)</p>
+                <ul className="space-y-2 text-[10px] text-slate-500 uppercase tracking-widest">
+                  <li>• 500MB Storage</li>
+                  <li>• 15 Daily Tokens</li>
+                  <li>• 10 active Tasks</li>
+                </ul>
               </div>
-              <div className="text-right">
-                <p className="font-light text-2xl text-slate-900">$3.99</p>
+
+              {/* Pro Tier */}
+              <div className="border-2 border-black p-4 bg-slate-50 relative">
+                <div className="absolute -top-2 -right-2 bg-black text-white text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider">Selected</div>
+                <p className="font-bold text-sm text-slate-900 mb-2">Executive (Pro)</p>
+                <ul className="space-y-2 text-[10px] text-slate-900 font-bold uppercase tracking-widest">
+                  <li>• ∞ Unlimited Storage</li>
+                  <li>• ∞ Neural Access (AI)</li>
+                  <li>• ∞ No Limits</li>
+                  <li>• Financial Vault</li>
+                </ul>
               </div>
             </div>
 
-            {/* Annual */}
-            {/* Highlighted Tier */}
-            <div className="group border-2 border-black bg-slate-50 p-6 flex items-center justify-between cursor-pointer relative overflow-hidden" onClick={handleUpgrade}>
-              <div className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">
-                Preferred
-              </div>
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
               <div>
-                <p className="font-bold text-lg text-slate-900">Executive</p>
-                <p className="text-slate-500 text-sm">Annual billing (Save 20%)</p>
+                <span className="text-3xl font-black text-slate-900">$3.99</span>
+                <span className="text-slate-500 font-medium text-xs ml-1">/ month</span>
               </div>
               <div className="text-right">
-                <p className="font-light text-2xl text-slate-900">$39.99</p>
+                <p className="text-[10px] text-slate-400 line-through">$9.99</p>
+                <p className="text-[10px] text-rose-500 font-bold uppercase">Launch Price</p>
               </div>
             </div>
+
+            <button
+              onClick={handleUpgrade}
+              disabled={loading}
+              className="w-full bg-black hover:bg-slate-800 text-white py-5 font-bold tracking-widest text-sm uppercase transition-all flex items-center justify-center gap-3"
+            >
+              {loading ? <Loader2 className="animate-spin" /> : 'Upgrade to Executive'}
+              <ArrowRight size={16} />
+            </button>
+
+            <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest">
+              Cancel anytime via Profile • Secure Stripe Processing
+            </p>
           </div>
-
-          <button
-            onClick={handleUpgrade}
-            disabled={loading}
-            className="w-full bg-black hover:bg-slate-800 text-white py-5 font-bold tracking-widest text-sm uppercase transition-all flex items-center justify-center gap-3"
-          >
-            {loading ? <Loader2 className="animate-spin" /> : 'Begin Subscription'}
-            <ArrowRight size={16} />
-          </button>
-
-          <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest">
-            Cancel anytime via Profile • Secure Stripe Processing
-          </p>
         </div>
       </div>
-    </div>
-  );
+      );
 };

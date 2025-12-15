@@ -79,13 +79,17 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onResult, onClose 
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
             handleFinish();
-        }, 3000); // Auto-finish after 3s of silence
+        }, 6000); // Zen Mode: 6s of silence
     };
 
     const handleFinish = () => {
         stopListening();
-        if (transcript.trim()) {
+        // Prevent empty sends which might cause infinite loaders if parent doesn't handle them
+        if (transcript.trim().length > 0) {
             onResult(transcript);
+        } else {
+            // If nothing recorded, just close
+            onClose();
         }
     };
 

@@ -76,12 +76,14 @@ export const Tasks = () => {
     if (!title.trim()) return;
 
     if (!editingTask) {
-      // Enforce Usage Limit on New Tasks
-      if (!isPremium && usageCount >= 3) {
-        setShowPaywall(true);
-        return;
+      if (!editingTask) {
+        // Enforce Usage Limit on New Tasks
+        // if (!isPremium && usageCount >= 3) {
+        //   setShowPaywall(true);
+        //   return;
+        // }
+        incrementUsage();
       }
-      incrementUsage();
     }
 
     if (editingTask) {
@@ -173,8 +175,8 @@ export const Tasks = () => {
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
                   className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all checkbox-spring ${task.status === 'completed'
-                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-500'
-                      : 'border-slate-200 hover:border-indigo-300'
+                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-500'
+                    : 'border-slate-200 hover:border-indigo-300'
                     }`}
                 >
                   {task.status === 'completed' && <Check size={16} className="text-white" strokeWidth={3} />}
@@ -187,8 +189,8 @@ export const Tasks = () => {
                   <div className="flex items-center gap-3 mt-1">
                     {task.priority && (
                       <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${task.priority === 'high' ? 'bg-rose-100 text-rose-600' :
-                          task.priority === 'medium' ? 'bg-indigo-100 text-indigo-600' :
-                            'bg-slate-100 text-slate-500'
+                        task.priority === 'medium' ? 'bg-indigo-100 text-indigo-600' :
+                          'bg-slate-100 text-slate-500'
                         }`}>
                         {task.priority}
                       </span>

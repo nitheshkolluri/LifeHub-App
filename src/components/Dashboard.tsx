@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
 import { VoiceRecorder } from './VoiceRecorder';
-import { CheckCircle2, DollarSign, Wind, ArrowRight, Zap, Droplets, Mountain, Globe, Bell } from 'lucide-react';
+import { CheckCircle2, DollarSign, Wind, ArrowRight, Zap, Droplets, Mountain, Globe, Bell, Mic } from 'lucide-react';
 import { ViewState } from '../types';
 
 // --- STYLES & ANIMATIONS ---
@@ -306,7 +306,7 @@ export const Dashboard = () => {
             onClick={() => setIsVoiceMode(true)}
             className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-16 h-16 bg-rose-600 rounded-full text-white shadow-2xl shadow-rose-500/50 flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 animate-bounce-in"
          >
-            <Wind size={28} />
+            <Mic size={28} />
          </button>
 
          {/* VOICE MODE OVERLAY (Brain Dump) */}
