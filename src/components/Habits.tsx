@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
-import { Flame, Plus, Check, Star, Sparkles, X } from 'lucide-react';
+import { Flame, Plus, Check, Star, Sparkles, X, Trash2 } from 'lucide-react';
 
 const ConstellationNode = ({ active }: { active: boolean }) => (
   <div className={`w-3 h-3 rounded-full transition-all duration-500 ${active

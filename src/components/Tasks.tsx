@@ -155,19 +155,59 @@ export const Tasks = () => {
             </p>
           </div>
         ) : (
-          sortedTasks.map((task, index) => ( // Changed to sortedTasks
+          sortedTasks.map((task, index) => (
             <div
               key={task.id}
-              onClick={() => openEditModal(task)} // Added onClick for editing
-              className="glass-card group flex items-center gap-4 hover:border-indigo-200 animate-slide-up"
+              className="glass-card group relative p-6 hover:border-indigo-200 animate-slide-up cursor-pointer"
               style={{ animationDelay: `${index * 0.05}s` }}
+              onClick={() => openEditModal(task)}
             >
               <button
                 onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-opacity p-2"
+                className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors p-2"
               >
                 <Trash2 size={16} />
               </button>
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
+                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all checkbox-spring ${task.status === 'completed'
+                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-500'
+                      : 'border-slate-200 hover:border-indigo-300'
+                    }`}
+                >
+                  {task.status === 'completed' && <Check size={16} className="text-white" strokeWidth={3} />}
+                </button>
+
+                <div className="flex-1">
+                  <h3 className={`text-lg font-bold ${task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                    {task.title}
+                  </h3>
+                  <div className="flex items-center gap-3 mt-1">
+                    {task.priority && (
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${task.priority === 'high' ? 'bg-rose-100 text-rose-600' :
+                          task.priority === 'medium' ? 'bg-indigo-100 text-indigo-600' :
+                            'bg-slate-100 text-slate-500'
+                        }`}>
+                        {task.priority}
+                      </span>
+                    )}
+                    {task.dueDate && (
+                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                        <Calendar size={12} />
+                        {task.dueDate}
+                      </span>
+                    )}
+                    {task.dueTime && (
+                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                        <Clock size={12} />
+                        {task.dueTime}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           ))
         )}

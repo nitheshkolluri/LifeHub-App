@@ -41,8 +41,13 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 FROM node:20-alpine AS build_stage
 WORKDIR /app
 
-# Copy dependencies
-COPY --from=dependencies /app/node_modules ./node_modules
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY vite.config.ts ./
+
+# Install ALL dependencies (including devDependencies needed for build)
+RUN npm install
 
 # Copy source code
 COPY . .
