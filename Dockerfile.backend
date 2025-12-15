@@ -9,6 +9,7 @@ WORKDIR /app
 # Copy backend package files
 COPY backend/package.json ./
 COPY backend/package-lock.json ./
+COPY backend/tsconfig.json ./
 
 # Debug: List files to ensure package-lock.json exists
 RUN ls -la
