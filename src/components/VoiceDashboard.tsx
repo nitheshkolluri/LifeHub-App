@@ -114,6 +114,7 @@ const VoiceDashboard = () => {
 
                 {/* VISUALIZER / MICROPHONE */}
                 <button
+                    type="button"
                     onClick={toggleListening}
                     disabled={isProcessing}
                     className={`relative w-40 h-40 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl group ${isListening
@@ -165,12 +166,14 @@ const VoiceDashboard = () => {
                         {transcript && !isProcessing && (
                             <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
                                 <button
+                                    type="button"
                                     onClick={() => setTranscript('')}
                                     className="px-4 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors"
                                 >
                                     Clear
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleProcess}
                                     className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:scale-105 transition-all flex items-center gap-2"
                                 >
