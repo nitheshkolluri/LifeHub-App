@@ -74,6 +74,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
         {/* User / Logout */}
         <div className="pt-6 border-t border-slate-200/50 mt-4 space-y-2">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white hover:text-primary-600 transition-colors"
+            onClick={() => handleNav(ViewState.PROFILE)}
+          >
+            <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">
+              P
+            </div>
+            <span className="font-medium">Profile</span>
+          </button>
+
           <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
             onClick={signOut}
           >
@@ -119,6 +128,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 </button>
               ))}
               <div className="h-px bg-slate-100 my-2" />
+              <button onClick={() => handleNav(ViewState.PROFILE)} className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 font-medium hover:bg-slate-50 rounded-xl">
+                <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">
+                  P
+                </div>
+                <span>Profile</span>
+              </button>
               <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 font-medium hover:bg-rose-50 rounded-xl">
                 <LogOut size={18} />
                 <span>Sign Out</span>

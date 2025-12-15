@@ -93,7 +93,8 @@ export enum ViewState {
   HABITS = 'HABITS',
   FINANCE = 'FINANCE',
   ASSISTANT = 'ASSISTANT',
-  REPORTS = 'REPORTS'
+  REPORTS = 'REPORTS',
+  PROFILE = 'PROFILE'
 }
 
 export interface User {

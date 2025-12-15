@@ -18,6 +18,7 @@ const Habits = lazy(() => import('./components/Habits').then(module => ({ defaul
 const Finance = lazy(() => import('./components/Finance').then(module => ({ default: module.Finance })));
 const Assistant = lazy(() => import('./components/Assistant').then(module => ({ default: module.Assistant })));
 const Reports = lazy(() => import('./components/Reports').then(module => ({ default: module.Reports })));
+const Profile = lazy(() => import('./components/Profile').then(module => ({ default: module.ProfileModal })));
 
 const LoadingView = () => (
   <div className="h-full flex items-center justify-center">
@@ -26,7 +27,7 @@ const LoadingView = () => (
 );
 
 const AppContent = () => {
-  const { currentView, showUpsell, setShowUpsell } = useApp();
+  const { currentView, showUpsell, setShowUpsell, setView } = useApp();
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -51,6 +52,7 @@ const AppContent = () => {
       case ViewState.HABITS: return <Habits />;
       case ViewState.FINANCE: return <Finance />;
       case ViewState.ASSISTANT: return <Assistant />;
+      case ViewState.PROFILE: return <Profile isOpen={true} onClose={() => setView(ViewState.DASHBOARD)} />;
       default: return <Dashboard />;
     }
   };
