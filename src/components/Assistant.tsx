@@ -18,7 +18,7 @@ import { ViewState } from '../types';
 
 export const Assistant = () => {
   const { messages, setMessages, sendChatMessage, isLoadingAI, setView } = useApp();
-  const { usageCount, isPremium, setShowPaywall, incrementUsage } = useUsage();
+  const { usageCount, incrementUsage } = useUsage();
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [saveToMemory, setSaveToMemory] = useState(false);

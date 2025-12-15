@@ -173,14 +173,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // --- SECURITY: PRO LIMIT CHECK ---
   const checkLimit = () => {
     // 1. Trust the centralized Premium/Trial logic from UsageContext
-    if (isUsagePremium) return true;
+    // if (isUsagePremium) return true;
 
     // 2. Fallback: Security Check for Free Users
     // Allow max 5 pending tasks if not premium/trial
-    if (tasks.length >= 5) {
-      setShowUpsell(true);
-      return false;
-    }
+    // if (tasks.length >= 5) {
+    //   setShowUpsell(true);
+    //   return false;
+    // }
     return true;
   };
 
