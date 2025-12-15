@@ -136,20 +136,20 @@ export const Assistant = () => {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/50 border border-white shadow-inner p-4 md:p-6 space-y-6 scroll-smooth">
+      <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/40 border border-white/50 shadow-inner p-4 md:p-6 space-y-6 scroll-smooth backdrop-blur-sm">
         {messages.slice(1).map((msg) => (
           <div
             key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}
           >
-            <div className={`flex items-end max-w-[85%] md:max-w-[70%] gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600'
+            <div className={`flex items-end max-w-[85%] md:max-w-[70%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600'
                 }`}>
-                {msg.role === 'user' ? <User size={14} /> : <Bot size={16} />}
+                {msg.role === 'user' ? <User size={18} /> : <Bot size={20} />}
               </div>
-              <div className={`px-5 py-3.5 rounded-[24px] text-[15px] leading-relaxed shadow-sm ${msg.role === 'user'
-                ? 'bg-indigo-600 text-white rounded-br-none'
-                : 'bg-white text-slate-800 rounded-bl-none border border-slate-100'
+              <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-md ${msg.role === 'user'
+                  ? 'bg-primary-600 text-white rounded-br-sm'
+                  : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white'
                 }`}>
                 {msg.text}
               </div>
@@ -157,31 +157,32 @@ export const Assistant = () => {
           </div>
         ))}
         {isLoadingAI && (
-          <div className="flex justify-start">
-            <div className="flex items-center space-x-2 ml-10 bg-white px-4 py-3 rounded-[24px] rounded-bl-none border border-slate-100 shadow-sm">
-              <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-              <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-              <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          <div className="flex justify-start animate-fade-in">
+            <div className="flex items-center space-x-2 ml-14 bg-white/80 px-6 py-4 rounded-[24px] rounded-bl-sm border border-white shadow-sm">
+              <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+              <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+              <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
             </div>
           </div>
         )}
         <div ref={endRef} />
       </div>
 
-      <form onSubmit={handleSend} className="mt-4 relative flex items-center gap-2 px-1">
+      <form onSubmit={handleSend} className="mt-4 relative flex items-center gap-3">
         <div className="relative flex-1 group">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isListening ? "Listening..." : "Type a message..."}
-            className="w-full pl-6 pr-12 py-4 rounded-full border-0 bg-white shadow-lg shadow-indigo-100/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder:text-slate-400 transition-all font-medium"
+            placeholder={isListening ? "Listening..." : "Ask your AI Assistant..."}
+            className="w-full pl-6 pr-14 py-4 rounded-2xl border-0 bg-white/80 backdrop-blur shadow-lg shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/50 text-slate-800 placeholder:text-slate-400 transition-all font-medium"
             disabled={isLoadingAI}
           />
           <button
             type="button"
             onClick={toggleListening}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isListening ? 'text-rose-500 bg-rose-50 animate-pulse' : 'text-slate-400 hover:text-indigo-600'}`}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'
+              }`}
             title={isListening ? "Stop Listening" : "Start Voice Input"}
           >
             {isListening ? <MicOff size={20} /> : <Mic size={20} />}
@@ -191,7 +192,7 @@ export const Assistant = () => {
         <button
           type="submit"
           disabled={!input.trim() || isLoadingAI}
-          className="p-4 bg-slate-900 text-white rounded-full shadow-lg shadow-slate-300 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+          className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-900/20 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
         >
           <Send size={20} className={input.trim() ? "ml-0.5" : ""} />
         </button>

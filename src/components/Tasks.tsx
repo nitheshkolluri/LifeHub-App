@@ -122,71 +122,52 @@ export const Tasks = () => {
         </div>
       </div>
 
-      {/* --- TASK STREAM --- */}
-      <div className="space-y-4 px-2">
-        {sortedTasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 opacity-60">
-            <div className="w-24 h-24 bg-gradient-to-tr from-indigo-50 to-white rounded-full flex items-center justify-center mb-6 shadow-inner animate-pulse">
-              <Zap className="text-indigo-200" size={40} />
+      <div className="flex flex-col md:flex-row gap-4 mb-8 animate-slide-up">
+        <div className="flex-1 relative group">
+          <input
+            type="text"
+            placeholder="What needs to be done?"
+            value={title} // Assuming 'title' is the new task input
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full glass-input text-lg pl-12 transition-all group-hover:bg-white/60"
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)} // Assuming handleSubmit handles adding
+          />
+          <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-600 transition-colors" size={24} />
+        </div>
+        <button
+          onClick={openAddModal} // Changed to openAddModal
+          className="btn-primary whitespace-nowrap"
+        >
+          <Plus size={20} />
+          <span>New Task</span>
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {tasks.length === 0 ? ( // Removed loading state, assuming tasks is always available
+          <div className="glass-card text-center py-20 animate-fade-in">
+            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-400">
+              <Zap size={40} /> {/* Changed to Zap icon */}
             </div>
-            <p className="text-slate-500 font-medium text-lg">Your mind is clear.</p>
-            <button onClick={openAddModal} className="mt-4 text-indigo-500 text-sm font-bold">Create new flow</button>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">All Caught Up!</h3>
+            <p className="text-slate-500 max-w-sm mx-auto leading-relaxed">
+              Your mind is clear. Use the input above to capture new tasks or ask the Assistant to help you plan.
+            </p>
           </div>
         ) : (
-          sortedTasks.map((task, index) => (
+          sortedTasks.map((task, index) => ( // Changed to sortedTasks
             <div
               key={task.id}
-              onClick={() => openEditModal(task)}
-              className={`task-card group relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white p-5 rounded-[24px] cursor-pointer
-                ${task.priority === 'high' ? 'priority-glow-high border-rose-100/50' :
-                  task.priority === 'medium' ? 'priority-glow-medium border-indigo-100/50' : 'shadow-sm border-slate-100'}
-              `}
-              style={{ animation: `float-${index % 2 === 0 ? 'slow' : 'medium'} ${3 + index}s ease-in-out infinite` }}
+              onClick={() => openEditModal(task)} // Added onClick for editing
+              className="glass-card group flex items-center gap-4 hover:border-indigo-200 animate-slide-up"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
-              {/* Decorative Gradient Blob for High Priority */}
-              {task.priority === 'high' && (
-                <div className="absolute -top-10 -right-10 w-24 h-24 bg-rose-400/20 blur-[40px] rounded-full pointer-events-none" />
-              )}
-
-              <div className="flex items-start gap-4 relative z-10">
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
-                  className={`checkbox-spring w-8 h-8 rounded-full border-[3px] flex items-center justify-center transition-all duration-300
-                      ${task.status === 'completed'
-                      ? 'bg-emerald-500 border-emerald-500 scale-90'
-                      : 'border-slate-200 hover:border-indigo-400 bg-white/80'}`}
-                >
-                  <Check size={16} className={`text-white transition-opacity ${task.status === 'completed' ? 'opacity-100' : 'opacity-0'}`} strokeWidth={4} />
-                </button>
-
-                <div className="flex-1 pt-1">
-                  <h3 className={`text-lg font-bold leading-snug transition-all ${task.status === 'completed' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
-                    {task.title}
-                  </h3>
-
-                  <div className="flex items-center gap-3 mt-2">
-                    {task.priority === 'high' && (
-                      <span className="text-[10px] font-black text-rose-500 bg-rose-50 px-2 py-1 rounded-md tracking-wider uppercase">
-                        Urgent
-                      </span>
-                    )}
-                    {(task.dueDate || task.dueTime) && (
-                      <div className="flex items-center text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
-                        <Clock size={10} className="mr-1.5" />
-                        {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
-                        {task.dueTime && <span className="ml-1 opacity-70">{task.dueTime}</span>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity p-2"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity p-2"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           ))
         )}
@@ -261,8 +242,8 @@ export const Tasks = () => {
                       type="button"
                       onClick={() => setPriority(p)}
                       className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase transition-all border-2 flex flex-col items-center gap-2 ${priority === p
-                          ? p === 'high' ? 'border-rose-500 bg-rose-50 text-rose-600 shadow-lg shadow-rose-200' : p === 'medium' ? 'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-lg shadow-indigo-200' : 'border-emerald-500 bg-emerald-50 text-emerald-600 shadow-lg shadow-emerald-200'
-                          : 'border-slate-100 bg-white text-slate-300 hover:border-slate-200'
+                        ? p === 'high' ? 'border-rose-500 bg-rose-50 text-rose-600 shadow-lg shadow-rose-200' : p === 'medium' ? 'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-lg shadow-indigo-200' : 'border-emerald-500 bg-emerald-50 text-emerald-600 shadow-lg shadow-emerald-200'
+                        : 'border-slate-100 bg-white text-slate-300 hover:border-slate-200'
                         }`}
                     >
                       <Circle size={10} fill={priority === p ? "currentColor" : "transparent"} />
@@ -282,3 +263,4 @@ export const Tasks = () => {
     </div>
   );
 };
+```
