@@ -7,8 +7,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy backend package files
-COPY backend/package*.json ./
-COPY backend/tsconfig.json ./
+COPY backend/package.json ./
+COPY backend/package-lock.json ./
+
+# Debug: List files to ensure package-lock.json exists
+RUN ls -la
 
 # Install ALL dependencies (including devDependencies for tsc)
 RUN npm ci
@@ -32,7 +35,8 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 # Copy backend package files for prod install
-COPY backend/package*.json ./
+COPY backend/package.json ./
+COPY backend/package-lock.json ./
 
 # Install ONLY production dependencies
 RUN npm ci --only=production && \
