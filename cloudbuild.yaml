@@ -46,5 +46,36 @@ steps:
       - '8080'
       - '--allow-unauthenticated'
 
+  # --- BACKEND DEPLOYMENT ---
+  # Build Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/lifehub-backend:$COMMIT_SHA'
+      - '-f'
+      - 'Dockerfile.backend'
+      - '.'
+
+  # Push Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/lifehub-backend:$COMMIT_SHA']
+
+  # Deploy Backend
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'lifehub-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/lifehub-backend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--port'
+      - '8080'
+      - '--allow-unauthenticated'
+
 images:
   - 'gcr.io/$PROJECT_ID/lifehub-frontend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/lifehub-backend:$COMMIT_SHA'
