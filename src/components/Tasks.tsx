@@ -164,7 +164,7 @@ export const Tasks = () => {
             >
               <button
                 onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity p-2"
+                className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-opacity p-2"
               >
                 <Trash2 size={16} />
               </button>

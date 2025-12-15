@@ -2,6 +2,7 @@
 import React from 'react';
 import { X, Check, Star, Lock } from 'lucide-react';
 import { useUsage } from '../store/UsageContext';
+import { getEnv } from '../utils/env';
 import { apiService } from '../services/api.service';
 
 export const PaymentPrompt: React.FC = () => {
@@ -9,7 +10,7 @@ export const PaymentPrompt: React.FC = () => {
 
     const handleUpgrade = async () => {
         try {
-            const priceId = import.meta.env.VITE_STRIPE_PRICE_ID_PRO_MONTHLY;
+            const priceId = getEnv('VITE_STRIPE_PRICE_ID_PRO_MONTHLY');
             if (!priceId) {
                 console.error("Price ID not found");
                 return;

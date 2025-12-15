@@ -18,13 +18,7 @@ import { getFirestore } from "firebase/firestore";
  * - VITE_FIREBASE_MEASUREMENT_ID (optional)
  */
 
-// Helper to get environment variables (Runtime > Build time)
-const getEnv = (key: string) => {
-  if (typeof window !== 'undefined' && (window as any).env && (window as any).env[key]) {
-    return (window as any).env[key];
-  }
-  return import.meta.env[key];
-};
+import { getEnv } from '../utils/env';
 
 // Validate required environment variables
 const requiredEnvVars = [

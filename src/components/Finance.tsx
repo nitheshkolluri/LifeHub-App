@@ -137,16 +137,23 @@ export const Finance = () => {
                            </div>
                            <div className="text-right">
                               <span className={`block font-black text-lg ${item.type === 'income' ? 'text-emerald-500' : 'text-slate-800'}`}>
-                                 {item.type === 'income' ? '+' : '-'}${item.amount}
                               </span>
-                              {!item.isPaidThisMonth && item.type === 'bill' && (
+                              <div className="flex flex-col items-end gap-1">
+                                 {!item.isPaidThisMonth && item.type === 'bill' && (
+                                    <button
+                                       onClick={() => togglePaid(item.id)}
+                                       className="text-[10px] font-bold text-primary-500 bg-primary-50 px-2 py-1 rounded-md hover:bg-primary-100 transition-colors"
+                                    >
+                                       MARK PAID
+                                    </button>
+                                 )}
                                  <button
-                                    onClick={() => togglePaid(item.id)}
-                                    className="text-[10px] font-bold text-primary-500 bg-primary-50 px-2 py-1 rounded-md mt-1 hover:bg-primary-100 transition-colors"
+                                    onClick={() => deleteFinanceItem(item.id)}
+                                    className="text-[10px] font-bold text-slate-400 hover:text-rose-500 px-2 py-1 transition-colors"
                                  >
-                                    MARK PAID
+                                    DELETE
                                  </button>
-                              )}
+                              </div>
                            </div>
                         </div>
                      ))

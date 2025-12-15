@@ -1,14 +1,15 @@
 
-import { 
-  GoogleGenAI, 
-  FunctionDeclaration, 
-  Type, 
+import {
+  GoogleGenAI,
+  FunctionDeclaration,
+  Type,
   Chat,
   Part,
   GenerateContentResponse,
   Schema
 } from "@google/genai";
 import { Task, Habit, FinanceItem, BrainDumpResult } from "../types";
+import { getEnv } from "../utils/env";
 
 // Define tools for the AI to interact with the app state
 const addTaskTool: FunctionDeclaration = {
@@ -58,7 +59,7 @@ const getSummaryTool: FunctionDeclaration = {
   description: 'Get a summary of current tasks, habits, and finances to answer user questions.',
   parameters: {
     type: Type.OBJECT,
-    properties: {}, 
+    properties: {},
   }
 };
 
@@ -68,7 +69,7 @@ export class GeminiService {
   private modelName = 'gemini-2.5-flash';
 
   constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    this.ai = new GoogleGenAI({ apiKey: getEnv('VITE_GEMINI_API_KEY') || '' });
   }
 
   // --- BRAIN DUMP FEATURE ---
@@ -102,7 +103,7 @@ export class GeminiService {
             properties: {
               type: { type: Type.STRING, enum: ['task', 'habit', 'finance'] },
               confidence: { type: Type.NUMBER },
-              data: { 
+              data: {
                 type: Type.OBJECT,
                 properties: {
                   // Common
@@ -121,8 +122,8 @@ export class GeminiService {
                     items: {
                       type: Type.OBJECT,
                       properties: {
-                         amount: { type: Type.NUMBER },
-                         dueDate: { type: Type.STRING }
+                        amount: { type: Type.NUMBER },
+                        dueDate: { type: Type.STRING }
                       }
                     }
                   }
@@ -144,7 +145,7 @@ export class GeminiService {
           responseSchema: schema
         }
       });
-      
+
       if (result.text) {
         return JSON.parse(result.text) as BrainDumpResult;
       }
@@ -173,7 +174,7 @@ export class GeminiService {
   }
 
   async sendMessage(
-    message: string, 
+    message: string,
     context: any,
     toolHandlers: any
   ): Promise<string> {
@@ -184,15 +185,15 @@ export class GeminiService {
     try {
       let result = await this.chat!.sendMessage({ message });
       const calls = result.functionCalls;
-      
+
       if (calls && calls.length > 0) {
         const call = calls[0];
         let functionResponseResult = { result: "Success" };
-        
+
         try {
           if (toolHandlers[call.name]) {
-             const res = await toolHandlers[call.name](call.args);
-             functionResponseResult = { result: res };
+            const res = await toolHandlers[call.name](call.args);
+            functionResponseResult = { result: res };
           }
         } catch (toolError) {
           functionResponseResult = { result: "Failed" };
@@ -201,7 +202,7 @@ export class GeminiService {
         const responsePart: Part = {
           functionResponse: {
             name: call.name,
-            id: call.id, 
+            id: call.id,
             response: functionResponseResult
           }
         };
@@ -222,7 +223,7 @@ export class GeminiService {
     const prompt = `
       Generate a professional 'Executive Brief' based on:
       Tasks: ${data.tasks.length} total.
-      Habits: ${data.habits.map((h:any) => h.title).join(', ')}.
+      Habits: ${data.habits.map((h: any) => h.title).join(', ')}.
       Finance: ${data.finance.length} items.
       
       Structure:
@@ -234,9 +235,9 @@ export class GeminiService {
     `;
 
     try {
-      const result: GenerateContentResponse = await this.ai.models.generateContent({ 
-        model: 'gemini-2.5-flash', 
-        contents: prompt 
+      const result: GenerateContentResponse = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt
       });
       return result.text || "Report generation failed.";
     } catch (error) {

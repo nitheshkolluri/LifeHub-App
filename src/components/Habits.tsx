@@ -32,16 +32,24 @@ const HabitCard = ({ habit, onIncrement, isDoneToday }: any) => {
           <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{habit.frequency}</p>
         </div>
 
-        <button
-          onClick={() => onIncrement(habit.id)}
-          disabled={isDoneToday}
-          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${isDoneToday
-            ? 'bg-gradient-to-tr from-amber-400 to-orange-500 text-white scale-100'
-            : 'bg-white text-slate-200 hover:text-primary-500 hover:scale-110'
-            }`}
-        >
-          {isDoneToday ? <Star size={24} fill="currentColor" /> : <Check size={24} strokeWidth={4} />}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => useApp().deleteHabit(habit.id)}
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-white text-slate-200 hover:text-rose-500 hover:scale-110 shadow-lg transition-all"
+          >
+            <Trash2 size={24} />
+          </button>
+          <button
+            onClick={() => onIncrement(habit.id)}
+            disabled={isDoneToday}
+            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${isDoneToday
+              ? 'bg-gradient-to-tr from-amber-400 to-orange-500 text-white scale-100'
+              : 'bg-white text-slate-200 hover:text-primary-500 hover:scale-110'
+              }`}
+          >
+            {isDoneToday ? <Star size={24} fill="currentColor" /> : <Check size={24} strokeWidth={4} />}
+          </button>
+        </div>
       </div>
 
       {/* Mini Constellation Visualization (Last 7 Days) */}

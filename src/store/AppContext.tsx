@@ -4,6 +4,7 @@ import { ChatMessage, ViewState, Report, NotificationPreferences, BrainDumpResul
 import { geminiService } from '../services/geminiService';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
+import { apiService } from '../services/api.service';
 import { collection, query, onSnapshot, addDoc, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 
 // --- DEFINITIONS ---
@@ -355,12 +356,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     setIsLoadingAI(true);
     try {
-      // SECURITY NOTE: Client-side AI call. Move to backend.
-      const result = await geminiService.parseBrainDump(text);
+      // Use Backend API for robust parsing
+      const { data: result } = await apiService.assistant.brainDump(text);
 
       const promises: Promise<any>[] = [];
       if (result.entities) {
-        result.entities.forEach(entity => {
+        result.entities.forEach((entity: { type: string; data: any; }) => {
           if (entity.type === 'task') promises.push(addTask(entity.data.title, entity.data.priority, entity.data.dueDate));
           else if (entity.type === 'habit') promises.push(addHabit(entity.data.title, entity.data.frequency));
           else if (entity.type === 'finance') promises.push(addFinanceItem(entity.data));
@@ -369,6 +370,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await Promise.all(promises);
       return result;
     } catch (e) {
+      console.error(e);
       throw e;
     } finally {
       setIsLoadingAI(false);
