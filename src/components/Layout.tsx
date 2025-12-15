@@ -17,7 +17,7 @@ import { useAuth } from '../store/AuthContext';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { currentView, setView } = useApp();
-  const { signOut } = useAuth();
+  const { logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [

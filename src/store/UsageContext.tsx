@@ -28,58 +28,71 @@ export const UsageProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setUsageCount(parseInt(savedUsage, 10));
         }
 
-        // Check premium status (mock or from user claims)
-        // In a real app, check user.claims.stripeRole or firestore subscription
-        if (user?.uid) {
-            // Mock: Check if user has 'premium' tag or local override
-            const premiumStatus = localStorage.getItem('lifehub_is_premium');
-            if (premiumStatus === 'true') setIsPremium(true);
-        }
-    }, [user]);
+        // Check premium or Trial status
+        useEffect(() => {
+            if (user?.uid) {
+                // Check for Hard-coded or Local Premium override
+                const localPremium = localStorage.getItem('lifehub_is_premium') === 'true';
 
-    useEffect(() => {
-        localStorage.setItem('lifehub_usage_count', usageCount.toString());
-        if (usageCount >= FREE_TIER_LIMIT && !isPremium) {
-            // Don't show immediately on load, only on action? 
-            // Actually, we enforce it on increment.
-        }
-    }, [usageCount, isPremium]);
+                // Check for Account Premium status
+                const accountPremium = user.isPremium;
 
-    const incrementUsage = () => {
-        if (isPremium) return;
+                // Check for 7-Day Trial
+                let isTrial = false;
+                if (user.createdAt) {
+                    const msInDay = 24 * 60 * 60 * 1000;
+                    const diffDays = (Date.now() - user.createdAt) / msInDay;
+                    isTrial = diffDays <= 7;
+                }
 
-        if (usageCount >= FREE_TIER_LIMIT) {
-            setShowPaywall(true);
-            return;
-        }
+                // Unlock if ANY condition is true
+                setIsPremium(localPremium || accountPremium || isTrial);
+            }
+        }, [user]);
 
-        setUsageCount(prev => prev + 1);
+        useEffect(() => {
+            localStorage.setItem('lifehub_usage_count', usageCount.toString());
+            if (usageCount >= FREE_TIER_LIMIT && !isPremium) {
+                // Don't show immediately on load, only on action? 
+                // Actually, we enforce it on increment.
+            }
+        }, [usageCount, isPremium]);
+
+        const incrementUsage = () => {
+            if (isPremium) return;
+
+            if (usageCount >= FREE_TIER_LIMIT) {
+                setShowPaywall(true);
+                return;
+            }
+
+            setUsageCount(prev => prev + 1);
+        };
+
+        const resetUsage = () => {
+            setUsageCount(0);
+            setShowPaywall(false);
+            localStorage.setItem('lifehub_usage_count', '0');
+        };
+
+        return (
+            <UsageContext.Provider value={{
+                usageCount,
+                incrementUsage,
+                isPremium,
+                showPaywall,
+                setShowPaywall,
+                resetUsage
+            }}>
+                {children}
+            </UsageContext.Provider>
+        );
     };
 
-    const resetUsage = () => {
-        setUsageCount(0);
-        setShowPaywall(false);
-        localStorage.setItem('lifehub_usage_count', '0');
+    export const useUsage = () => {
+        const context = useContext(UsageContext);
+        if (context === undefined) {
+            throw new Error('useUsage must be used within a UsageProvider');
+        }
+        return context;
     };
-
-    return (
-        <UsageContext.Provider value={{
-            usageCount,
-            incrementUsage,
-            isPremium,
-            showPaywall,
-            setShowPaywall,
-            resetUsage
-        }}>
-            {children}
-        </UsageContext.Provider>
-    );
-};
-
-export const useUsage = () => {
-    const context = useContext(UsageContext);
-    if (context === undefined) {
-        throw new Error('useUsage must be used within a UsageProvider');
-    }
-    return context;
-};
