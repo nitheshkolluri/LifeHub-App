@@ -1,0 +1,48 @@
+steps:
+  # Build the container image, passing in the required environment variables as build-args
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/lifehub-frontend:$COMMIT_SHA'
+      - '-f'
+      - 'Dockerfile.frontend'
+      - '--build-arg'
+      - 'VITE_API_URL=https://lifehub-backend-710009842508.us-central1.run.app/api'
+      - '--build-arg'
+      - 'VITE_FIREBASE_API_KEY=AIzaSyA2SeEaod4ciM0oUufN-C0bT73MMr5jI8Y'
+      - '--build-arg'
+      - 'VITE_FIREBASE_AUTH_DOMAIN=lifehub-d322e.firebaseapp.com'
+      - '--build-arg'
+      - 'VITE_FIREBASE_PROJECT_ID=lifehub-d322e'
+      - '--build-arg'
+      - 'VITE_FIREBASE_STORAGE_BUCKET=lifehub-d322e.appspot.com'
+      - '--build-arg'
+      - 'VITE_FIREBASE_MESSAGING_SENDER_ID=868390342036'
+      - '--build-arg'
+      - 'VITE_FIREBASE_APP_ID=1:868390342036:web:0cc18f05ee8d2065535381'
+      - '--build-arg'
+      - 'VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51SZ6MN3GzoSJKmxmfN98dDBakrTcQ133ogxMYMpbXTVGQaj00k5lGbkx99ioQecpLuAYNByHao8wPpPzvxruwLrM0098YjYmKP'
+      - '.'
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/lifehub-frontend:$COMMIT_SHA']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'lifehub-frontend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/lifehub-frontend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--port'
+      - '8080'
+      - '--allow-unauthenticated'
+
+images:
+  - 'gcr.io/$PROJECT_ID/lifehub-frontend:$COMMIT_SHA'
