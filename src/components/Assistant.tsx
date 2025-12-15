@@ -104,11 +104,8 @@ export const Assistant = () => {
     e.preventDefault();
     if (!input.trim() || isLoadingAI) return;
 
-    // Enforce Usage Limit
-    if (!isPremium && usageCount >= 3) {
-      setShowPaywall(true);
-      return;
-    }
+    // Enforce Usage Limit - REMOVED per user request
+    // if (!isPremium && usageCount >= 3) { ... }
     incrementUsage();
 
     stopListening(); // Stop listening on send
@@ -148,8 +145,8 @@ export const Assistant = () => {
                 {msg.role === 'user' ? <User size={18} /> : <Bot size={20} />}
               </div>
               <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-md ${msg.role === 'user'
-                  ? 'bg-primary-600 text-white rounded-br-sm'
-                  : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white'
+                ? 'bg-primary-600 text-white rounded-br-sm'
+                : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white'
                 }`}>
                 {msg.text}
               </div>

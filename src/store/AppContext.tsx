@@ -408,10 +408,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const processBrainDump = async (text: string): Promise<BrainDumpResult> => {
-    if (!checkLimit()) {
-      setShowUpsell(true);
-      throw new Error("Free limit reached");
-    }
+    // Limit check removed to allow backend to decide (Trial Logic)
     setIsLoadingAI(true);
     try {
       // Use Backend API for robust parsing
