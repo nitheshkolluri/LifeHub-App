@@ -63,7 +63,7 @@ const AppContent = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case ViewState.DASHBOARD: return <VoiceDashboard />;
+      case ViewState.DASHBOARD: return <Dashboard />;
       case ViewState.TASKS: return <Tasks />;
       case ViewState.HABITS: return <Habits />;
       case ViewState.FINANCE: return <Finance />;
