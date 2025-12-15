@@ -58,7 +58,7 @@ export const PaymentPrompt: React.FC = () => {
                         </div>
                     </div>
 
-                    <button className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg shadow-xl shadow-indigo-200 hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-2 group">
+                    <button className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 group">
                         <Star className="fill-white" size={20} />
                         <span>Upgrade to Premium</span>
                     </button>
