@@ -196,7 +196,7 @@ export const Dashboard = () => {
             >
                <div className="absolute top-0 right-0 p-8 w-full h-full bg-gradient-to-b from-emerald-50/50 to-transparent pointer-events-none" />
                <div className="absolute inset-0 p-8 flex flex-col">
-                  <div className="flex justify-between items-center mb-6 cursor-pointer" onClick={() => setView('HABITS' as any)}>
+                  <div className="flex justify-between items-center mb-6 cursor-pointer" onClick={() => setView(ViewState.HABITS)}>
                      <h3 className="text-xl font-black text-slate-800">Habits</h3>
                      <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl">
                         <Zap size={20} fill="currentColor" />
@@ -236,7 +236,7 @@ export const Dashboard = () => {
 
             {/* 3. FINANCE SNAPSHOT (Interactive) */}
             <div
-               onClick={() => setView('FINANCE' as any)}
+               onClick={() => setView(ViewState.FINANCE)}
                className="relative h-48 bg-slate-50 rounded-[40px] p-8 flex flex-col justify-between border border-dashed border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer group"
             >
                <div className="flex justify-between items-start">

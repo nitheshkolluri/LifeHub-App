@@ -28,6 +28,7 @@ interface AppContextType {
   // Setters
   setView: (view: ViewState) => void;
   setShowUpsell: (show: boolean) => void;
+  setMessages: (messages: ChatMessage[]) => void;
 
   // Actions
   addTask: (title: string, priority?: Priority, dueDate?: string, dueTime?: string, linkedFinanceId?: string) => Promise<string>;
@@ -465,7 +466,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   return (
     <AppContext.Provider value={{
-      tasks, habits, finance, messages, currentView, isLoadingAI, showUpsell, reports,
+      tasks, habits, finance, messages, setMessages, currentView, isLoadingAI, showUpsell, reports,
       setView: setCurrentView, setShowUpsell,
       addTask, updateTask, toggleTask, deleteTask,
       addHabit, updateHabit, incrementHabit, deleteHabit,
