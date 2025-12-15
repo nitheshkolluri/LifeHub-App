@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
-import { DollarSign, Check, Plus, Lock, TrendingUp, Layers } from 'lucide-react';
+import { useUsage } from '../store/UsageContext';
+import { DollarSign, Check, Plus, Lock, TrendingUp, Layers, CreditCard } from 'lucide-react';
 
 // Styles for the liquid wave animation
 const liquidStyles = `
@@ -27,6 +27,7 @@ const liquidStyles = `
 
 export const Finance = () => {
    const { finance, togglePaid, addFinanceItem } = useApp();
+   const { isPremium, setShowPaywall } = useUsage();
    const [isModalOpen, setIsModalOpen] = useState(false);
 
    // Stats
@@ -123,7 +124,7 @@ export const Finance = () => {
                         <div key={item.id} className={`glass-card p-5 flex items-center justify-between group ${item.isPaidThisMonth ? 'opacity-60' : ''}`}>
                            <div className="flex items-center gap-4">
                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.type === 'income' ? 'bg-emerald-100 text-emerald-600' :
-                                    item.type === 'bill' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'
+                                 item.type === 'bill' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'
                                  }`}>
                                  {item.type === 'income' ? <TrendingUp size={18} /> : <CreditCard size={18} />}
                               </div>
@@ -140,7 +141,7 @@ export const Finance = () => {
                               </span>
                               {!item.isPaidThisMonth && item.type === 'bill' && (
                                  <button
-                                    onClick={() => markPaid(item.id)}
+                                    onClick={() => togglePaid(item.id)}
                                     className="text-[10px] font-bold text-primary-500 bg-primary-50 px-2 py-1 rounded-md mt-1 hover:bg-primary-100 transition-colors"
                                  >
                                     MARK PAID

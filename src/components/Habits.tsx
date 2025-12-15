@@ -5,13 +5,12 @@ import { Flame, Plus, Check, Star, Sparkles, X } from 'lucide-react';
 
 const ConstellationNode = ({ active }: { active: boolean }) => (
   <div className={`w-3 h-3 rounded-full transition-all duration-500 ${active
-      ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)] scale-110'
-      : 'bg-slate-200 scale-100'
+    ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)] scale-110'
+    : 'bg-slate-200 scale-100'
     }`} />
 );
 
 const HabitCard = ({ habit, onIncrement, isDoneToday }: any) => {
-  return (
   return (
     <div className="group relative glass-card p-6 rounded-[32px] hover:bg-white/60 overflow-hidden">
 
@@ -37,8 +36,8 @@ const HabitCard = ({ habit, onIncrement, isDoneToday }: any) => {
           onClick={() => onIncrement(habit.id)}
           disabled={isDoneToday}
           className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${isDoneToday
-              ? 'bg-gradient-to-tr from-amber-400 to-orange-500 text-white scale-100'
-              : 'bg-white text-slate-200 hover:text-primary-500 hover:scale-110'
+            ? 'bg-gradient-to-tr from-amber-400 to-orange-500 text-white scale-100'
+            : 'bg-white text-slate-200 hover:text-primary-500 hover:scale-110'
             }`}
         >
           {isDoneToday ? <Star size={24} fill="currentColor" /> : <Check size={24} strokeWidth={4} />}
