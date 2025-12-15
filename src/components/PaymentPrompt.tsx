@@ -41,6 +41,7 @@ export const PaymentPrompt: React.FC = () => {
             }
         } catch (error) {
             console.error("Failed to start checkout", error);
+            alert(`Checkout Failed.\n\nError: ${(error as any).message}\n\nCheck Console for CORS or Network errors.`);
         }
     };
 
