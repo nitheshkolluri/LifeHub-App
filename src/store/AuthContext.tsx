@@ -84,41 +84,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (e) {
+      console.error("Login failed:", e);
+      throw e;
+    }
   };
 
   const signup = async (email: string, password: string, name: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    // Send verification email safely
     try {
-      await sendEmailVerification(user);
-    } catch (error) {
-      console.warn("Failed to send verification email:", error);
-      // Continue account creation even if email fails
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Send verification email safely
+      try {
+        await sendEmailVerification(user);
+      } catch (error) {
+        console.warn("Failed to send verification email:", error);
+        // Continue account creation even if email fails
+      }
+
+      // Create user profile
+      const newUser: User = {
+        id: user.uid,
+        email: user.email || '',
+        name: name,
+        isPremium: false,
+        plan: 'free',
+        emailVerified: false,
+        createdAt: Date.now()
+      };
+
+      await setDoc(doc(db, 'users', user.uid), newUser);
+    } catch (e) {
+      console.error("Signup failed:", e);
+      throw e;
     }
-
-    // Create user profile
-    const newUser: User = {
-      id: user.uid,
-      email: user.email || '',
-      name: name,
-      isPremium: false,
-      plan: 'free',
-      emailVerified: false,
-      createdAt: Date.now()
-    };
-
-    await setDoc(doc(db, 'users', user.uid), newUser);
   };
 
   const loginWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (e) {
+      console.error("Google login failed:", e);
+      throw e;
+    }
   };
 
   const logout = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.error("Logout failed:", e);
+    }
   };
 
   const upgradeToPremium = async () => {

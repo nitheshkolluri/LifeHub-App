@@ -188,105 +188,155 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // --- ACTIONS (Wrappers around Firestore) ---
+  // --- ACTIONS (Wrappers around Firestore) ---
   const addTask = async (title: string, priority: Priority = 'medium', dueDate?: string, dueTime?: string, linkedFinanceId?: string) => {
     if (!user) return '';
-    if (!checkLimit()) return '';
+    try {
+      if (!checkLimit()) return '';
 
-    const newTask = {
-      title,
-      status: 'pending',
-      priority,
-      dueDate: dueDate || null,
-      dueTime: dueTime || null,
-      linkedFinanceId: linkedFinanceId || null,
-      createdAt: Date.now()
-    };
-    const docRef = await addDoc(collection(db, 'users', user.id, 'tasks'), newTask);
-    return docRef.id;
+      const newTask = {
+        title,
+        status: 'pending',
+        priority,
+        dueDate: dueDate || null,
+        dueTime: dueTime || null,
+        linkedFinanceId: linkedFinanceId || null,
+        createdAt: Date.now()
+      };
+      const docRef = await addDoc(collection(db, 'users', user.id, 'tasks'), newTask);
+      return docRef.id;
+    } catch (e) {
+      console.error("Failed to add task:", e);
+      return '';
+    }
   };
 
   const updateTask = async (id: string, updates: Partial<Task>) => {
     if (!user) return;
-    await updateDoc(doc(db, 'users', user.id, 'tasks', id), updates);
+    try {
+      await updateDoc(doc(db, 'users', user.id, 'tasks', id), updates);
+    } catch (e) {
+      console.error("Failed to update task:", e);
+    }
   };
 
   const toggleTask = async (id: string) => {
     if (!user) return;
-    const task = tasks.find(t => t.id === id);
-    if (task) {
-      await updateDoc(doc(db, 'users', user.id, 'tasks', id), { status: task.status === 'pending' ? 'completed' : 'pending' });
+    try {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        await updateDoc(doc(db, 'users', user.id, 'tasks', id), { status: task.status === 'pending' ? 'completed' : 'pending' });
+      }
+    } catch (e) {
+      console.error("Failed to toggle task:", e);
     }
   };
 
   const deleteTask = async (id: string) => {
     if (!user) return;
-    await deleteDoc(doc(db, 'users', user.id, 'tasks', id));
+    try {
+      await deleteDoc(doc(db, 'users', user.id, 'tasks', id));
+    } catch (e) {
+      console.error("Failed to delete task:", e);
+      alert("Failed to delete task. Please check your connection.");
+    }
   };
 
   const addHabit = async (title: string, frequency: 'daily' | 'weekly' = 'daily') => {
     if (!user) return;
-    if (!checkLimit()) return;
-    const newHabit: Omit<Habit, 'id'> = {
-      title, streak: 0, completedDates: [], frequency, targetPerPeriod: 1, startDate: new Date().toISOString().split('T')[0]
-    };
-    await addDoc(collection(db, 'users', user.id, 'habits'), newHabit);
+    try {
+      if (!checkLimit()) return;
+      const newHabit: Omit<Habit, 'id'> = {
+        title, streak: 0, completedDates: [], frequency, targetPerPeriod: 1, startDate: new Date().toISOString().split('T')[0]
+      };
+      await addDoc(collection(db, 'users', user.id, 'habits'), newHabit);
+    } catch (e) {
+      console.error("Failed to add habit:", e);
+    }
   };
 
   const updateHabit = async (id: string, updates: Partial<Habit>) => {
     if (!user) return;
-    await updateDoc(doc(db, 'users', user.id, 'habits', id), updates);
+    try {
+      await updateDoc(doc(db, 'users', user.id, 'habits', id), updates);
+    } catch (e) {
+      console.error("Failed to update habit:", e);
+    }
   };
 
   const deleteHabit = async (id: string) => {
     if (!user) return;
-    await deleteDoc(doc(db, 'users', user.id, 'habits', id));
+    try {
+      await deleteDoc(doc(db, 'users', user.id, 'habits', id));
+    } catch (e) {
+      console.error("Failed to delete habit:", e);
+      alert("Failed to delete habit. Please check your connection.");
+    }
   };
 
   const incrementHabit = async (id: string) => {
     if (!user) return;
-    const habit = habits.find(h => h.id === id);
-    if (!habit) return;
-    const today = new Date().toISOString().split('T')[0];
-    if (habit.completedDates.includes(today)) return;
-    await updateDoc(doc(db, 'users', user.id, 'habits', id), {
-      streak: habit.streak + 1,
-      completedDates: [...habit.completedDates, today]
-    });
+    try {
+      const habit = habits.find(h => h.id === id);
+      if (!habit) return;
+      const today = new Date().toISOString().split('T')[0];
+      if (habit.completedDates.includes(today)) return;
+      await updateDoc(doc(db, 'users', user.id, 'habits', id), {
+        streak: habit.streak + 1,
+        completedDates: [...habit.completedDates, today]
+      });
+    } catch (e) {
+      console.error("Failed to increment habit:", e);
+    }
   };
 
   const addFinanceItem = async (data: Partial<FinanceItem>) => {
     if (!user) return '';
-    const docRef = await addDoc(collection(db, 'users', user.id, 'finance'), {
-      title: data.title || 'Expense',
-      amount: data.amount || 0,
-      type: data.type || 'bill',
-      recurrence: data.recurrence || 'monthly',
-      dueDay: data.dueDay || 1,
-      dueDate: data.dueDate || null,
-      isPaidThisMonth: false,
-      installments: data.installments || []
-    });
+    try {
+      const docRef = await addDoc(collection(db, 'users', user.id, 'finance'), {
+        title: data.title || 'Expense',
+        amount: data.amount || 0,
+        type: data.type || 'bill',
+        recurrence: data.recurrence || 'monthly',
+        dueDay: data.dueDay || 1,
+        dueDate: data.dueDate || null,
+        isPaidThisMonth: false,
+        installments: data.installments || []
+      });
 
-    if (data.installments && data.installments.length > 0) {
-      const taskIds = [];
-      for (let i = 0; i < data.installments.length; i++) {
-        const inst = data.installments[i];
-        const taskId = await addTask(`Pay ${data.title} (${i + 1}/${data.installments.length})`, 'high', inst.dueDate, undefined, docRef.id);
-        if (taskId) taskIds.push(taskId);
+      if (data.installments && data.installments.length > 0) {
+        const taskIds = [];
+        for (let i = 0; i < data.installments.length; i++) {
+          const inst = data.installments[i];
+          const taskId = await addTask(`Pay ${data.title} (${i + 1}/${data.installments.length})`, 'high', inst.dueDate, undefined, docRef.id);
+          if (taskId) taskIds.push(taskId);
+        }
+        await updateDoc(docRef, { linkedTaskIds: taskIds });
       }
-      await updateDoc(docRef, { linkedTaskIds: taskIds });
+      return docRef.id;
+    } catch (e) {
+      console.error("Failed to add finance item:", e);
+      return '';
     }
-    return docRef.id;
   };
 
   const updateFinanceItem = async (id: string, updates: Partial<FinanceItem>) => {
     if (!user) return;
-    await updateDoc(doc(db, 'users', user.id, 'finance', id), updates);
+    try {
+      await updateDoc(doc(db, 'users', user.id, 'finance', id), updates);
+    } catch (e) {
+      console.error("Failed to update finance item:", e);
+    }
   };
 
   const deleteFinanceItem = async (id: string) => {
     if (!user) return;
-    await deleteDoc(doc(db, 'users', user.id, 'finance', id));
+    try {
+      await deleteDoc(doc(db, 'users', user.id, 'finance', id));
+    } catch (e) {
+      console.error("Failed to delete finance item:", e);
+      alert("Failed to delete finance item. Please check your connection.");
+    }
   };
 
   const togglePaid = async (id: string) => {
