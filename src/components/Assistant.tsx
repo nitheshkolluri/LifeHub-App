@@ -1,9 +1,9 @@
-
+```
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
 import { useUsage } from '../store/UsageContext';
-import { Send, Bot, User, Mic as MicIcon, MicOff as MicOffIcon, X, ArrowLeft, Save, AlertTriangle, AlertCircle } from 'lucide-react';
+import * as Icons from 'lucide-react'; // Namespace Import to prevent Minification Collisions
 import { ViewState } from '../types';
 
 export const Assistant = () => {
@@ -37,7 +37,9 @@ export const Assistant = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) recognitionRef.current.abort();
+      try {
+          if (recognitionRef.current) recognitionRef.current.abort();
+      } catch (e) { console.error("Cleanup error", e); }
     };
   }, []);
 
@@ -56,58 +58,67 @@ export const Assistant = () => {
   };
 
   const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    }
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
+    try {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+          setIsListening(false);
+        }
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
+        }
+    } catch (e) {
+        console.error("Stop Voice Error", e);
+        setIsListening(false);
     }
   };
 
   const startListening = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Voice not supported in this browser.");
-      return;
+    try {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Voice not supported in this browser.");
+            return;
+        }
+
+        if (recognitionRef.current) recognitionRef.current.abort();
+
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        textBeforeRef.current = input;
+
+        recognition.onstart = () => {
+          setIsListening(true);
+          resetSilenceTimer();
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+          isHolding.current = false; // Reset hold state
+        };
+
+        recognition.onresult = (event: any) => {
+          resetSilenceTimer();
+          let currentTranscript = '';
+          for (let i = 0; i < event.results.length; ++i) {
+            currentTranscript += event.results[i][0].transcript;
+          }
+          const prefix = textBeforeRef.current ? textBeforeRef.current + ' ' : '';
+          setInput(prefix + currentTranscript);
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error("Speech Error:", event.error);
+          stopListening();
+        };
+
+        recognition.start();
+    } catch (e) {
+        console.error("Start Voice Error", e);
     }
-
-    if (recognitionRef.current) recognitionRef.current.abort();
-
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    textBeforeRef.current = input;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      resetSilenceTimer();
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      isHolding.current = false; // Reset hold state
-    };
-
-    recognition.onresult = (event: any) => {
-      resetSilenceTimer();
-      let currentTranscript = '';
-      for (let i = 0; i < event.results.length; ++i) {
-        currentTranscript += event.results[i][0].transcript;
-      }
-      const prefix = textBeforeRef.current ? textBeforeRef.current + ' ' : '';
-      setInput(prefix + currentTranscript);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("Speech Error:", event.error);
-      stopListening();
-    };
-
-    recognition.start();
   };
 
   // Hybrid Interaction Handler
@@ -173,7 +184,7 @@ export const Assistant = () => {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-fade-in">
         <div className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl text-center space-y-6">
           <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle size={32} />
+            <Icons.AlertTriangle size={32} />
           </div>
           <div>
             <h3 className="text-2xl font-black text-slate-800 mb-2">Leave Chat?</h3>
@@ -181,7 +192,7 @@ export const Assistant = () => {
           </div>
           <div className="space-y-3">
             <button onClick={() => confirmExit(true)} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95">
-              <Save size={18} /> <span>Save to Memory & Exit</span>
+              <Icons.Save size={18} /> <span>Save to Memory & Exit</span>
             </button>
             <button onClick={() => confirmExit(false)} className="w-full py-4 bg-white border-2 border-slate-100 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl transition-all">
               Just Exit
@@ -198,27 +209,27 @@ export const Assistant = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 bg-white/60 backdrop-blur-md p-2 rounded-full border border-white/50 shadow-sm">
         <button onClick={handleExitRequest} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
-          <ArrowLeft size={20} />
+          <Icons.ArrowLeft size={20} />
         </button>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Session Mode</span>
-          <button onClick={() => setSaveToMemory(!saveToMemory)} className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${saveToMemory ? 'bg-indigo-500 text-white shadow-indigo-200 shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
-            <div className={`w-2 h-2 rounded-full ${saveToMemory ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
+          <button onClick={() => setSaveToMemory(!saveToMemory)} className={`px - 4 py - 2 rounded - full flex items - center gap - 2 transition - all ${ saveToMemory ? 'bg-indigo-500 text-white shadow-indigo-200 shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200' } `}>
+            <div className={`w - 2 h - 2 rounded - full ${ saveToMemory ? 'bg-white animate-pulse' : 'bg-slate-400' } `} />
             <span className="text-xs font-bold">{saveToMemory ? 'Memory ON' : 'Memory OFF'}</span>
           </button>
         </div>
-        <button onClick={handleExitRequest} className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50"><X size={20} /></button>
+        <button onClick={handleExitRequest} className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50"><Icons.X size={20} /></button>
       </div>
 
       <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/40 border border-white/50 shadow-inner p-4 md:p-6 space-y-6 scroll-smooth backdrop-blur-sm">
         {(safeMessages || []).length > 0 ? (
           safeMessages.slice(1).map((msg, idx) => (
-            <div key={msg.id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
-              <div className={`flex items-end max-w-[85%] md:max-w-[70%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600'}`}>
-                  {msg.role === 'user' ? <User size={18} /> : <Bot size={20} />}
+            <div key={msg.id || idx} className={`flex ${ msg.role === 'user' ? 'justify-end' : 'justify-start' } animate - slide - up`}>
+              <div className={`flex items - end max - w - [85 %] md: max - w - [70 %] gap - 3 ${ msg.role === 'user' ? 'flex-row-reverse' : 'flex-row' } `}>
+                <div className={`w - 10 h - 10 rounded - 2xl flex items - center justify - center flex - shrink - 0 shadow - lg ${ msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600' } `}>
+                  {msg.role === 'user' ? <Icons.User size={18} /> : <Icons.Bot size={20} />}
                 </div>
-                <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-md ${msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white'}`}>
+                <div className={`px - 6 py - 4 rounded - 3xl text - [15px] leading - relaxed shadow - md ${ msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white' } `}>
                   {msg.text}
                 </div>
               </div>
@@ -226,7 +237,7 @@ export const Assistant = () => {
           ))
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
-            <Bot size={48} className="mb-4" />
+            <Icons.Bot size={48} className="mb-4" />
             <p>Ready to help.</p>
           </div>
         )}
@@ -258,10 +269,10 @@ export const Assistant = () => {
             onMouseUp={handleMicUp}
             onTouchStart={handleMicDown} // Mobile Touch Support
             onTouchEnd={handleMicUp}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'}`}
+            className={`absolute right - 2 top - 1 / 2 - translate - y - 1 / 2 p - 2.5 rounded - xl transition - all duration - 300 ${ isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50' } `}
             title="Hold to Speak / Tap to Toggle"
           >
-            {isListening ? <MicOffIcon size={20} /> : <MicIcon size={20} />}
+            {isListening ? <Icons.MicOff size={20} /> : <Icons.Mic size={20} />}
           </button>
         </div>
 
@@ -270,9 +281,10 @@ export const Assistant = () => {
           disabled={!input.trim() || isLoadingAI}
           className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-900/20 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
         >
-          <Send size={20} className={input.trim() ? "ml-0.5" : ""} />
+          <Icons.Send size={20} className={input.trim() ? "ml-0.5" : ""} />
         </button>
       </form>
     </div>
   );
 };
+```
