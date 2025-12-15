@@ -7,31 +7,30 @@ import { apiService } from '../services/api.service';
 export const PaymentPrompt: React.FC = () => {
     const { showPaywall, setShowPaywall } = useUsage();
 
-    if (!showPaywall) return null;
-
-    return (
     const handleUpgrade = async () => {
-            try {
-                const priceId = import.meta.env.VITE_STRIPE_PRICE_ID_PRO_MONTHLY;
-                if (!priceId) {
-                    console.error("Price ID not found");
-                    return;
-                }
-
-                // Get current URL for redirect
-                const origin = window.location.origin;
-                const successUrl = `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
-                const cancelUrl = `${origin}/`;
-
-                const { data } = await apiService.subscription.createCheckoutSession(priceId, successUrl, cancelUrl);
-
-                if (data.url) {
-                    window.location.href = data.url;
-                }
-            } catch (error) {
-                console.error("Failed to start checkout", error);
+        try {
+            const priceId = import.meta.env.VITE_STRIPE_PRICE_ID_PRO_MONTHLY;
+            if (!priceId) {
+                console.error("Price ID not found");
+                return;
             }
-        };
+
+            // Get current URL for redirect
+            const origin = window.location.origin;
+            const successUrl = `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
+            const cancelUrl = `${origin}/`;
+
+            const { data } = await apiService.subscription.createCheckoutSession(priceId, successUrl, cancelUrl);
+
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch (error) {
+            console.error("Failed to start checkout", error);
+        }
+    };
+
+    if (!showPaywall) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
