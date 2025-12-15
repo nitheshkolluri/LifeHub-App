@@ -92,7 +92,7 @@ const AppContent = () => {
       />
 
       {/* Triggered Upsell Modal */}
-      {isUpsellOpen && !showOnboarding && <SubscriptionModal isOpen={true} />}
+      {isUpsellOpen && !showOnboarding && <SubscriptionModal isOpen={true} onClose={() => { setShowUpsell(false); setShowPaywall(false); }} />}
     </Layout>
   );
 };
