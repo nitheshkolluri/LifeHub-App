@@ -301,6 +301,38 @@ export const Dashboard = () => {
             </div>
 
          </div>
+
+         {/* FLOATING MIC BUTTON (Invokes Voice Dashboard as Overlay) */}
+         <button
+            onClick={() => setIsVoiceMode(true)}
+            className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-16 h-16 bg-rose-600 rounded-full text-white shadow-2xl shadow-rose-500/50 flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 animate-bounce-in"
+         >
+            <Wind size={28} />
+         </button>
+
+         {/* VOICE MODE OVERLAY */}
+         {isVoiceMode && (
+            <div className="fixed inset-0 z-[100] bg-white/95 backdrop-blur-xl animate-fade-in flex flex-col items-center justify-center p-6">
+               <button onClick={() => setIsVoiceMode(false)} className="absolute top-8 right-8 p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200">
+                  <CheckCircle2 size={24} />
+               </button>
+               <div className="w-full h-full">
+                  <div className="flex flex-col items-center justify-center h-full text-center space-y-8">
+                     <div className="w-40 h-40 bg-rose-500 rounded-full flex items-center justify-center text-white shadow-2xl shadow-rose-500/50 animate-pulse">
+                        <Wind size={64} />
+                     </div>
+                     <h2 className="text-4xl font-black text-slate-800">Listening...</h2>
+                     <p className="text-xl text-slate-500">Speak your mind in any language. I'll sort it out.</p>
+                     <button
+                        onClick={() => { setView(ViewState.ASSISTANT); setIsVoiceMode(false); }}
+                        className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                     >
+                        Open Full Chat
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 };

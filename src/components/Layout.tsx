@@ -11,7 +11,7 @@ import {
   X,
   Settings,
   LogOut,
-  Sparkles
+  BrainCircuit
 } from 'lucide-react';
 import { useAuth } from '../store/AuthContext';
 
