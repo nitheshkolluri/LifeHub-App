@@ -15,6 +15,7 @@ echo "  VITE_FIREBASE_MESSAGING_SENDER_ID: \"${VITE_FIREBASE_MESSAGING_SENDER_ID
 echo "  VITE_FIREBASE_APP_ID: \"${VITE_FIREBASE_APP_ID}\"," >> "$file_path"
 echo "  VITE_STRIPE_PUBLISHABLE_KEY: \"${VITE_STRIPE_PUBLISHABLE_KEY}\"," >> "$file_path"
 echo "  VITE_API_URL: \"${VITE_API_URL}\"," >> "$file_path"
+echo "  VITE_STRIPE_PRICE_ID_PRO_MONTHLY: \"${VITE_STRIPE_PRICE_ID_PRO_MONTHLY}\"," >> "$file_path"
 
 echo "};" >> "$file_path"
 

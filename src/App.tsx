@@ -6,6 +6,7 @@ import { Layout } from './components/Layout';
 import { AuthScreen as Auth, VerificationScreen } from './components/Auth';
 import { Onboarding } from './components/Onboarding';
 import { SubscriptionModal } from './components/Subscription';
+import { StripeSuccess } from './components/StripeSuccess';
 import { ViewState } from './types';
 import { Loader2 } from 'lucide-react';
 
@@ -53,6 +54,10 @@ const AppContent = () => {
       default: return <Dashboard />;
     }
   };
+
+  if (window.location.pathname === '/payment/success') {
+    return <StripeSuccess />;
+  }
 
   return (
     <Layout>
