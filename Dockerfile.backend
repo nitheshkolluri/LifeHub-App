@@ -19,6 +19,9 @@ RUN npm ci
 # Copy backend source code
 COPY backend/src ./src
 
+# Debug: List files to verify structure
+RUN ls -la && cat tsconfig.json || echo "tsconfig.json missing"
+
 # Build TypeScript
 RUN npm run build
 
