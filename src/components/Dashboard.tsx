@@ -302,26 +302,56 @@ export const Dashboard = () => {
             <Wind size={28} />
          </button>
 
-         {/* VOICE MODE OVERLAY */}
+         {/* VOICE MODE OVERLAY (Brain Dump) */}
          {isVoiceMode && (
-            <div className="fixed inset-0 z-[100] bg-white/95 backdrop-blur-xl animate-fade-in flex flex-col items-center justify-center p-6">
-               <button onClick={() => setIsVoiceMode(false)} className="absolute top-8 right-8 p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200">
+            <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-xl animate-fade-in flex flex-col items-center justify-center p-6">
+
+               <button onClick={() => setIsVoiceMode(false)} className="absolute top-8 right-8 p-3 bg-white/10 rounded-full text-white/50 hover:bg-white/20 hover:text-white transition-all">
                   <CheckCircle2 size={24} />
                </button>
-               <div className="w-full h-full">
-                  <div className="flex flex-col items-center justify-center h-full text-center space-y-8">
-                     <div className="w-40 h-40 bg-rose-500 rounded-full flex items-center justify-center text-white shadow-2xl shadow-rose-500/50 animate-pulse">
-                        <Wind size={64} />
+
+               <div className="flex flex-col items-center justify-center max-w-md w-full text-center space-y-8 animate-slide-up">
+
+                  {/* Visualizer */}
+                  <div className="relative group cursor-pointer" onClick={() => setIsVoiceMode(false)}>
+                     <div className="absolute inset-0 bg-rose-500 rounded-full animate-ping opacity-20 duration-1000"></div>
+                     <div className="absolute inset-[-20px] bg-rose-500 rounded-full animate-pulse opacity-10"></div>
+                     <div className="w-32 h-32 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center text-white shadow-2xl shadow-rose-500/50 relative z-10 transition-transform group-hover:scale-95">
+                        <Wind size={48} className="animate-pulse" />
                      </div>
-                     <h2 className="text-4xl font-black text-slate-800">Listening...</h2>
-                     <p className="text-xl text-slate-500">Speak your mind in any language. I'll sort it out.</p>
-                     <button
-                        onClick={() => { setView(ViewState.ASSISTANT); setIsVoiceMode(false); }}
-                        className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:scale-105 transition-transform"
-                     >
-                        Open Full Chat
-                     </button>
                   </div>
+
+                  <div className="space-y-4">
+                     <h2 className="text-4xl font-black text-white tracking-tight">Listening...</h2>
+                     <p className="text-lg text-slate-300 font-medium leading-relaxed">
+                        "Buy milk, gym at 5pm, and pay internet bill." <br />
+                        <span className="text-white/40 text-sm mt-2 block">Speak naturally. I'll sort it into Tasks, Habits, & Finance.</span>
+                     </p>
+                  </div>
+
+                  {/* Manual Controls (Hidden for seamless feel, but good for accessibility/fallback) */}
+                  <button
+                     onClick={() => { setView(ViewState.ASSISTANT); setIsVoiceMode(false); }}
+                     className="mt-8 text-sm font-bold text-white/30 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2"
+                  >
+                     Or swap to Chat <ArrowRight size={14} />
+                  </button>
+
+                  <VoiceRecorder
+                     onResult={async (text) => {
+                        // Auto-Process
+                        new Notification("Processing Brain Dump...", { body: " organizing your thoughts." });
+                        try {
+                           const result = await processBrainDump(text);
+                           setIsVoiceMode(false);
+                           // Show success feedback (toast replacement)
+                           alert(`Captured ${result.entities.length} items from your brain dump!`);
+                        } catch (e) {
+                           alert("Could not process voice. Please try again.");
+                        }
+                     }}
+                     onClose={() => setIsVoiceMode(false)}
+                  />
                </div>
             </div>
          )}

@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { ChatMessage, ViewState, Report, NotificationPreferences, BrainDumpResult, Task, Habit, FinanceItem, Priority } from '../types';
 import { geminiService } from '../services/geminiService';
 import { useAuth } from './AuthContext';
+import { useUsage } from './UsageContext';
 import { db } from '../lib/firebase';
 import { apiService } from '../services/api.service';
 import { collection, query, onSnapshot, addDoc, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
@@ -57,6 +58,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { isPremium: isUsagePremium } = useUsage();
 
   // Data State
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -170,17 +172,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // --- SECURITY: PRO LIMIT CHECK ---
   const checkLimit = () => {
-    // SECURITY RISK: Client-side check only.
-    if (user?.isPremium) return true;
+    // 1. Trust the centralized Premium/Trial logic from UsageContext
+    if (isUsagePremium) return true;
 
-    // 7-Day Free Trial Logic
-    if (user?.createdAt) {
-      const msInDay = 24 * 60 * 60 * 1000;
-      const diffDays = (Date.now() - user.createdAt) / msInDay;
-      if (diffDays <= 7) return true; // Unlimited access during trial
-    }
-
-    // After trial: Limit strictly (e.g. max 5 tasks)
+    // 2. Fallback: Security Check for Free Users
+    // Allow max 5 pending tasks if not premium/trial
     if (tasks.length >= 5) {
       setShowUpsell(true);
       return false;
