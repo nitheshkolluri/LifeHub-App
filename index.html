@@ -28,7 +28,7 @@
   <script>
     window.onerror = function (message, source, lineno, colno, error) {
       console.error('GLOBAL ERROR:', message, error);
-      document.body.innerHTML += '<div style="color:red; padding:20px;">' + message + '</div>';
+      // Suppressed UI error display for production polish
     };
     window.onunhandledrejection = function (event) {
       console.error('UNHANDLED REJECTION:', event.reason);

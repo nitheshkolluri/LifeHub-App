@@ -410,10 +410,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const processBrainDump = async (text: string): Promise<BrainDumpResult> => {
     // Limit check removed to allow backend to decide (Trial Logic)
     setIsLoadingAI(true);
+    setIsLoadingAI(true);
+    let dumpResult: BrainDumpResult;
     try {
-      // Use Backend API for robust parsing
-      const { data: result } = await apiService.assistant.brainDump(text);
+      // 1. Try Backend API (Preferred)
+      console.log("BrainDump: Attempting Backend API...");
+      const { data } = await apiService.assistant.brainDump(text);
+      dumpResult = data;
+    } catch (e) {
+      console.warn("BrainDump: Backend failed (403/500). Falling back to Client-Side Gemini.", e);
+      // 2. Fallback to Client SDK
+      try {
+        dumpResult = await geminiService.parseBrainDump(text);
+      } catch (clientError) {
+        console.error("BrainDump: All attempts failed.", clientError);
+        throw clientError;
+      }
+    }
 
+    try {
+      // Process Result
+      const result = dumpResult;
       const promises: Promise<any>[] = [];
       if (result.entities) {
         result.entities.forEach((entity: { type: string; data: any; }) => {
@@ -430,35 +447,41 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } finally {
       setIsLoadingAI(false);
     }
-  };
+  } catch (e) {
+    console.error(e);
+    throw e;
+  } finally {
+    setIsLoadingAI(false);
+  }
+};
 
-  const generateReport = async () => {
-    try {
-      const text = await geminiService.generateWeeklyReport({ tasks, habits, finance });
-      if (user) {
-        await addDoc(collection(db, 'users', user.id, 'reports'), {
-          text, generatedAt: Date.now(), weekOf: new Date().toISOString()
-        });
-      }
-      return text;
-    } catch (e) {
-      return "Failed to generate report.";
+const generateReport = async () => {
+  try {
+    const text = await geminiService.generateWeeklyReport({ tasks, habits, finance });
+    if (user) {
+      await addDoc(collection(db, 'users', user.id, 'reports'), {
+        text, generatedAt: Date.now(), weekOf: new Date().toISOString()
+      });
     }
-  };
+    return text;
+  } catch (e) {
+    return "Failed to generate report.";
+  }
+};
 
-  return (
-    <AppContext.Provider value={{
-      tasks, habits, finance, messages, currentView, isLoadingAI, showUpsell, reports,
-      setView: setCurrentView, setShowUpsell,
-      addTask, updateTask, toggleTask, deleteTask,
-      addHabit, updateHabit, incrementHabit, deleteHabit,
-      addFinanceItem, updateFinanceItem, togglePaid, deleteFinanceItem,
-      updateNotificationSettings,
-      sendChatMessage, generateReport, processBrainDump
-    }}>
-      {children}
-    </AppContext.Provider>
-  );
+return (
+  <AppContext.Provider value={{
+    tasks, habits, finance, messages, currentView, isLoadingAI, showUpsell, reports,
+    setView: setCurrentView, setShowUpsell,
+    addTask, updateTask, toggleTask, deleteTask,
+    addHabit, updateHabit, incrementHabit, deleteHabit,
+    addFinanceItem, updateFinanceItem, togglePaid, deleteFinanceItem,
+    updateNotificationSettings,
+    sendChatMessage, generateReport, processBrainDump
+  }}>
+    {children}
+  </AppContext.Provider>
+);
 };
 
 export const useApp = () => {
