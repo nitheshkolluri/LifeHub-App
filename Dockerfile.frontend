@@ -41,16 +41,12 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 FROM node:20-alpine AS build_stage
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
-COPY vite.config.ts ./
+# Copy ALL source code first (except node_modules - handled by .dockerignore)
+COPY . .
 
 # Install ALL dependencies (including devDependencies needed for build)
+# This must come AFTER copying source to avoid being overwritten
 RUN npm install
-
-# Copy source code
-COPY . .
 
 # Build arguments for environment variables (Secure injection)
 ARG VITE_API_URL
