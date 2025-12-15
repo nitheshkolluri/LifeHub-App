@@ -47,6 +47,11 @@ export const Assistant = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (SpeechRecognition) {
+      // SAFETY: Explicitly stop any existing instance before creating a new one
+      if (recognitionRef.current) {
+        recognitionRef.current.abort(); // abort() kills it immediately
+      }
+
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
 
@@ -57,6 +62,7 @@ export const Assistant = () => {
       textBeforeRef.current = input;
 
       recognition.onstart = () => {
+        console.log("Voice: Recognition started");
         setIsListening(true);
         resetSilenceTimer();
       };
@@ -142,8 +148,8 @@ export const Assistant = () => {
                 {msg.role === 'user' ? <User size={14} /> : <Bot size={16} />}
               </div>
               <div className={`px-5 py-3.5 rounded-[24px] text-[15px] leading-relaxed shadow-sm ${msg.role === 'user'
-                  ? 'bg-indigo-600 text-white rounded-br-none'
-                  : 'bg-white text-slate-800 rounded-bl-none border border-slate-100'
+                ? 'bg-indigo-600 text-white rounded-br-none'
+                : 'bg-white text-slate-800 rounded-bl-none border border-slate-100'
                 }`}>
                 {msg.text}
               </div>

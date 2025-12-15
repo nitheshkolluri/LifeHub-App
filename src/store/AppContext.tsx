@@ -18,34 +18,34 @@ interface AppContextType {
   finance: FinanceItem[];
   reports: Report[];
   messages: ChatMessage[];
-  
+
   // UI State
   currentView: ViewState;
   isLoadingAI: boolean;
   showUpsell: boolean;
-  
+
   // Setters
   setView: (view: ViewState) => void;
   setShowUpsell: (show: boolean) => void;
-  
+
   // Actions
   addTask: (title: string, priority?: Priority, dueDate?: string, dueTime?: string, linkedFinanceId?: string) => Promise<string>;
   updateTask: (id: string, updates: Partial<Task>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
-  
-  addHabit: (title: string, frequency?: 'daily'|'weekly') => void;
+
+  addHabit: (title: string, frequency?: 'daily' | 'weekly') => void;
   updateHabit: (id: string, updates: Partial<Habit>) => void;
   incrementHabit: (id: string) => void;
   deleteHabit: (id: string) => void;
-  
+
   addFinanceItem: (data: Partial<FinanceItem>) => Promise<string>;
   updateFinanceItem: (id: string, updates: Partial<FinanceItem>) => void;
   togglePaid: (id: string) => void;
   deleteFinanceItem: (id: string) => void;
 
   updateNotificationSettings: (prefs: NotificationPreferences) => Promise<void>;
-  
+
   sendChatMessage: (text: string) => Promise<void>;
   generateReport: () => Promise<string>;
   processBrainDump: (text: string) => Promise<BrainDumpResult>;
@@ -55,7 +55,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  
+
   // Data State
   const [tasks, setTasks] = useState<Task[]>([]);
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -72,13 +72,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // --- DATA SYNC OPTIMIZATION ---
   // We use separate useEffects so that if one listener fails or re-runs, it doesn't kill the others.
-  
+
   // 1. Sync Tasks
   useEffect(() => {
     if (!user) { setTasks([]); return; }
     const q = query(collection(db, 'users', user.id, 'tasks')); // In prod, add limit(100)
     const unsub = onSnapshot(q, (snapshot) => {
-      setTasks(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Task)).sort((a,b) => b.createdAt - a.createdAt));
+      setTasks(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Task)).sort((a, b) => b.createdAt - a.createdAt));
     });
     return () => unsub();
   }, [user]);
@@ -107,9 +107,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (!user) { setReports([]); return; }
     // OPTIMIZATION: Only fetch the last 10 reports to save bandwidth
-    const q = query(collection(db, 'users', user.id, 'reports'), orderBy('generatedAt', 'desc')); 
+    const q = query(collection(db, 'users', user.id, 'reports'), orderBy('generatedAt', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
       setReports(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Report)));
+    });
+    return () => unsub();
+  }, [user]);
+
+  // 5. Sync Messages (Chat History)
+  useEffect(() => {
+    if (!user) {
+      setMessages([{ id: '0', role: 'model', text: "Ready to capture. What's on your mind?", timestamp: Date.now() }]);
+      return;
+    }
+    const q = query(collection(db, 'users', user.id, 'messages'), orderBy('timestamp', 'asc'));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ChatMessage));
+      if (msgs.length === 0) {
+        setMessages([{ id: '0', role: 'model', text: "Ready to capture. What's on your mind?", timestamp: Date.now() }]);
+      } else {
+        setMessages(msgs);
+      }
     });
     return () => unsub();
   }, [user]);
@@ -137,10 +155,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       // Daily Rhythm
       if (prefs.morningBriefTime === currentTime) {
-         new Notification('Morning Briefing', { body: `You have ${tasks.filter(t => t.status === 'pending').length} flows to capture today.` });
+        new Notification('Morning Briefing', { body: `You have ${tasks.filter(t => t.status === 'pending').length} flows to capture today.` });
       }
       if (prefs.afterWorkTime === currentTime) {
-         new Notification('Wrap Up', { body: 'Check your personal errands.' });
+        new Notification('Wrap Up', { body: 'Check your personal errands.' });
       }
     }, 60000); // Check every minute
 
@@ -164,7 +182,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addTask = async (title: string, priority: Priority = 'medium', dueDate?: string, dueTime?: string, linkedFinanceId?: string) => {
     if (!user) return '';
     if (!checkLimit()) return '';
-    
+
     const newTask = {
       title,
       status: 'pending',
@@ -196,7 +214,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await deleteDoc(doc(db, 'users', user.id, 'tasks', id));
   };
 
-  const addHabit = async (title: string, frequency: 'daily'|'weekly' = 'daily') => {
+  const addHabit = async (title: string, frequency: 'daily' | 'weekly' = 'daily') => {
     if (!user) return;
     if (!checkLimit()) return;
     const newHabit: Omit<Habit, 'id'> = {
@@ -244,8 +262,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const taskIds = [];
       for (let i = 0; i < data.installments.length; i++) {
         const inst = data.installments[i];
-        const taskId = await addTask(`Pay ${data.title} (${i+1}/${data.installments.length})`, 'high', inst.dueDate, undefined, docRef.id);
-        if(taskId) taskIds.push(taskId);
+        const taskId = await addTask(`Pay ${data.title} (${i + 1}/${data.installments.length})`, 'high', inst.dueDate, undefined, docRef.id);
+        if (taskId) taskIds.push(taskId);
       }
       await updateDoc(docRef, { linkedTaskIds: taskIds });
     }
@@ -253,8 +271,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const updateFinanceItem = async (id: string, updates: Partial<FinanceItem>) => {
-     if (!user) return;
-     await updateDoc(doc(db, 'users', user.id, 'finance', id), updates);
+    if (!user) return;
+    await updateDoc(doc(db, 'users', user.id, 'finance', id), updates);
   };
 
   const deleteFinanceItem = async (id: string) => {
@@ -286,23 +304,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // --- AI ORCHESTRATION ---
   // In a Production environment, these calls should hit a Backend Endpoint (Cloud Function)
   // which then talks to Gemini. We are mocking that structure here.
-  
+
   const sendChatMessage = async (text: string) => {
-    const userMsg: ChatMessage = { id: Math.random().toString(), role: 'user', text, timestamp: Date.now() };
-    setMessages(prev => [...prev, userMsg]);
+    if (!user) return; // Guard: Must be logged in for persistence
+
+    // 1. Save User Message
+    const userMsg: Omit<ChatMessage, 'id'> = { role: 'user', text, timestamp: Date.now() };
+    await addDoc(collection(db, 'users', user.id, 'messages'), userMsg);
+
     setIsLoadingAI(true);
 
     const toolHandlers = {
       addTask: async (args: any) => {
         if (checkLimit()) {
-            await addTask(args.title, args.priority || 'medium', args.dueDate);
-            return `Added task "${args.title}".`;
+          await addTask(args.title, args.priority || 'medium', args.dueDate);
+          return `Added task "${args.title}".`;
         }
         return `Limit reached. Upgrade to Pro.`;
       },
       addHabit: async (args: any) => {
         await addHabit(args.title, args.frequency || 'daily');
-        return `Tracking "${args.title}".`;
       },
       addFinanceItem: async (args: any) => {
         await addFinanceItem(args);
@@ -314,10 +335,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // SECURITY NOTE: This service call exposes the API key in the client.
       // REMEDIATION: Replace this with `fetch('/api/chat', ...)`
       const responseText = await geminiService.sendMessage(text, { tasks, habits, finance }, toolHandlers);
-      const aiMsg: ChatMessage = { id: Math.random().toString(), role: 'model', text: responseText, timestamp: Date.now() };
-      setMessages(prev => [...prev, aiMsg]);
+
+      // 2. Save AI Message
+      const aiMsg: Omit<ChatMessage, 'id'> = { role: 'model', text: responseText, timestamp: Date.now() };
+      await addDoc(collection(db, 'users', user.id, 'messages'), aiMsg);
+
     } catch (e) {
-      setMessages(prev => [...prev, { id: Math.random().toString(), role: 'model', text: "Connection error.", timestamp: Date.now() }]);
+      const errorMsg: Omit<ChatMessage, 'id'> = { role: 'model', text: "Connection error. Please try again.", timestamp: Date.now() };
+      await addDoc(collection(db, 'users', user.id, 'messages'), errorMsg);
     } finally {
       setIsLoadingAI(false);
     }
@@ -325,21 +350,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const processBrainDump = async (text: string): Promise<BrainDumpResult> => {
     if (!user?.isPremium && tasks.length >= 5) {
-        setShowUpsell(true);
-        throw new Error("Free limit reached");
+      setShowUpsell(true);
+      throw new Error("Free limit reached");
     }
     setIsLoadingAI(true);
     try {
       // SECURITY NOTE: Client-side AI call. Move to backend.
       const result = await geminiService.parseBrainDump(text);
-      
+
       const promises: Promise<any>[] = [];
       if (result.entities) {
-         result.entities.forEach(entity => {
-           if (entity.type === 'task') promises.push(addTask(entity.data.title, entity.data.priority, entity.data.dueDate));
-           else if (entity.type === 'habit') promises.push(addHabit(entity.data.title, entity.data.frequency));
-           else if (entity.type === 'finance') promises.push(addFinanceItem(entity.data));
-         });
+        result.entities.forEach(entity => {
+          if (entity.type === 'task') promises.push(addTask(entity.data.title, entity.data.priority, entity.data.dueDate));
+          else if (entity.type === 'habit') promises.push(addHabit(entity.data.title, entity.data.frequency));
+          else if (entity.type === 'finance') promises.push(addFinanceItem(entity.data));
+        });
       }
       await Promise.all(promises);
       return result;
@@ -355,7 +380,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const text = await geminiService.generateWeeklyReport({ tasks, habits, finance });
       if (user) {
         await addDoc(collection(db, 'users', user.id, 'reports'), {
-           text, generatedAt: Date.now(), weekOf: new Date().toISOString()
+          text, generatedAt: Date.now(), weekOf: new Date().toISOString()
         });
       }
       return text;
