@@ -104,10 +104,11 @@ function App() {
   return (
     <AuthProvider>
       <UsageProvider>
-        <AppProvider>
-          <AppContent />
-          <PaymentPrompt />
-        </AppProvider>
+        <UsageProvider>
+          <AppProvider>
+            <AppContent />
+          </AppProvider>
+        </UsageProvider>
       </UsageProvider>
     </AuthProvider>
   );

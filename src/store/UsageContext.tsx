@@ -11,7 +11,7 @@ interface UsageContextType {
     resetUsage: () => void; // For dev/testing
 }
 
-const UsageContext = createContext<UsageContextType | undefined>(undefined);
+export const UsageContext = createContext<UsageContextType | undefined>(undefined);
 
 const FREE_TIER_LIMIT = 3;
 
