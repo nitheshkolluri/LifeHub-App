@@ -25,63 +25,40 @@ const LoadingView = () => (
 );
 
 const AppContent = () => {
-  const { currentView, showUpsell } = useApp();
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const { currentView, showUpsell, setShowUpsell } = useApp();
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    // Simple check to show onboarding once. In prod, store this in Firestore 'users' doc.
-    const hasSeen = localStorage.getItem('hasSeenOnboarding');
-    if (isAuthenticated && !hasSeen) {
-      setShowOnboarding(true);
-    }
-  }, [isAuthenticated]);
-
-  const completeOnboarding = () => {
-    localStorage.setItem('hasSeenOnboarding', 'true');
-    setShowOnboarding(false);
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F3F6FC]">
-        <Loader2 className="animate-spin text-indigo-600" size={32} />
+      <div className="min-h-screen bg-surface-light flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+          <p className="text-primary-600 font-medium animate-pulse">Loading LifeHub...</p>
+        </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return <AuthScreen />;
-  }
-
-  if (isAuthenticated && !user?.emailVerified) {
-    return <VerificationScreen />;
-  }
-
-  if (showOnboarding) {
-    return <Onboarding onComplete={completeOnboarding} />;
+  if (!user) {
+    return <Auth />;
   }
 
   const renderView = () => {
-    return (
-      <Suspense fallback={<LoadingView />}>
-        {currentView === ViewState.DASHBOARD && <Dashboard />}
-        {currentView === ViewState.TASKS && <Tasks />}
-        {currentView === ViewState.HABITS && <Habits />}
-        {currentView === ViewState.FINANCE && <Finance />}
-        {currentView === ViewState.ASSISTANT && <Assistant />}
-        {currentView === ViewState.REPORTS && <Reports />}
-      </Suspense>
-    );
+    switch (currentView) {
+      case ViewState.DASHBOARD: return <Dashboard />;
+      case ViewState.TASKS: return <Tasks />;
+      case ViewState.HABITS: return <Habits />;
+      case ViewState.FINANCE: return <Finance />;
+      case ViewState.ASSISTANT: return <Assistant />;
+      default: return <Dashboard />;
+    }
   };
 
   return (
-    <>
-      <Layout>
-        {renderView()}
-      </Layout>
-      {showUpsell && <SubscriptionModal />}
-    </>
+    <Layout>
+      {renderView()}
+      {showUpsell && <PaymentPrompt onClose={() => setShowUpsell(false)} />}
+    </Layout>
   );
 };
 
