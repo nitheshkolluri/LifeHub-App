@@ -76,6 +76,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           isLoading: false,
         });
       } else {
+        // Clear Token
+        localStorage.removeItem('authToken');
         setState({
           user: null,
           isAuthenticated: false,
