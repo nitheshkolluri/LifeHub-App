@@ -141,30 +141,66 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (!user?.notificationPreferences?.enablePush || Notification.permission !== 'granted') return;
 
+    // Normalize current time to HH:MM format (24h) for comparison
+    const now = new Date();
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentTimeString = `${currentHours}:${currentMinutes < 10 ? '0' + currentMinutes : currentMinutes}`;
+    const todayDate = now.toISOString().split('T')[0];
+    const prefs = user.notificationPreferences!;
+
     const intervalId = setInterval(() => {
+      // Normalize current time to HH:MM format (24h) for comparison
       const now = new Date();
-      const currentTime = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      // Pad single digits for log robustness, though we compare numbers below
+      const currentTimeString = `${currentHours}:${currentMinutes < 10 ? '0' + currentMinutes : currentMinutes}`;
       const todayDate = now.toISOString().split('T')[0];
       const prefs = user.notificationPreferences!;
 
       // Check Time Sensitive Tasks
       if (prefs.enableTimeSensitive) {
         tasks.forEach(task => {
-          if (task.status === 'pending' && task.dueTime === currentTime) {
-            if (task.dueDate && task.dueDate !== todayDate) return;
-            new Notification(`Due Now: ${task.title}`, { body: 'Time to focus.', icon: '/icon.png' });
+          if (task.status === 'pending' && task.dueTime) {
+            // Handle "10:36" vs "10:36:00" discrepancies
+            const [taskH, taskM] = task.dueTime.split(':').map(Number);
+            if (taskH === currentHours && taskM === currentMinutes) {
+              if (task.dueDate && task.dueDate !== todayDate) return;
+              // Prevent duplicate firing in the same minute (simple debounce)
+              const lastFired = localStorage.getItem(`notif_${task.id}`);
+              if (lastFired !== currentTimeString) {
+                new Notification(`Due Now: ${task.title}`, { body: 'Time to focus.', icon: '/icon.png' });
+                localStorage.setItem(`notif_${task.id}`, currentTimeString);
+              }
+            }
           }
         });
       }
 
       // Daily Rhythm
-      if (prefs.morningBriefTime === currentTime) {
-        new Notification('Morning Briefing', { body: `You have ${tasks.filter(t => t.status === 'pending').length} flows to capture today.` });
+      if (prefs.morningBriefTime) {
+        const [mH, mM] = prefs.morningBriefTime.split(':').map(Number);
+        if (mH === currentHours && mM === currentMinutes) {
+          const firedKey = `daily_morning_${todayDate}`;
+          if (!localStorage.getItem(firedKey)) {
+            new Notification('Morning Briefing', { body: `You have ${tasks.filter(t => t.status === 'pending').length} flows to capture today.` });
+            localStorage.setItem(firedKey, 'true');
+          }
+        }
       }
-      if (prefs.afterWorkTime === currentTime) {
-        new Notification('Wrap Up', { body: 'Check your personal errands.' });
+
+      if (prefs.afterWorkTime) {
+        const [eH, eM] = prefs.afterWorkTime.split(':').map(Number);
+        if (eH === currentHours && eM === currentMinutes) {
+          const firedKey = `daily_evening_${todayDate}`;
+          if (!localStorage.getItem(firedKey)) {
+            new Notification('Wrap Up', { body: 'Check your personal errands.' });
+            localStorage.setItem(firedKey, 'true');
+          }
+        }
       }
-    }, 60000); // Check every minute
+    }, 10000); // Check every 10 seconds for precision
 
     return () => clearInterval(intervalId);
   }, [tasks, user]);

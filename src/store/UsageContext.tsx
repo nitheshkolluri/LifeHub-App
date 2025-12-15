@@ -56,18 +56,9 @@ export const UsageProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 3. Persist Usage & Enforce Limits
     useEffect(() => {
         localStorage.setItem('lifehub_usage_count', usageCount.toString());
-        // Logic to show paywall could go here, but we do it on action currently
     }, [usageCount, isPremium]);
 
     const incrementUsage = () => {
-        // if (isPremium) return;
-
-        // Logic Disabled to make Assistant Free
-        // if (usageCount >= FREE_TIER_LIMIT) {
-        //     setShowPaywall(true);
-        //     return;
-        // }
-
         setUsageCount(prev => prev + 1);
     };
 

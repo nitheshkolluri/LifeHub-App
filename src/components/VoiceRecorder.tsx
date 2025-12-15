@@ -30,7 +30,7 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onResult, onClose 
             recognitionRef.current = recognition;
             recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.lang = 'en-US';
+            recognition.lang = navigator.language || 'en-US'; // Auto-detect user's language
 
             recognition.onstart = () => {
                 setIsListening(true);
