@@ -34,6 +34,14 @@
     };
   </script>
   <script src="/env-config.js"></script>
+  <script>
+    console.log('DEBUG: window.env state:', window.env);
+    if (!window.env) {
+      console.error('CRITICAL: env-config.js failed to load or is empty!');
+    } else {
+      console.log('DEBUG: API Key present?', !!window.env.VITE_FIREBASE_API_KEY);
+    }
+  </script>
   <script type="module" src="/src/index.tsx"></script>
 </body>
 
