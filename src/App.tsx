@@ -3,7 +3,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { AppProvider, useApp } from './store/AppContext';
 import { AuthProvider, useAuth } from './store/AuthContext';
 import { Layout } from './components/Layout';
-import { AuthScreen, VerificationScreen } from './components/Auth';
+import { AuthScreen as Auth, VerificationScreen } from './components/Auth';
 import { Onboarding } from './components/Onboarding';
 import { SubscriptionModal } from './components/Subscription';
 import { ViewState } from './types';
