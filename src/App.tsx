@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 // --- LAZY LOADED COMPONENTS ---
 // This reduces the initial bundle size significantly
 const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })));
+const VoiceDashboard = lazy(() => import('./components/VoiceDashboard'));
 const Tasks = lazy(() => import('./components/Tasks').then(module => ({ default: module.Tasks })));
 const Habits = lazy(() => import('./components/Habits').then(module => ({ default: module.Habits })));
 const Finance = lazy(() => import('./components/Finance').then(module => ({ default: module.Finance })));
@@ -47,7 +48,7 @@ const AppContent = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case ViewState.DASHBOARD: return <Dashboard />;
+      case ViewState.DASHBOARD: return <VoiceDashboard />;
       case ViewState.TASKS: return <Tasks />;
       case ViewState.HABITS: return <Habits />;
       case ViewState.FINANCE: return <Finance />;
