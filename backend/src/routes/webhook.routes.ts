@@ -1,9 +1,8 @@
-import { Router, Request, Response } from 'express';
+import express, { Router, Request, Response } from 'express';
 import { stripe, STRIPE_CONFIG } from '../config/stripe.config';
 import { db } from '../config/firebase.config';
 import { webhookRateLimiter } from '../middleware/monitoring.middleware';
 import { logger } from '../utils/logger';
-import express from 'express';
 
 const router = Router();
 

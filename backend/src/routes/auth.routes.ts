@@ -44,7 +44,7 @@ router.post('/register', authRateLimiter, async (req: Request, res: Response) =>
         // Generate JWT token
         const token = jwt.sign({ uid: userRecord.uid }, JWT_SECRET, {
             expiresIn: JWT_EXPIRES_IN,
-        });
+        } as any);
 
         logger.info(`User registered: ${email}`);
 
@@ -98,7 +98,7 @@ router.post('/login', authRateLimiter, async (req: Request, res: Response) => {
         // Generate JWT token
         const token = jwt.sign({ uid: userRecord.uid }, JWT_SECRET, {
             expiresIn: JWT_EXPIRES_IN,
-        });
+        } as any);
 
         logger.info(`User logged in: ${email}`);
 
@@ -183,7 +183,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         // Generate new token
         const newToken = jwt.sign({ uid: decoded.uid }, JWT_SECRET, {
             expiresIn: JWT_EXPIRES_IN,
-        });
+        } as any);
 
         res.status(200).json({
             message: 'Token refreshed',
