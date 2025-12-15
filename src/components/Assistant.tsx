@@ -1,4 +1,3 @@
-```
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
@@ -38,7 +37,7 @@ export const Assistant = () => {
   useEffect(() => {
     return () => {
       try {
-          if (recognitionRef.current) recognitionRef.current.abort();
+        if (recognitionRef.current) recognitionRef.current.abort();
       } catch (e) { console.error("Cleanup error", e); }
     };
   }, []);
@@ -59,65 +58,65 @@ export const Assistant = () => {
 
   const stopListening = () => {
     try {
-        if (recognitionRef.current) {
-          recognitionRef.current.stop();
-          setIsListening(false);
-        }
-        if (silenceTimerRef.current) {
-          clearTimeout(silenceTimerRef.current);
-          silenceTimerRef.current = null;
-        }
-    } catch (e) {
-        console.error("Stop Voice Error", e);
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
         setIsListening(false);
+      }
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+    } catch (e) {
+      console.error("Stop Voice Error", e);
+      setIsListening(false);
     }
   };
 
   const startListening = () => {
     try {
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Voice not supported in this browser.");
-            return;
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Voice not supported in this browser.");
+        return;
+      }
+
+      if (recognitionRef.current) recognitionRef.current.abort();
+
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      textBeforeRef.current = input;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        resetSilenceTimer();
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        isHolding.current = false; // Reset hold state
+      };
+
+      recognition.onresult = (event: any) => {
+        resetSilenceTimer();
+        let currentTranscript = '';
+        for (let i = 0; i < event.results.length; ++i) {
+          currentTranscript += event.results[i][0].transcript;
         }
+        const prefix = textBeforeRef.current ? textBeforeRef.current + ' ' : '';
+        setInput(prefix + currentTranscript);
+      };
 
-        if (recognitionRef.current) recognitionRef.current.abort();
+      recognition.onerror = (event: any) => {
+        console.error("Speech Error:", event.error);
+        stopListening();
+      };
 
-        const recognition = new SpeechRecognition();
-        recognitionRef.current = recognition;
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        textBeforeRef.current = input;
-
-        recognition.onstart = () => {
-          setIsListening(true);
-          resetSilenceTimer();
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-          isHolding.current = false; // Reset hold state
-        };
-
-        recognition.onresult = (event: any) => {
-          resetSilenceTimer();
-          let currentTranscript = '';
-          for (let i = 0; i < event.results.length; ++i) {
-            currentTranscript += event.results[i][0].transcript;
-          }
-          const prefix = textBeforeRef.current ? textBeforeRef.current + ' ' : '';
-          setInput(prefix + currentTranscript);
-        };
-
-        recognition.onerror = (event: any) => {
-          console.error("Speech Error:", event.error);
-          stopListening();
-        };
-
-        recognition.start();
+      recognition.start();
     } catch (e) {
-        console.error("Start Voice Error", e);
+      console.error("Start Voice Error", e);
     }
   };
 
@@ -126,7 +125,7 @@ export const Assistant = () => {
     if (isLoadingAI) return;
     pressStartTime.current = Date.now();
     isHolding.current = false;
-    // Don't start immediately, wait to see if it's a hold? 
+    // Don't start immediately, wait to see if it's a hold?
     // Actually, distinct Start is better for "Hold".
     // Strategy: Start listening immediately on DOWN.
     if (!isListening) startListening();
@@ -141,7 +140,7 @@ export const Assistant = () => {
       // If we started listening on Down, we just leave it on (Toggle behavior).
       // If we were ALREADY listening before Down, we should stop it.
       // But handleMicDown starts it if not listening.
-      // Usage pattern: 
+      // Usage pattern:
       // 1. Idle -> Down (Start) -> Up Fast (Keep Running) -> Tap (Stop)
       // 2. Idle -> Down (Start) -> Up Slow (Stop) -> "Hold mode"
     } else {
@@ -213,8 +212,8 @@ export const Assistant = () => {
         </button>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Session Mode</span>
-          <button onClick={() => setSaveToMemory(!saveToMemory)} className={`px - 4 py - 2 rounded - full flex items - center gap - 2 transition - all ${ saveToMemory ? 'bg-indigo-500 text-white shadow-indigo-200 shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200' } `}>
-            <div className={`w - 2 h - 2 rounded - full ${ saveToMemory ? 'bg-white animate-pulse' : 'bg-slate-400' } `} />
+          <button onClick={() => setSaveToMemory(!saveToMemory)} className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${saveToMemory ? 'bg-indigo-500 text-white shadow-indigo-200 shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
+            <div className={`w-2 h-2 rounded-full ${saveToMemory ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
             <span className="text-xs font-bold">{saveToMemory ? 'Memory ON' : 'Memory OFF'}</span>
           </button>
         </div>
@@ -223,18 +222,18 @@ export const Assistant = () => {
 
       <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/40 border border-white/50 shadow-inner p-4 md:p-6 space-y-6 scroll-smooth backdrop-blur-sm">
         {(safeMessages || []).length > 0 ? (
-            safeMessages.slice(1).map((msg, idx) => (
-            <div key={msg.id || idx} className={`flex ${ msg.role === 'user' ? 'justify-end' : 'justify-start' } animate - slide - up`}>
-                <div className={`flex items - end max - w - [85 %] md: max - w - [70 %] gap - 3 ${ msg.role === 'user' ? 'flex-row-reverse' : 'flex-row' } `}>
-                <div className={`w - 10 h - 10 rounded - 2xl flex items - center justify - center flex - shrink - 0 shadow - lg ${ msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600' } `}>
-                    {msg.role === 'user' ? <Icons.User size={18} /> : <Icons.Bot size={20} />}
+          safeMessages.slice(1).map((msg, idx) => (
+            <div key={msg.id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
+              <div className={`flex items-end max-w-[85%] md:max-w-[70%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600'}`}>
+                  {msg.role === 'user' ? <Icons.User size={18} /> : <Icons.Bot size={20} />}
                 </div>
-                <div className={`px - 6 py - 4 rounded - 3xl text - [15px] leading - relaxed shadow - md ${ msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white' } `}>
-                    {msg.text}
+                <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-md ${msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white'}`}>
+                  {msg.text}
                 </div>
-                </div>
+              </div>
             </div>
-            ))
+          ))
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
             <Icons.Bot size={48} className="mb-4" />
@@ -269,7 +268,7 @@ export const Assistant = () => {
             onMouseUp={handleMicUp}
             onTouchStart={handleMicDown} // Mobile Touch Support
             onTouchEnd={handleMicUp}
-            className={`absolute right - 2 top - 1 / 2 - translate - y - 1 / 2 p - 2.5 rounded - xl transition - all duration - 300 ${ isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50' } `}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'}`}
             title="Hold to Speak / Tap to Toggle"
           >
             {isListening ? <Icons.MicOff size={20} /> : <Icons.Mic size={20} />}
@@ -287,4 +286,3 @@ export const Assistant = () => {
     </div>
   );
 };
-```
