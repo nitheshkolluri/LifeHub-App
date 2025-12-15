@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../store/AuthContext';
 import { useApp } from '../store/AppContext';
-import { X, LogOut, Download, CreditCard, Bell, ChevronRight, Moon, Clock, Zap, Shield, Smartphone, MessageSquare, Sun, Sunset, Crosshair } from 'lucide-react';
+import { X, LogOut, Download, CreditCard, Bell, ChevronRight, Moon, Clock, Zap, Shield, Smartphone, MessageSquare, Sun, Sunset, Crosshair, Crown } from 'lucide-react';
 import { NotificationPreferences } from '../types';
 
 interface ProfileModalProps {
