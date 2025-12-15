@@ -106,6 +106,7 @@ export interface User {
   emailVerified: boolean;
   notificationPreferences?: NotificationPreferences;
   hasOnboarded?: boolean;
+  createdAt?: number; // Timestamp
 }
 
 export interface AuthState {

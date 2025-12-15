@@ -34,7 +34,7 @@ const HabitCard = ({ habit, onIncrement, isDoneToday }: any) => {
 
         <div className="flex gap-2">
           <button
-            onClick={() => useApp().deleteHabit(habit.id)}
+            onClick={() => deleteHabit(habit.id)}
             className="w-14 h-14 rounded-full flex items-center justify-center bg-white text-slate-200 hover:text-rose-500 hover:scale-110 shadow-lg transition-all"
           >
             <Trash2 size={24} />
@@ -76,7 +76,7 @@ const HabitCard = ({ habit, onIncrement, isDoneToday }: any) => {
 };
 
 export const Habits = () => {
-  const { habits, addHabit, incrementHabit } = useApp();
+  const { habits, addHabit, incrementHabit, deleteHabit } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const today = new Date().toISOString().split('T')[0];

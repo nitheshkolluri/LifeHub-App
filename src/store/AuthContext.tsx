@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState } from '../types';
-import { 
-  signInWithPopup, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
   sendEmailVerification,
   User as FirebaseUser
@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Fetch user profile from Firestore
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
-        
+
         let userData: User;
 
         if (userDoc.exists()) {
@@ -49,7 +49,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             isPremium: data.isPremium || false,
             plan: data.plan || 'free',
             emailVerified: firebaseUser.emailVerified,
-            notificationPreferences: data.notificationPreferences
+            notificationPreferences: data.notificationPreferences,
+            createdAt: data.createdAt || Date.now() // Default to now for fallback (gives old users a trial)
           };
         } else {
           // Initialize user in Firestore if new (e.g. first Google login)
@@ -59,7 +60,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             name: firebaseUser.displayName || 'User',
             isPremium: false,
             plan: 'free',
-            emailVerified: firebaseUser.emailVerified
+            emailVerified: firebaseUser.emailVerified,
+            createdAt: Date.now()
           };
           await setDoc(userDocRef, userData);
         }
@@ -88,7 +90,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signup = async (email: string, password: string, name: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    
+
     // Send verification email safely
     try {
       await sendEmailVerification(user);
@@ -96,7 +98,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.warn("Failed to send verification email:", error);
       // Continue account creation even if email fails
     }
-    
+
     // Create user profile
     const newUser: User = {
       id: user.uid,
@@ -104,9 +106,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       name: name,
       isPremium: false,
       plan: 'free',
-      emailVerified: false
+      emailVerified: false,
+      createdAt: Date.now()
     };
-    
+
     await setDoc(doc(db, 'users', user.uid), newUser);
   };
 
@@ -122,7 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (state.user) {
       const userRef = doc(db, 'users', state.user.id);
       await updateDoc(userRef, { isPremium: true, plan: 'pro' });
-      
+
       // Optimistic update
       setState(prev => ({
         ...prev,
@@ -141,7 +144,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (auth.currentUser) {
       await auth.currentUser.reload();
       const firebaseUser = auth.currentUser;
-      
+
       setState(prev => ({
         ...prev,
         user: prev.user ? { ...prev.user, emailVerified: firebaseUser.emailVerified } : null

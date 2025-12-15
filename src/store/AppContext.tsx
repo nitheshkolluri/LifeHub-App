@@ -169,9 +169,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // --- SECURITY: PRO LIMIT CHECK ---
   const checkLimit = () => {
-    // SECURITY RISK: This is client-side only. 
-    // TODO: Move this check to Firestore Security Rules or Cloud Functions.
+    // SECURITY RISK: Client-side check only.
     if (user?.isPremium) return true;
+
+    // 7-Day Free Trial Logic
+    if (user?.createdAt) {
+      const msInDay = 24 * 60 * 60 * 1000;
+      const diffDays = (Date.now() - user.createdAt) / msInDay;
+      if (diffDays <= 7) return true; // Unlimited access during trial
+    }
+
+    // After trial: Limit strictly (e.g. max 5 tasks)
     if (tasks.length >= 5) {
       setShowUpsell(true);
       return false;

@@ -26,7 +26,7 @@ const liquidStyles = `
 `;
 
 export const Finance = () => {
-   const { finance, togglePaid, addFinanceItem } = useApp();
+   const { finance, togglePaid, addFinanceItem, deleteFinanceItem } = useApp();
    const { isPremium, setShowPaywall } = useUsage();
    const [isModalOpen, setIsModalOpen] = useState(false);
 
