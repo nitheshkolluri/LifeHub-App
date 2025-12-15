@@ -16,57 +16,38 @@ declare global {
     }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-/**
- * Middleware to verify JWT token and attach user to request
- */
+// Middleware to verify Firebase ID token
 export const authenticateToken = async (
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<void> => {
     try {
-        // Get token from Authorization header
         const authHeader = req.headers.authorization;
-        const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+        const token = authHeader && authHeader.split(' ')[1];
 
         if (!token) {
             res.status(401).json({ error: 'Access token required' });
             return;
         }
 
-        // Verify JWT token
-        const decoded = jwt.verify(token, JWT_SECRET) as { uid: string };
+        // Verify Firebase ID Token
+        const decodedToken = await auth.verifyIdToken(token);
 
-        // Verify user exists in Firebase
-        const userRecord = await auth.getUser(decoded.uid);
-
-        // Attach user to request
         req.user = {
-            uid: userRecord.uid,
-            email: userRecord.email || '',
-            emailVerified: userRecord.emailVerified,
+            uid: decodedToken.uid,
+            email: decodedToken.email || '',
+            emailVerified: decodedToken.email_verified || false,
         };
 
         next();
     } catch (error) {
-        if (error instanceof jwt.JsonWebTokenError) {
-            res.status(403).json({ error: 'Invalid token' });
-            return;
-        }
-        if (error instanceof jwt.TokenExpiredError) {
-            res.status(403).json({ error: 'Token expired' });
-            return;
-        }
         logger.error('Authentication error:', error);
-        res.status(500).json({ error: 'Authentication failed' });
+        res.status(403).json({ error: 'Invalid or expired token' });
     }
 };
 
-/**
- * Middleware to verify email is verified
- */
+// Middleware to verify email is verified
 export const requireEmailVerified = (
     req: Request,
     res: Response,
@@ -79,9 +60,7 @@ export const requireEmailVerified = (
     next();
 };
 
-/**
- * Middleware to check if user is premium
- */
+// Middleware to check if user is premium
 export const requirePremium = async (
     req: Request,
     res: Response,
@@ -92,12 +71,28 @@ export const requirePremium = async (
         const userDoc = await db.collection('users').doc(req.user!.uid).get();
         const userData = userDoc.data();
 
-        if (!userData?.isPremium) {
-            res.status(403).json({ error: 'Premium subscription required' });
+        // 1. Check Premium Status
+        if (userData?.isPremium) {
+            next();
             return;
         }
 
-        next();
+        // 2. Check Trial Status (7 Days)
+        const now = Date.now();
+        const createdAt = userData?.createdAt?.toMillis
+            ? userData.createdAt.toMillis()
+            : (userData?.createdAt || now);
+
+        const ageInDays = (now - createdAt) / (1000 * 60 * 60 * 24);
+
+        if (ageInDays <= 7) {
+            // In Trial -> Allow
+            next();
+            return;
+        }
+
+        // 3. Block
+        res.status(403).json({ error: 'Premium subscription required (Trial Ended)' });
     } catch (error) {
         logger.error('Premium check error:', error);
         res.status(500).json({ error: 'Failed to verify subscription' });
