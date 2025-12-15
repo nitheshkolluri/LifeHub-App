@@ -235,12 +235,6 @@ export const Assistant = () => {
                 </div>
             </div>
             ))
-                <div className={`px - 6 py - 4 rounded - 3xl text - [15px] leading - relaxed shadow - md ${ msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white' } `}>
-                  {msg.text}
-                </div>
-              </div>
-            </div>
-          ))
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
             <Icons.Bot size={48} className="mb-4" />
