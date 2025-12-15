@@ -20,9 +20,6 @@ RUN npm ci
 # Copy backend source code
 COPY backend/src ./src
 
-# Debug: List files to verify structure
-RUN ls -la && cat tsconfig.json || echo "tsconfig.json missing"
-
 # Build TypeScript
 RUN npm run build
 
@@ -52,12 +49,16 @@ COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 # Switch to non-root user
 USER nodejs
 
-# Expose port
-EXPOSE 5000
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=8080
 
-# Add healthcheck
+# Expose port
+EXPOSE 8080
+
+# Add healthcheck (using port 8080)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:5000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    CMD node -e "require('http').get('http://localhost:8080/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
