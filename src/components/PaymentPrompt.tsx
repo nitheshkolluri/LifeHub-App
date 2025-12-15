@@ -5,8 +5,18 @@ import { useUsage } from '../store/UsageContext';
 import { getEnv } from '../utils/env';
 import { apiService } from '../services/api.service';
 
+import { useApp } from '../store/AppContext';
+
 export const PaymentPrompt: React.FC = () => {
     const { showPaywall, setShowPaywall } = useUsage();
+    const { showUpsell, setShowUpsell } = useApp();
+
+    const isVisible = showPaywall || showUpsell;
+
+    const handleClose = () => {
+        setShowPaywall(false);
+        setShowUpsell(false);
+    };
 
     const handleUpgrade = async () => {
         try {
@@ -31,13 +41,13 @@ export const PaymentPrompt: React.FC = () => {
         }
     };
 
-    if (!showPaywall) return null;
+    if (!isVisible) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
                 className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in"
-                onClick={() => setShowPaywall(false)}
+                onClick={handleClose}
             />
             <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-scale-in glass-modal">
 
@@ -45,7 +55,7 @@ export const PaymentPrompt: React.FC = () => {
                 <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 text-white text-center relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
                     <button
-                        onClick={() => setShowPaywall(false)}
+                        onClick={handleClose}
                         className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 transition"
                     >
                         <X size={20} />
