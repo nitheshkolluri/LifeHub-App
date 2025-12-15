@@ -40,7 +40,7 @@ const profileStyles = `
 
 export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
    const { user, logout } = useAuth();
-   const { tasks, habits, finance, updateNotificationSettings } = useApp();
+   const { tasks, habits, finance, updateNotificationSettings, setShowUpsell } = useApp();
    const [showNotifSettings, setShowNotifSettings] = useState(false);
    const [loading, setLoading] = useState(false);
 
