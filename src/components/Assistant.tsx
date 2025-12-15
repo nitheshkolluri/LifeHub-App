@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
 import { useUsage } from '../store/UsageContext';
-import { Send, Bot, User, Mic, MicOff, X, ArrowLeft, Save, AlertTriangle } from 'lucide-react';
+import { Send, Bot, User, Mic as MicIcon, MicOff as MicOffIcon, X, ArrowLeft, Save, AlertTriangle, AlertCircle } from 'lucide-react';
 import { ViewState } from '../types';
 
 export const Assistant = () => {
@@ -20,8 +20,13 @@ export const Assistant = () => {
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textBeforeRef = useRef('');
 
+  // Interaction Refs (for Hybrid Click/Hold)
+  const pressStartTime = useRef<number>(0);
+  const isHolding = useRef<boolean>(false);
+
   // 1. Auto-Clear Chat on Mount
   useEffect(() => {
+    // SECURITY: Ensure messages is an array immediately
     setMessages([{ id: 'init', role: 'system', text: "Hello! I'm LifeHub. I'm here to listen. This chat will disappear when you leave, so let me know if you want me to remember anything." }]);
   }, []);
 
@@ -31,12 +36,14 @@ export const Assistant = () => {
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => stopListening();
+    return () => {
+      if (recognitionRef.current) recognitionRef.current.abort();
+    };
   }, []);
 
   // -- Handlers --
   const handleExitRequest = () => {
-    if (messages.length > 1) {
+    if (messages && messages.length > 1) {
       setShowExitWarning(true);
     } else {
       setView(ViewState.DASHBOARD);
@@ -44,11 +51,7 @@ export const Assistant = () => {
   };
 
   const confirmExit = (shouldSave: boolean) => {
-    if (shouldSave) {
-      // Logic to "Save" could go here (e.g. summarize to Brain Dump), 
-      // but for now we just acknowledge and exit as per user request just "toggle" memory
-      // API call to memory service could happen here
-    }
+    // API logic shim
     setView(ViewState.DASHBOARD);
   };
 
@@ -63,59 +66,83 @@ export const Assistant = () => {
     }
   };
 
-  const toggleListening = () => {
-    if (isListening) {
-      stopListening();
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice not supported in this browser.");
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (recognitionRef.current) recognitionRef.current.abort();
 
-    if (SpeechRecognition) {
-      // SAFETY: Explicitly stop any existing instance before creating a new one
-      if (recognitionRef.current) {
-        recognitionRef.current.abort(); // abort() kills it immediately
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    textBeforeRef.current = input;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      resetSilenceTimer();
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      isHolding.current = false; // Reset hold state
+    };
+
+    recognition.onresult = (event: any) => {
+      resetSilenceTimer();
+      let currentTranscript = '';
+      for (let i = 0; i < event.results.length; ++i) {
+        currentTranscript += event.results[i][0].transcript;
       }
+      const prefix = textBeforeRef.current ? textBeforeRef.current + ' ' : '';
+      setInput(prefix + currentTranscript);
+    };
 
-      const recognition = new SpeechRecognition();
-      recognitionRef.current = recognition;
+    recognition.onerror = (event: any) => {
+      console.error("Speech Error:", event.error);
+      stopListening();
+    };
 
-      // recognition.lang = 'en-US'; // Allow Multi-Language Support (Defaults to Device Lang)
-      recognition.continuous = true;
-      recognition.interimResults = true;
+    recognition.start();
+  };
 
-      textBeforeRef.current = input;
+  // Hybrid Interaction Handler
+  const handleMicDown = () => {
+    if (isLoadingAI) return;
+    pressStartTime.current = Date.now();
+    isHolding.current = false;
+    // Don't start immediately, wait to see if it's a hold? 
+    // Actually, distinct Start is better for "Hold".
+    // Strategy: Start listening immediately on DOWN.
+    if (!isListening) startListening();
+  };
 
-      recognition.onstart = () => {
-        console.log("Voice: Recognition started");
-        setIsListening(true);
-        resetSilenceTimer();
-      };
+  const handleMicUp = () => {
+    if (isLoadingAI) return;
+    const duration = Date.now() - pressStartTime.current;
 
-      recognition.onend = () => {
-        setIsListening(false);
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      };
-
-      recognition.onresult = (event: any) => {
-        resetSilenceTimer();
-
-        let currentTranscript = '';
-        for (let i = 0; i < event.results.length; ++i) {
-          currentTranscript += event.results[i][0].transcript;
-        }
-
-        const prefix = textBeforeRef.current ? textBeforeRef.current + ' ' : '';
-        setInput(prefix + currentTranscript);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error", event.error);
-        stopListening();
-      };
-
-      recognition.start();
+    // If it was a SHORT TAP (< 400ms)
+    if (duration < 400) {
+      // If we started listening on Down, we just leave it on (Toggle behavior).
+      // If we were ALREADY listening before Down, we should stop it.
+      // But handleMicDown starts it if not listening.
+      // Usage pattern: 
+      // 1. Idle -> Down (Start) -> Up Fast (Keep Running) -> Tap (Stop)
+      // 2. Idle -> Down (Start) -> Up Slow (Stop) -> "Hold mode"
+    } else {
+      // Long Press -> Stop on release
+      if (isListening) stopListening();
     }
+  };
+
+  // Simplified Toggle for Click (Fallback)
+  const toggleListening = () => {
+    if (isListening) stopListening();
+    else startListening();
   };
 
   const resetSilenceTimer = () => {
@@ -128,10 +155,8 @@ export const Assistant = () => {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoadingAI) return;
-
     incrementUsage();
-
-    stopListening(); // Stop listening on send
+    stopListening();
     const text = input;
     setInput('');
     await sendChatMessage(text);
@@ -140,7 +165,6 @@ export const Assistant = () => {
   // -- DEFENSIVE: Ensure messages is a valid array --
   const safeMessages = React.useMemo(() => {
     if (Array.isArray(messages)) return messages;
-    console.warn("Assistant: messages is not an array", messages);
     return [];
   }, [messages]);
 
@@ -155,27 +179,14 @@ export const Assistant = () => {
             <h3 className="text-2xl font-black text-slate-800 mb-2">Leave Chat?</h3>
             <p className="text-slate-500 font-medium">This thread will be lost forever. Do you want to save this context to your Memory?</p>
           </div>
-
           <div className="space-y-3">
-            <button
-              onClick={() => confirmExit(true)}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
-            >
-              <Save size={18} />
-              <span>Save to Memory & Exit</span>
+            <button onClick={() => confirmExit(true)} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95">
+              <Save size={18} /> <span>Save to Memory & Exit</span>
             </button>
-            <button
-              onClick={() => confirmExit(false)}
-              className="w-full py-4 bg-white border-2 border-slate-100 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl transition-all"
-            >
-              just Exit
+            <button onClick={() => confirmExit(false)} className="w-full py-4 bg-white border-2 border-slate-100 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl transition-all">
+              Just Exit
             </button>
-            <button
-              onClick={() => setShowExitWarning(false)}
-              className="text-sm font-bold text-slate-400 hover:text-slate-600"
-            >
-              Cancel
-            </button>
+            <button onClick={() => setShowExitWarning(false)} className="text-sm font-bold text-slate-400 hover:text-slate-600">Cancel</button>
           </div>
         </div>
       </div>
@@ -184,57 +195,41 @@ export const Assistant = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] animate-slide-up relative">
-
-      {/* Header with Memory Toggle & Exit */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-4 bg-white/60 backdrop-blur-md p-2 rounded-full border border-white/50 shadow-sm">
-        <button
-          onClick={handleExitRequest}
-          className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors"
-        >
+        <button onClick={handleExitRequest} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
           <ArrowLeft size={20} />
         </button>
-
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Session Mode</span>
-          {/* Memory Toggle */}
-          <button
-            onClick={() => setSaveToMemory(!saveToMemory)}
-            className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${saveToMemory ? 'bg-indigo-500 text-white shadow-indigo-200 shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
-          >
+          <button onClick={() => setSaveToMemory(!saveToMemory)} className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${saveToMemory ? 'bg-indigo-500 text-white shadow-indigo-200 shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
             <div className={`w-2 h-2 rounded-full ${saveToMemory ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
             <span className="text-xs font-bold">{saveToMemory ? 'Memory ON' : 'Memory OFF'}</span>
           </button>
         </div>
-
-        {/* Mobile-only close button -> Mapped to same Exit Request */}
-        <button
-          onClick={handleExitRequest}
-          className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50"
-        >
-          <X size={20} />
-        </button>
+        <button onClick={handleExitRequest} className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50"><X size={20} /></button>
       </div>
 
       <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/40 border border-white/50 shadow-inner p-4 md:p-6 space-y-6 scroll-smooth backdrop-blur-sm">
-        {safeMessages.slice(1).map((msg) => (
-          <div
-            key={msg.id || Math.random()}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}
-          >
-            <div className={`flex items-end max-w-[85%] md:max-w-[70%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600'
-                }`}>
-                {msg.role === 'user' ? <User size={18} /> : <Bot size={20} />}
-              </div>
-              <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-md ${msg.role === 'user'
-                ? 'bg-primary-600 text-white rounded-br-sm'
-                : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white'
-                }`}>
-                {msg.text}
+        {(safeMessages || []).length > 0 ? (
+          safeMessages.slice(1).map((msg, idx) => (
+            <div key={msg.id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
+              <div className={`flex items-end max-w-[85%] md:max-w-[70%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600'}`}>
+                  {msg.role === 'user' ? <User size={18} /> : <Bot size={20} />}
+                </div>
+                <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-md ${msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white'}`}>
+                  {msg.text}
+                </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
+            <Bot size={48} className="mb-4" />
+            <p>Ready to help.</p>
           </div>
-        ))}
+        )}
         {isLoadingAI && (
           <div className="flex justify-start animate-fade-in">
             <div className="flex items-center space-x-2 ml-14 bg-white/80 px-6 py-4 rounded-[24px] rounded-bl-sm border border-white shadow-sm">
@@ -259,12 +254,14 @@ export const Assistant = () => {
           />
           <button
             type="button"
-            onClick={toggleListening}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'
-              }`}
-            title={isListening ? "Stop Listening" : "Start Voice Input"}
+            onMouseDown={handleMicDown}
+            onMouseUp={handleMicUp}
+            onTouchStart={handleMicDown} // Mobile Touch Support
+            onTouchEnd={handleMicUp}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'}`}
+            title="Hold to Speak / Tap to Toggle"
           >
-            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+            {isListening ? <MicOffIcon size={20} /> : <MicIcon size={20} />}
           </button>
         </div>
 
