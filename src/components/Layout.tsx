@@ -41,8 +41,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
         {/* Logo */}
         <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/30">
-            <Sparkles size={20} fill="white" />
+          <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+            <BrainCircuit size={24} className="text-white" />
           </div>
           <h1 className="text-2xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-primary-500">
             LifeHub

@@ -209,7 +209,7 @@ export const Assistant = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/40 border border-white/50 shadow-inner p-4 md:p-6 space-y-6 scroll-smooth backdrop-blur-sm">
-        {messages.slice(1).map((msg) => (
+        {(Array.isArray(messages) ? messages : []).slice(1).map((msg) => (
           <div
             key={msg.id}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}

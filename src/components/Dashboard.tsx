@@ -53,12 +53,13 @@ export const Dashboard = () => {
    useEffect(() => setMounted(true), []);
 
    // Stats
-   const pendingTasks = tasks.filter(t => t.status === 'pending');
-   const completedToday = tasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
-   const totalTasks = completedToday + pendingTasks.length;
-   const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
-   const nextBill = finance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
-   const activeHabits = habits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
+   // Stats (Calculated safely below in Handlers block to avoid "M is not a function")
+   // const pendingTasks = tasks.filter(t => t.status === 'pending');
+   // const completedToday = tasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
+   // const totalTasks = completedToday + pendingTasks.length;
+   // const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
+   // const nextBill = finance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
+   // const activeHabits = habits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
 
    // Dynamic Stress/Mood Logic
    const stressLevel = pendingTasks.length;
@@ -77,23 +78,57 @@ export const Dashboard = () => {
    if (!mounted) return null;
 
    // -- Handlers --
+   // -- Handlers --
    const handleTaskToggle = (id: string, e: React.MouseEvent) => {
       e.stopPropagation(); // Prevent card navigation
       toggleTask(id);
    };
 
+   // Voice Mode Overlay State
+   const [isVoiceMode, setIsVoiceMode] = useState(false);
+
+   // -- DEFENSIVE CODING: Ensure arrays exist --
+   const safeTasks = Array.isArray(tasks) ? tasks : [];
+   const safeHabits = Array.isArray(habits) ? habits : [];
+   const safeFinance = Array.isArray(finance) ? finance : [];
+
+   const pendingTasks = safeTasks.filter(t => t.status === 'pending');
+   const completedToday = safeTasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
+   const totalTasks = completedToday + pendingTasks.length;
+   const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
+   const nextBill = safeFinance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
+   const activeHabits = safeHabits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
+
    return (
       <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10">
-         <header className="mb-8 animate-fade-in-up">
-            <h1 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight">
-               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                  {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'},
-               </span><br />
-               {user?.name.split(' ')[0]}
-            </h1>
-            <p className="text-slate-500 font-medium mt-2">
-               {stressLevel > 4 ? "Let's tackle this chaos together." : "Everything is in perfect balance."}
-            </p>
+         <header className="mb-8 animate-fade-in-up flex justify-between items-start">
+            <div>
+               <h1 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                     {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'},
+                  </span><br />
+                  {user?.name ? user.name.split(' ')[0] : 'Explorer'}
+               </h1>
+               <p className="text-slate-500 font-medium mt-2">
+                  {stressLevel > 4 ? "Let's tackle this chaos together." : "Everything is in perfect balance."}
+               </p>
+            </div>
+            {/* NOTIFICATION BELL */}
+            <button
+               onClick={() => {
+                  if ("Notification" in window && Notification.permission !== "granted") {
+                     Notification.requestPermission().then(p => {
+                        if (p === "granted") new Notification("Notifications Active", { body: "You will now receive precision alerts.", icon: "/icon-v2.png" });
+                     });
+                  } else {
+                     new Notification("Test Alert", { body: "Notifications are working perfectly.", icon: "/icon-v2.png" });
+                  }
+               }}
+               className="p-3 bg-white rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm"
+               title="Enable Alerts"
+            >
+               <Zap size={20} />
+            </button>
          </header>
 
          {/* BENTO GRID LAYOUT */}
