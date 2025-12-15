@@ -44,9 +44,14 @@ WORKDIR /app
 # Copy ALL source code first (except node_modules - handled by .dockerignore)
 COPY . .
 
-# Install ALL dependencies (including devDependencies needed for build)
-# This must come AFTER copying source to avoid being overwritten
-RUN npm install
+# Install ALL dependencies with clean slate
+# Using npm ci for production builds (faster, more reliable than npm install)
+# Clear cache first to prevent any stale data
+RUN npm cache clean --force && \
+    npm ci --include=dev && \
+    echo "Verifying @vitejs/plugin-react installation..." && \
+    ls -la node_modules/@vitejs/ && \
+    test -d node_modules/@vitejs/plugin-react || (echo "ERROR: @vitejs/plugin-react not installed!" && exit 1)
 
 # Build arguments for environment variables (Secure injection)
 ARG VITE_API_URL
