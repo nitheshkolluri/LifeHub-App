@@ -21,8 +21,11 @@ export const PaymentPrompt: React.FC = () => {
     const handleUpgrade = async () => {
         try {
             const priceId = getEnv('VITE_STRIPE_PRICE_ID_PRO_MONTHLY');
+            console.log("Debug: Attempting upgrade with Price ID:", priceId);
+            console.log("Debug: Full Env Objects:", (window as any).env);
+
             if (!priceId) {
-                console.error("Price ID not found");
+                alert(`Configuration Error: Price ID is missing.\n\nPlease check your Cloud Run FRONTEND variables.\nOnly found keys: ${Object.keys((window as any).env || {}).join(', ')}`);
                 return;
             }
 

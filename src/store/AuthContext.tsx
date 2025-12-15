@@ -134,9 +134,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
+      console.log("Debug: Logout requested");
       await signOut(auth);
+      console.log("Debug: Logout successful");
     } catch (e) {
       console.error("Logout failed:", e);
+      alert("Logout failed. See console for error details.");
     }
   };
 
