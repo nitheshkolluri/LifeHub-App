@@ -60,6 +60,20 @@ export const Dashboard = () => {
    const nextBill = finance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
    const activeHabits = habits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
 
+   // Dynamic Stress/Mood Logic
+   const stressLevel = pendingTasks.length;
+   const getMoodGradient = () => {
+      if (stressLevel >= 5) return 'from-rose-600 via-orange-700 to-slate-900'; // High Stress
+      if (stressLevel >= 3) return 'from-indigo-600 via-purple-700 to-slate-900'; // Medium Flow
+      return 'from-emerald-600 via-teal-700 to-slate-900'; // Zen/Low Stress
+   };
+
+   const getPulseColor = () => {
+      if (stressLevel >= 5) return 'bg-rose-500/30';
+      if (stressLevel >= 3) return 'bg-indigo-500/30';
+      return 'bg-emerald-500/30';
+   };
+
    if (!mounted) return null;
 
    // -- Handlers --
@@ -73,11 +87,13 @@ export const Dashboard = () => {
          <header className="mb-8 animate-fade-in-up">
             <h1 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight">
                <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                  {new Date().getHours() < 12 ? 'Good Morning' : 'Welcome Back'},
+                  {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'},
                </span><br />
                {user?.name.split(' ')[0]}
             </h1>
-            <p className="text-slate-500 font-medium mt-2">Here is the rhythm of your life today.</p>
+            <p className="text-slate-500 font-medium mt-2">
+               {stressLevel > 4 ? "Let's tackle this chaos together." : "Everything is in perfect balance."}
+            </p>
          </header>
 
          {/* BENTO GRID LAYOUT */}
@@ -89,14 +105,16 @@ export const Dashboard = () => {
             >
                {/* Backgrounds */}
                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
-               <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-700 to-slate-900 opacity-90 transition-transform duration-700 pointer-events-none" />
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/30 rounded-full blur-3xl animate-pulse pointer-events-none" />
+               <div className={`absolute inset-0 bg-gradient-to-br ${getMoodGradient()} opacity-90 transition-all duration-1000 pointer-events-none`} />
+               <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 ${getPulseColor()} rounded-full blur-3xl animate-pulse pointer-events-none transition-colors duration-1000`} />
 
                <div className="absolute inset-0 p-8 flex flex-col justify-between text-white z-10">
                   <div className="flex justify-between items-start cursor-pointer" onClick={() => setView(ViewState.TASKS)}>
                      <div>
                         <h2 className="text-3xl font-black tracking-tight">{Math.round(progress)}% Focused</h2>
-                        <p className="text-indigo-200 font-medium">{pendingTasks.length} missions remaining</p>
+                        <p className="text-white/70 font-medium">
+                           {stressLevel} missions remaining
+                        </p>
                      </div>
                      <div className="w-12 h-12 bg-white/10 backdrop-blur rounded-full flex items-center justify-center group-hover:rotate-45 transition-transform">
                         <ArrowRight size={24} />
