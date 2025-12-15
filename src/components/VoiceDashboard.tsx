@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
 import { Mic, MicOff, Terminal, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { ViewState } from '../types';
 
 const VoiceDashboard = () => {
     const { processBrainDump, currentView, setView } = useApp();
@@ -82,7 +83,7 @@ const VoiceDashboard = () => {
             await processBrainDump(transcript);
             setStatus('Done! Organizing...');
             setTranscript('');
-            setTimeout(() => setView('TASKS' as any), 1000);
+            setTimeout(() => setView(ViewState.TASKS), 1000);
         } catch (e) {
             console.error(e);
             setStatus('Failed to process. Try again.');
