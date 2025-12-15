@@ -50,19 +50,26 @@ export const Dashboard = () => {
    const { tasks, habits, finance, setView, toggleTask, incrementHabit } = useApp();
    const { user } = useAuth();
    const [mounted, setMounted] = useState(false);
+   const [isVoiceMode, setIsVoiceMode] = useState(false); // Voice Overlay State
+
    useEffect(() => setMounted(true), []);
 
-   // Stats
-   // Stats (Calculated safely below in Handlers block to avoid "M is not a function")
-   // const pendingTasks = tasks.filter(t => t.status === 'pending');
-   // const completedToday = tasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
-   // const totalTasks = completedToday + pendingTasks.length;
-   // const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
-   // const nextBill = finance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
-   // const activeHabits = habits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
+   // -- DEFENSIVE CODING: Ensure arrays exist (Fix for "M is not a function") --
+   const safeTasks = Array.isArray(tasks) ? tasks : [];
+   const safeHabits = Array.isArray(habits) ? habits : [];
+   const safeFinance = Array.isArray(finance) ? finance : [];
 
-   // Dynamic Stress/Mood Logic
+   // -- STATS & DERIVED STATE --
+   const pendingTasks = safeTasks.filter(t => t.status === 'pending');
+   const completedToday = safeTasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
+   const totalTasks = completedToday + pendingTasks.length;
+   const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
+   const nextBill = safeFinance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
+   const activeHabits = safeHabits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
+
+   // Dynamic Stress/Mood Logic (Depends on pendingTasks)
    const stressLevel = pendingTasks.length;
+
    const getMoodGradient = () => {
       if (stressLevel >= 5) return 'from-rose-600 via-orange-700 to-slate-900'; // High Stress
       if (stressLevel >= 3) return 'from-indigo-600 via-purple-700 to-slate-900'; // Medium Flow
@@ -78,26 +85,11 @@ export const Dashboard = () => {
    if (!mounted) return null;
 
    // -- Handlers --
-   // -- Handlers --
    const handleTaskToggle = (id: string, e: React.MouseEvent) => {
       e.stopPropagation(); // Prevent card navigation
       toggleTask(id);
    };
 
-   // Voice Mode Overlay State
-   const [isVoiceMode, setIsVoiceMode] = useState(false);
-
-   // -- DEFENSIVE CODING: Ensure arrays exist --
-   const safeTasks = Array.isArray(tasks) ? tasks : [];
-   const safeHabits = Array.isArray(habits) ? habits : [];
-   const safeFinance = Array.isArray(finance) ? finance : [];
-
-   const pendingTasks = safeTasks.filter(t => t.status === 'pending');
-   const completedToday = safeTasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
-   const totalTasks = completedToday + pendingTasks.length;
-   const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
-   const nextBill = safeFinance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
-   const activeHabits = safeHabits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
 
    return (
       <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10">
