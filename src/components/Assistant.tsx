@@ -2,7 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
 import { useUsage } from '../store/UsageContext';
-import * as Icons from 'lucide-react'; // Namespace Import to prevent Minification Collisions
+import {
+  Mic,
+  MicOff,
+  Send,
+  User,
+  Bot,
+  X,
+  ArrowLeft,
+  Save,
+  AlertTriangle,
+  Loader2
+} from 'lucide-react';
 import { ViewState } from '../types';
 
 export const Assistant = () => {
@@ -19,9 +30,9 @@ export const Assistant = () => {
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textBeforeRef = useRef('');
 
-  // Interaction Refs (for Hybrid Click/Hold)
+  // Interaction Refs
   const pressStartTime = useRef<number>(0);
-  const isHolding = useRef<boolean>(false);
+  const ignoreUpRef = useRef<boolean>(false);
 
   // 1. Auto-Clear Chat on Mount
   useEffect(() => {
@@ -86,6 +97,7 @@ export const Assistant = () => {
       recognitionRef.current = recognition;
       recognition.continuous = true;
       recognition.interimResults = true;
+      recognition.lang = navigator.language || 'en-US'; // Multi-language support
 
       textBeforeRef.current = input;
 
@@ -96,7 +108,6 @@ export const Assistant = () => {
 
       recognition.onend = () => {
         setIsListening(false);
-        isHolding.current = false; // Reset hold state
       };
 
       recognition.onresult = (event: any) => {
@@ -120,39 +131,41 @@ export const Assistant = () => {
     }
   };
 
-  // Hybrid Interaction Handler
-  const handleMicDown = () => {
+  // -- Solid Hybrid Mic Logic --
+  const onMicDown = () => {
     if (isLoadingAI) return;
-    pressStartTime.current = Date.now();
-    isHolding.current = false;
-    // Don't start immediately, wait to see if it's a hold?
-    // Actually, distinct Start is better for "Hold".
-    // Strategy: Start listening immediately on DOWN.
-    if (!isListening) startListening();
-  };
-
-  const handleMicUp = () => {
-    if (isLoadingAI) return;
-    const duration = Date.now() - pressStartTime.current;
-
-    // If it was a SHORT TAP (< 400ms)
-    if (duration < 400) {
-      // If we started listening on Down, we just leave it on (Toggle behavior).
-      // If we were ALREADY listening before Down, we should stop it.
-      // But handleMicDown starts it if not listening.
-      // Usage pattern:
-      // 1. Idle -> Down (Start) -> Up Fast (Keep Running) -> Tap (Stop)
-      // 2. Idle -> Down (Start) -> Up Slow (Stop) -> "Hold mode"
+    if (isListening) {
+      // If already on, we prepare to turn OFF on Up.
+      // We don't need to do anything here, just let Up handle the toggle off.
     } else {
-      // Long Press -> Stop on release
-      if (isListening) stopListening();
+      // Start immediately (Hold/Tap start)
+      pressStartTime.current = Date.now();
+      startListening();
     }
   };
 
-  // Simplified Toggle for Click (Fallback)
-  const toggleListening = () => {
-    if (isListening) stopListening();
-    else startListening();
+  const onMicUp = () => {
+    if (isLoadingAI) return;
+
+    const duration = Date.now() - pressStartTime.current;
+
+    if (isListening) {
+      // We are listening.
+      // If we just started it (this interaction):
+      if (Date.now() - pressStartTime.current < 2000000 && pressStartTime.current > 0) { // Check if we set the time this click
+        if (duration < 400) {
+          // Tap -> Keep running.
+        } else {
+          // Hold -> Stop.
+          stopListening();
+        }
+        pressStartTime.current = 0; // Reset
+      } else {
+        // We didn't start it this click (it was already on).
+        // So this click is a Toggle OFF.
+        stopListening();
+      }
+    }
   };
 
   const resetSilenceTimer = () => {
@@ -183,7 +196,7 @@ export const Assistant = () => {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-fade-in">
         <div className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl text-center space-y-6">
           <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icons.AlertTriangle size={32} />
+            <AlertTriangle size={32} />
           </div>
           <div>
             <h3 className="text-2xl font-black text-slate-800 mb-2">Leave Chat?</h3>
@@ -191,7 +204,7 @@ export const Assistant = () => {
           </div>
           <div className="space-y-3">
             <button onClick={() => confirmExit(true)} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95">
-              <Icons.Save size={18} /> <span>Save to Memory & Exit</span>
+              <Save size={18} /> <span>Save to Memory & Exit</span>
             </button>
             <button onClick={() => confirmExit(false)} className="w-full py-4 bg-white border-2 border-slate-100 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl transition-all">
               Just Exit
@@ -208,7 +221,7 @@ export const Assistant = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 bg-white/60 backdrop-blur-md p-2 rounded-full border border-white/50 shadow-sm">
         <button onClick={handleExitRequest} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
-          <Icons.ArrowLeft size={20} />
+          <ArrowLeft size={20} />
         </button>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Session Mode</span>
@@ -217,7 +230,7 @@ export const Assistant = () => {
             <span className="text-xs font-bold">{saveToMemory ? 'Memory ON' : 'Memory OFF'}</span>
           </button>
         </div>
-        <button onClick={handleExitRequest} className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50"><Icons.X size={20} /></button>
+        <button onClick={handleExitRequest} className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50"><X size={20} /></button>
       </div>
 
       <div className="flex-1 overflow-y-auto rounded-[32px] bg-white/40 border border-white/50 shadow-inner p-4 md:p-6 space-y-6 scroll-smooth backdrop-blur-sm">
@@ -226,7 +239,7 @@ export const Assistant = () => {
             <div key={msg.id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
               <div className={`flex items-end max-w-[85%] md:max-w-[70%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white' : 'bg-white text-primary-600'}`}>
-                  {msg.role === 'user' ? <Icons.User size={18} /> : <Icons.Bot size={20} />}
+                  {msg.role === 'user' ? <User size={18} /> : <Bot size={20} />}
                 </div>
                 <div className={`px-6 py-4 rounded-3xl text-[15px] leading-relaxed shadow-md ${msg.role === 'user' ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-white/90 backdrop-blur text-slate-800 rounded-bl-sm border border-white'}`}>
                   {msg.text}
@@ -236,7 +249,7 @@ export const Assistant = () => {
           ))
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
-            <Icons.Bot size={48} className="mb-4" />
+            <Bot size={48} className="mb-4" />
             <p>Ready to help.</p>
           </div>
         )}
@@ -264,14 +277,14 @@ export const Assistant = () => {
           />
           <button
             type="button"
-            onMouseDown={handleMicDown}
-            onMouseUp={handleMicUp}
-            onTouchStart={handleMicDown} // Mobile Touch Support
-            onTouchEnd={handleMicUp}
+            onMouseDown={onMicDown}
+            onMouseUp={onMicUp}
+            onTouchStart={onMicDown}
+            onTouchEnd={onMicUp}
             className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'}`}
             title="Hold to Speak / Tap to Toggle"
           >
-            {isListening ? <Icons.MicOff size={20} /> : <Icons.Mic size={20} />}
+            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
         </div>
 
@@ -280,7 +293,7 @@ export const Assistant = () => {
           disabled={!input.trim() || isLoadingAI}
           className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-900/20 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
         >
-          <Icons.Send size={20} className={input.trim() ? "ml-0.5" : ""} />
+          {isLoadingAI ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className={input.trim() ? "ml-0.5" : ""} />}
         </button>
       </form>
     </div>
