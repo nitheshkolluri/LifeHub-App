@@ -80,6 +80,7 @@ export class GeminiService {
       Extract actionable items into a structured list of Entities.
       
       RULES:
+      0. LANGUAGE: The input may be in any language. ANALYZE it in that language, but if you create titles for inputs, try to keep them in the user's language unless valid translation is obvious.
       1. Finance:
          - Detect currency/amounts ($15, 100 dollars).
          - Detect recurrence (monthly, weekly).

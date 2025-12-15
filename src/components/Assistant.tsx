@@ -80,7 +80,7 @@ export const Assistant = () => {
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
 
-      recognition.lang = 'en-US';
+      // recognition.lang = 'en-US'; // Allow Multi-Language Support (Defaults to Device Lang)
       recognition.continuous = true;
       recognition.interimResults = true;
 
