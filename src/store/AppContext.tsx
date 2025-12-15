@@ -408,7 +408,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const processBrainDump = async (text: string): Promise<BrainDumpResult> => {
-    if (!user?.isPremium && tasks.length >= 5) {
+    if (!checkLimit()) {
       setShowUpsell(true);
       throw new Error("Free limit reached");
     }

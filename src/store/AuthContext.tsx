@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             plan: data.plan || 'free',
             emailVerified: firebaseUser.emailVerified,
             notificationPreferences: data.notificationPreferences,
-            createdAt: data.createdAt || Date.now() // Default to now for fallback (gives old users a trial)
+            createdAt: data.createdAt?.toMillis ? data.createdAt.toMillis() : (data.createdAt || Date.now())
           };
         } else {
           // Initialize user in Firestore if new (e.g. first Google login)

@@ -80,10 +80,9 @@ const VoiceDashboard = () => {
 
         try {
             await processBrainDump(transcript);
-            setStatus('Done! Organized into your LifeHub.');
+            setStatus('Done! Organizing...');
             setTranscript('');
-            // Optional: Show summary toast or animation
-            setTimeout(() => setStatus('Ready to listen'), 3000);
+            setTimeout(() => setView('TASKS' as any), 1000);
         } catch (e) {
             console.error(e);
             setStatus('Failed to process. Try again.');
@@ -117,10 +116,10 @@ const VoiceDashboard = () => {
                     onClick={toggleListening}
                     disabled={isProcessing}
                     className={`relative w-40 h-40 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl group ${isListening
-                            ? 'bg-rose-500 shadow-rose-500/50 scale-110'
-                            : isProcessing
-                                ? 'bg-indigo-500 shadow-indigo-500/50 scale-90'
-                                : 'bg-slate-900 shadow-slate-900/30 hover:scale-105'
+                        ? 'bg-rose-500 shadow-rose-500/50 scale-110'
+                        : isProcessing
+                            ? 'bg-indigo-500 shadow-indigo-500/50 scale-90'
+                            : 'bg-slate-900 shadow-slate-900/30 hover:scale-105'
                         }`}
                 >
                     {/* Ripple Effects when Listening */}
