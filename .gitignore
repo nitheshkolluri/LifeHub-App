@@ -209,3 +209,6 @@ temp/
 # Bundle analysis
 stats.json
 bundle-stats.html
+
+# Backend Error Logs
+backend/error.txt
