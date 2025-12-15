@@ -112,64 +112,52 @@ export const Finance = () => {
          <div className="space-y-3 px-2">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-2 mb-2">Upcoming Tickets</h3>
 
-            {isPremium ? (
-               <div className="space-y-4">
-                  {finance.length === 0 ? (
-                     <div className="glass-card text-center py-12">
-                        <DollarSign size={32} className="mx-auto mb-2 text-slate-300" />
-                        <p className="text-slate-400 font-bold">No items in wallet.</p>
-                     </div>
-                  ) : (
-                     finance.map(item => (
-                        <div key={item.id} className={`glass-card p-5 flex items-center justify-between group ${item.isPaidThisMonth ? 'opacity-60' : ''}`}>
-                           <div className="flex items-center gap-4">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.type === 'income' ? 'bg-emerald-100 text-emerald-600' :
-                                 item.type === 'bill' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'
-                                 }`}>
-                                 {item.type === 'income' ? <TrendingUp size={18} /> : <CreditCard size={18} />}
-                              </div>
-                              <div>
-                                 <h3 className="font-bold text-slate-800">{item.title}</h3>
-                                 <p className="text-xs text-slate-400 font-bold">
-                                    Due Day: {item.dueDay}
-                                 </p>
-                              </div>
+            <div className="space-y-4">
+               {finance.length === 0 ? (
+                  <div className="glass-card text-center py-12">
+                     <DollarSign size={32} className="mx-auto mb-2 text-slate-300" />
+                     <p className="text-slate-400 font-bold">No items in wallet.</p>
+                  </div>
+               ) : (
+                  finance.map(item => (
+                     <div key={item.id} className={`glass-card p-5 flex items-center justify-between group ${item.isPaidThisMonth ? 'opacity-60' : ''}`}>
+                        <div className="flex items-center gap-4">
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.type === 'income' ? 'bg-emerald-100 text-emerald-600' :
+                              item.type === 'bill' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'
+                              }`}>
+                              {item.type === 'income' ? <TrendingUp size={18} /> : <CreditCard size={18} />}
                            </div>
-                           <div className="text-right">
-                              <span className={`block font-black text-lg ${item.type === 'income' ? 'text-emerald-500' : 'text-slate-800'}`}>
-                              </span>
-                              <div className="flex flex-col items-end gap-1">
-                                 {!item.isPaidThisMonth && item.type === 'bill' && (
-                                    <button
-                                       onClick={() => togglePaid(item.id)}
-                                       className="text-[10px] font-bold text-primary-500 bg-primary-50 px-2 py-1 rounded-md hover:bg-primary-100 transition-colors"
-                                    >
-                                       MARK PAID
-                                    </button>
-                                 )}
-                                 <button
-                                    onClick={() => deleteFinanceItem(item.id)}
-                                    className="text-[10px] font-bold text-slate-400 hover:text-rose-500 px-2 py-1 transition-colors"
-                                 >
-                                    DELETE
-                                 </button>
-                              </div>
+                           <div>
+                              <h3 className="font-bold text-slate-800">{item.title}</h3>
+                              <p className="text-xs text-slate-400 font-bold">
+                                 Due Day: {item.dueDay}
+                              </p>
                            </div>
                         </div>
-                     ))
-                  )}
-               </div>
-            ) : (
-               <div className="glass-card text-center py-16 px-8 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-secondary-500/5" />
-                  <Lock className="mx-auto h-12 w-12 text-primary-300 mb-4" />
-                  <h3 className="text-xl font-black text-slate-800 mb-2">Unlock Financial Clarity</h3>
-                  <p className="text-slate-500 mb-6">Track bills & income. Start with a <strong>7-Day Free Trial</strong>.</p>
-                  <button onClick={() => setShowPaywall(true)} className="btn-primary w-full">
-                     Start Free Trial
-                  </button>
-               </div>
-            )}
+                        <div className="text-right">
+                           <span className={`block font-black text-lg ${item.type === 'income' ? 'text-emerald-500' : 'text-slate-800'}`}>
+                           </span>
+                           <div className="flex flex-col items-end gap-1">
+                              {!item.isPaidThisMonth && item.type === 'bill' && (
+                                 <button
+                                    onClick={() => togglePaid(item.id)}
+                                    className="text-[10px] font-bold text-primary-500 bg-primary-50 px-2 py-1 rounded-md hover:bg-primary-100 transition-colors"
+                                 >
+                                    MARK PAID
+                                 </button>
+                              )}
+                              <button
+                                 onClick={() => deleteFinanceItem(item.id)}
+                                 className="text-[10px] font-bold text-slate-400 hover:text-rose-500 px-2 py-1 transition-colors"
+                              >
+                                 DELETE
+                              </button>
+                           </div>
+                        </div>
+                     </div>
+                  ))
+               )}
+            </div>
          </div>
 
          {/* Add Logic */}
