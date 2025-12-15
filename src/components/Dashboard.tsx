@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
+import { VoiceRecorder } from './VoiceRecorder';
 import { CheckCircle2, DollarSign, Wind, ArrowRight, Zap, Droplets, Mountain, Globe } from 'lucide-react';
 import { ViewState } from '../types';
 
@@ -47,7 +48,7 @@ const fluidStyles = `
 `;
 
 export const Dashboard = () => {
-   const { tasks, habits, finance, setView, toggleTask, incrementHabit } = useApp();
+   const { tasks, habits, finance, setView, toggleTask, incrementHabit, processBrainDump } = useApp();
    const { user } = useAuth();
    const [mounted, setMounted] = useState(false);
    const [isVoiceMode, setIsVoiceMode] = useState(false); // Voice Overlay State
