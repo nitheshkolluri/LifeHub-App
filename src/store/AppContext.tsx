@@ -447,41 +447,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } finally {
       setIsLoadingAI(false);
     }
-  } catch (e) {
-    console.error(e);
-    throw e;
-  } finally {
-    setIsLoadingAI(false);
-  }
-};
+  };
 
-const generateReport = async () => {
-  try {
-    const text = await geminiService.generateWeeklyReport({ tasks, habits, finance });
-    if (user) {
-      await addDoc(collection(db, 'users', user.id, 'reports'), {
-        text, generatedAt: Date.now(), weekOf: new Date().toISOString()
-      });
+  const generateReport = async () => {
+    try {
+      const text = await geminiService.generateWeeklyReport({ tasks, habits, finance });
+      if (user) {
+        await addDoc(collection(db, 'users', user.id, 'reports'), {
+          text, generatedAt: Date.now(), weekOf: new Date().toISOString()
+        });
+      }
+      return text;
+    } catch (e) {
+      return "Failed to generate report.";
     }
-    return text;
-  } catch (e) {
-    return "Failed to generate report.";
-  }
-};
+  };
 
-return (
-  <AppContext.Provider value={{
-    tasks, habits, finance, messages, currentView, isLoadingAI, showUpsell, reports,
-    setView: setCurrentView, setShowUpsell,
-    addTask, updateTask, toggleTask, deleteTask,
-    addHabit, updateHabit, incrementHabit, deleteHabit,
-    addFinanceItem, updateFinanceItem, togglePaid, deleteFinanceItem,
-    updateNotificationSettings,
-    sendChatMessage, generateReport, processBrainDump
-  }}>
-    {children}
-  </AppContext.Provider>
-);
+  return (
+    <AppContext.Provider value={{
+      tasks, habits, finance, messages, currentView, isLoadingAI, showUpsell, reports,
+      setView: setCurrentView, setShowUpsell,
+      addTask, updateTask, toggleTask, deleteTask,
+      addHabit, updateHabit, incrementHabit, deleteHabit,
+      addFinanceItem, updateFinanceItem, togglePaid, deleteFinanceItem,
+      updateNotificationSettings,
+      sendChatMessage, generateReport, processBrainDump
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
 };
 
 export const useApp = () => {
