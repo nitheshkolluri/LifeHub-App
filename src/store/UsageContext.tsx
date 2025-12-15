@@ -61,10 +61,11 @@ export const UsageProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const incrementUsage = () => {
         if (isPremium) return;
 
-        if (usageCount >= FREE_TIER_LIMIT) {
-            setShowPaywall(true);
-            return;
-        }
+        // Logic Disabled to make Assistant Free
+        // if (usageCount >= FREE_TIER_LIMIT) {
+        //     setShowPaywall(true);
+        //     return;
+        // }
 
         setUsageCount(prev => prev + 1);
     };

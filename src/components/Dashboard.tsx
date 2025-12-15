@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
-import { CheckCircle2, DollarSign, Wind, ArrowRight, Zap, Droplets, Mountain } from 'lucide-react';
+import { CheckCircle2, DollarSign, Wind, ArrowRight, Zap, Droplets, Mountain, Globe } from 'lucide-react';
+import { ViewState } from '../types';
 
 // --- STYLES & ANIMATIONS ---
 // We inject these styles dynamically for the fluid animations
@@ -46,204 +47,173 @@ const fluidStyles = `
 `;
 
 export const Dashboard = () => {
-   const { tasks, habits, finance, toggleTask, incrementHabit, setView } = useApp();
+   const { tasks, habits, finance, setView } = useApp();
    const { user } = useAuth();
+   const [mounted, setMounted] = useState(false);
+   useEffect(() => setMounted(true), []);
 
-   // -- Data Processing --
-   const todayStr = new Date().toDateString();
+   // Stats
    const pendingTasks = tasks.filter(t => t.status === 'pending');
-   const highPriorityTask = pendingTasks.find(t => t.priority === 'high') || pendingTasks[0];
-   const completedToday = tasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === todayStr).length;
+   const completedToday = tasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
    const totalTasks = completedToday + pendingTasks.length;
-   const progress = totalTasks > 0 ? (completedToday / totalTasks) : 0;
-
-   // Finance Snapshot
-   const upcomingBills = finance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32));
-   const nextBill = upcomingBills[0];
-
-   // Habit Processing for Satellites
+   const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
+   const nextBill = finance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
    const activeHabits = habits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
 
-   // -- State for Interactions --
-   const [showFinanceDetail, setShowFinanceDetail] = useState(false);
-
-   // -- Dynamic Styling based on State --
-   // Calm Blue (Start) -> Energetic Purple (Mid) -> Success Green (Done)
-   const getBlobColor = () => {
-      if (progress === 1 && totalTasks > 0) return 'from-emerald-400 to-teal-500 shadow-emerald-200';
-      if (pendingTasks.length > 5) return 'from-rose-400 to-orange-500 shadow-rose-200'; // Stress mode
-      return 'from-indigo-500 to-purple-600 shadow-indigo-300'; // Default flow
-   };
-
-   const getMotivationalWord = () => {
-      if (progress === 1 && totalTasks > 0) return "Zen";
-      if (pendingTasks.length > 5) return "Focus";
-      if (completedToday === 0 && pendingTasks.length === 0) return "Free";
-      return "Flow";
-   };
+   if (!mounted) return null;
 
    return (
-      <div className="relative h-full w-full overflow-hidden flex flex-col items-center pt-8 md:pt-12 animate-fade-in font-sans">
-         <style>{fluidStyles}</style>
-
-         {/* --- HEADER --- */}
-         <div className="z-10 text-center space-y-1 mb-8">
-            <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">Second Brain</p>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tighter">
-               {new Date().getHours() < 12 ? 'Morning' : 'Evening'}, {user?.name.split(' ')[0]}
+      <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10">
+         <header className="mb-8 animate-fade-in-up">
+            <h1 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight">
+               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                  {new Date().getHours() < 12 ? 'Good Morning' : 'Welcome Back'},
+               </span><br />
+               {user?.name.split(' ')[0]}
             </h1>
-         </div>
+            <p className="text-slate-500 font-medium mt-2">Here is the rhythm of your life today.</p>
+         </header>
 
-         {/* --- THE LIFE CORE (Visualization) --- */}
-         <div className="relative w-80 h-80 flex items-center justify-center mb-12 flex-shrink-0">
+         {/* BENTO GRID LAYOUT */}
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-stagger-in">
 
-            {/* Background Glow */}
-            <div className={`absolute inset-0 bg-gradient-to-tr ${getBlobColor()} opacity-20 blur-[60px] rounded-full animate-pulse`} />
-
-            {/* The Blob */}
+            {/* 1. MAIN FOCUS (Tasks) - Large Card */}
             <div
-               className={`blob relative w-64 h-64 bg-gradient-to-br ${getBlobColor()} flex items-center justify-center shadow-2xl transition-all duration-1000 cursor-pointer group`}
-               onClick={() => setView('TASKS' as any)}
+               onClick={() => setView(ViewState.TASKS)}
+               className="md:col-span-2 relative h-64 md:h-80 bg-slate-900 rounded-[40px] overflow-hidden group cursor-pointer shadow-2xl shadow-indigo-200 hover:shadow-indigo-300 transition-all"
             >
-               {/* Inner texture/noise */}
-               <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')] rounded-[inherit]" />
+               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+               <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-700 to-slate-900 opacity-90 group-hover:scale-105 transition-transform duration-700" />
 
-               <div className="text-center text-white z-10 transform transition-transform group-hover:scale-110">
-                  <span className="block text-6xl font-black tracking-tighter drop-shadow-md">
-                     {Math.round(progress * 100)}%
-                  </span>
-                  <span className="text-sm font-bold uppercase tracking-widest opacity-80 mt-1 block">
-                     {getMotivationalWord()}
-                  </span>
-               </div>
-            </div>
+               {/* Orbital Visual */}
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/30 rounded-full blur-3xl animate-pulse" />
 
-            {/* Orbiting Habits (Satellites) */}
-            {activeHabits.slice(0, 3).map((habit, index) => {
-               // Calculate random delay for organic feel
-               const delay = index * -2;
-               return (
-                  <div key={habit.id} className="orbit-container" style={{ animation: `orbit ${15 + index * 5}s linear infinite`, animationDelay: `${delay}s` }}>
-                     <button
-                        onClick={() => incrementHabit(habit.id)}
-                        className="satellite blob bg-white/80 backdrop-blur-md border border-white shadow-lg flex items-center justify-center text-indigo-600 hover:scale-125 hover:bg-white transition-all duration-300"
-                        title={`Complete: ${habit.title}`}
-                     >
-                        <Zap size={20} fill="currentColor" />
-                     </button>
-                  </div>
-               );
-            })}
-         </div>
-
-         {/* --- THE DECK (Interactive Cards) --- */}
-         <div className="w-full max-w-md px-6 flex-1 flex flex-col justify-end pb-24 md:pb-10 space-y-4 z-10">
-
-            {/* 1. The "Next Action" Card (Highest Priority) */}
-            <div className="relative group">
-               <div className="absolute inset-0 bg-primary-500 rounded-[32px] blur-xl opacity-10 group-hover:opacity-20 transition-opacity" />
-               <div className={`glass-card relative rounded-[32px] p-6 hover:-translate-y-1 ${highPriorityTask ? 'border-primary-100' : ''}`}>
-                  <div className="flex justify-between items-start mb-4">
-                     <div>
-                        <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded-full uppercase tracking-wide">
-                           Up Next
-                        </span>
-                     </div>
-                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                        <Wind size={16} />
-                     </div>
-                  </div>
-
-                  {highPriorityTask ? (
-                     <>
-                        <h3 className="text-xl font-bold text-slate-800 leading-tight mb-2 line-clamp-2">
-                           {highPriorityTask.title}
-                        </h3>
-                        <div className="flex items-center justify-between mt-4">
-                           <span className="text-xs text-slate-400 font-bold flex items-center gap-1">
-                              {highPriorityTask.dueTime ? `Due ${highPriorityTask.dueTime}` : 'Do it today'}
-                           </span>
-                           <button
-                              onClick={() => toggleTask(highPriorityTask.id)}
-                              className="btn-primary py-2 px-4 text-sm"
-                           >
-                              <span>Complete</span>
-                              <ArrowRight size={16} />
-                           </button>
-                        </div>
-                     </>
-                  ) : (
-                     <div className="text-center py-4">
-                        <p className="text-slate-500 font-medium">All clear. Enjoy the calm.</p>
-                        <button onClick={() => setView('TASKS' as any)} className="mt-2 text-primary-600 text-sm font-bold hover:text-primary-700">Add Task</button>
-                     </div>
-                  )}
-               </div>
-            </div>
-
-            {/* 2. The "Finance" Pill (Expandable) */}
-            <div
-               onClick={() => setShowFinanceDetail(!showFinanceDetail)}
-               className={`relative overflow-hidden bg-slate-900 text-white rounded-[28px] transition-all duration-500 ease-spring ${showFinanceDetail ? 'h-48' : 'h-16'} shadow-xl cursor-pointer`}
-            >
-               {/* Background Gradient */}
-               <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-slate-800" />
-
-               {/* Collapsed View */}
-               <div className={`absolute inset-0 flex items-center justify-between px-6 transition-opacity duration-300 ${showFinanceDetail ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                  <div className="flex items-center gap-3">
-                     <div className="p-1.5 bg-white/10 rounded-full">
-                        <DollarSign size={16} className="text-emerald-400" />
-                     </div>
-                     <span className="font-bold text-sm">
-                        {nextBill ? `Upcoming: ${nextBill.title}` : 'Wallet Healthy'}
-                     </span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-400 bg-white/10 px-2 py-1 rounded-lg">
-                     {nextBill ? `$${nextBill.amount}` : 'See Wallet'}
-                  </span>
-               </div>
-
-               {/* Expanded View */}
-               <div className={`absolute inset-0 p-6 flex flex-col justify-between transition-opacity duration-500 delay-100 ${showFinanceDetail ? 'opacity-100' : 'opacity-0'}`}>
+               <div className="absolute inset-0 p-8 flex flex-col justify-between text-white z-10">
                   <div className="flex justify-between items-start">
                      <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Financial Snapshot</p>
-                        <h3 className="text-2xl font-bold mt-1">
-                           {nextBill ? `$${nextBill.amount}` : 'All Paid'}
-                        </h3>
-                        <p className="text-sm text-slate-300">
-                           {nextBill ? `due for ${nextBill.title}` : 'No upcoming bills shortly.'}
-                        </p>
+                        <h2 className="text-3xl font-black tracking-tight">{Math.round(progress)}% Focused</h2>
+                        <p className="text-indigo-200 font-medium">{pendingTasks.length} missions remaining</p>
                      </div>
-                     <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
-                        <Mountain size={20} />
+                     <div className="w-12 h-12 bg-white/10 backdrop-blur rounded-full flex items-center justify-center group-hover:rotate-45 transition-transform">
+                        <ArrowRight size={24} />
                      </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  {/* Task List Preview */}
+                  <div className="space-y-3">
+                     {pendingTasks.slice(0, 2).map(t => (
+                        <div key={t.id} className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl backdrop-blur-sm border border-white/5">
+                           <div className={`w-3 h-3 rounded-full ${t.priority === 'high' ? 'bg-rose-500' : 'bg-emerald-400'}`} />
+                           <span className="font-bold text-sm truncate">{t.title}</span>
+                        </div>
+                     ))}
+                     {pendingTasks.length === 0 && (
+                        <div className="text-indigo-200 font-bold flex items-center gap-2">
+                           <CheckCircle2 size={20} />
+                           <span>System Clear. Enjoy the calm.</span>
+                        </div>
+                     )}
+                  </div>
+               </div>
+            </div>
+
+            {/* 2. HABIT ORBIT - Tall Card */}
+            <div
+               onClick={() => setView('HABITS' as any)}
+               className="relative h-64 md:h-80 bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-xl group cursor-pointer hover:border-emerald-200 transition-all"
+            >
+               <div className="absolute top-0 right-0 p-8 w-full h-full bg-gradient-to-b from-emerald-50/50 to-transparent" />
+               <div className="absolute inset-0 p-8 flex flex-col">
+                  <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-xl font-black text-slate-800">Habits</h3>
+                     <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl">
+                        <Zap size={20} fill="currentColor" />
+                     </div>
+                  </div>
+
+                  <div className="flex-1 flex flex-col justify-center space-y-4">
+                     {activeHabits.length > 0 ? (
+                        activeHabits.slice(0, 3).map(h => (
+                           <div key={h.id} className="flex items-center justify-between group-hover:translate-x-1 transition-transform">
+                              <span className="font-bold text-slate-600">{h.title}</span>
+                              <div className="h-2 w-24 bg-slate-100 rounded-full overflow-hidden">
+                                 <div className="h-full bg-emerald-500 w-1/3" />
+                              </div>
+                           </div>
+                        ))
+                     ) : (
+                        <div className="text-center text-slate-400">
+                           <Mountain size={48} className="mx-auto mb-2 opacity-50" />
+                           <p className="text-xs font-bold uppercase">All Rituals Done</p>
+                        </div>
+                     )}
+                  </div>
+
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-auto">
+                     {habits.length - activeHabits.length} / {habits.length} Complete
+                  </p>
+               </div>
+            </div>
+
+            {/* 3. FINANCE SNAPSHOT (Small) */}
+            <div
+               onClick={() => setView('FINANCE' as any)}
+               className="relative h-48 bg-slate-50 rounded-[40px] p-8 flex flex-col justify-between border border-dashed border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer group"
+            >
+               <div className="flex justify-between items-start">
+                  <div>
+                     <p className="text-xs font-bold text-slate-400 uppercase">Wallet</p>
+                     <p className="text-2xl font-black text-slate-800 mt-1">
+                        {nextBill ? `$${nextBill.amount}` : 'Healthy'}
+                     </p>
+                  </div>
+                  <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 group-hover:bg-slate-800 group-hover:text-white transition-colors">
+                     <DollarSign size={20} />
+                  </div>
+               </div>
+
+               {nextBill ? (
+                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+                     <p className="text-xs font-bold text-rose-500">Upcoming Bill</p>
+                     <p className="font-bold text-slate-700">{nextBill.title}</p>
+                  </div>
+               ) : (
+                  <div className="flex items-center gap-2 text-emerald-600">
+                     <CheckCircle2 size={16} />
+                     <span className="text-sm font-bold">No dues soon</span>
+                  </div>
+               )}
+            </div>
+
+            {/* 4. AI ASSISTANT PROMPT (Small) */}
+            <div className="md:col-span-2 h-48 relative bg-gradient-to-r from-indigo-500 to-blue-500 rounded-[40px] p-1 overflow-hidden shadow-2xl shadow-blue-200 group">
+               <div className="absolute inset-0 bg-white/10 backdrop-blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+               <div className="h-full bg-white/95 rounded-[36px] p-6 flex items-center gap-6 relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg">
+                     <Zap size={32} />
+                  </div>
+                  <div>
+                     <h3 className="text-xl font-bold text-slate-800">Need clarity?</h3>
+                     <p className="text-slate-500 text-sm mb-3">Ask about your day, budget, or justvent.</p>
                      <button
-                        onClick={(e) => { e.stopPropagation(); setView('FINANCE' as any); }}
-                        className="flex-1 bg-white/10 hover:bg-white/20 py-3 rounded-xl text-xs font-bold transition-colors"
+                        onClick={() => setView(ViewState.ASSISTANT)}
+                        className="text-indigo-600 font-black text-sm uppercase tracking-wide flex items-center gap-1 hover:gap-2 transition-all"
                      >
-                        Open Wallet
+                        Chat with Assistant <ArrowRight size={14} />
                      </button>
-                     <button
-                        onClick={(e) => { e.stopPropagation(); setShowFinanceDetail(false); }}
-                        className="px-4 bg-transparent border border-white/10 rounded-xl text-xs font-bold hover:bg-white/5"
-                     >
-                        Close
-                     </button>
+                  </div>
+
+                  {/* Decorative */}
+                  <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
+                     <Globe size={120} />
                   </div>
                </div>
             </div>
 
          </div>
-
-         {/* Decorative Background Elements for "Anime" feel */}
-         <div className="absolute top-20 right-[-50px] w-64 h-64 bg-indigo-300/20 rounded-full blur-[80px] pointer-events-none mix-blend-multiply" />
-         <div className="absolute bottom-20 left-[-50px] w-80 h-80 bg-rose-300/20 rounded-full blur-[80px] pointer-events-none mix-blend-multiply" />
-
       </div>
    );
 };
+
+// End of Dashboard
+```

@@ -163,10 +163,10 @@ export const Finance = () => {
                <div className="glass-card text-center py-16 px-8 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-secondary-500/5" />
                   <Lock className="mx-auto h-12 w-12 text-primary-300 mb-4" />
-                  <h3 className="text-xl font-black text-slate-800 mb-2">Unlock Your Wallet</h3>
-                  <p className="text-slate-500 mb-6">Track bills, subscriptions, and income with the Pro plan.</p>
+                  <h3 className="text-xl font-black text-slate-800 mb-2">Unlock Financial Clarity</h3>
+                  <p className="text-slate-500 mb-6">Track bills & income. Start with a <strong>7-Day Free Trial</strong>.</p>
                   <button onClick={() => setShowPaywall(true)} className="btn-primary w-full">
-                     Upgrade to Pro
+                     Start Free Trial
                   </button>
                </div>
             )}
