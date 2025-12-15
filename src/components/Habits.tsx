@@ -10,7 +10,7 @@ const ConstellationNode = ({ active }: { active: boolean }) => (
     }`} />
 );
 
-const HabitCard = ({ habit, onIncrement, isDoneToday }: any) => {
+const HabitCard = ({ habit, onIncrement, deleteHabit, isDoneToday }: any) => {
   return (
     <div className="group relative glass-card p-6 rounded-[32px] hover:bg-white/60 overflow-hidden">
 
@@ -112,6 +112,7 @@ export const Habits = () => {
               key={habit.id}
               habit={habit}
               onIncrement={incrementHabit}
+              deleteHabit={deleteHabit}
               isDoneToday={habit.completedDates.includes(today)}
             />
           ))
