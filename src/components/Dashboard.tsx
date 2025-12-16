@@ -12,9 +12,11 @@ import {
    Mic,
    DollarSign,
    ChevronRight,
-   Zap
+   Zap,
+   Flame,
 } from 'lucide-react';
 import { ViewState } from '../types';
+import { VoiceOverlay } from './VoiceOverlay';
 
 // --- SUB-COMPONENTS ---
 
@@ -70,7 +72,7 @@ export const Dashboard = () => {
    const { user } = useAuth();
    const { tasks, habits, finance, setView, toggleTask, processBrainDump } = useApp();
    const [selectedDate, setSelectedDate] = useState(new Date());
-   const [isVoiceMode, setIsVoiceMode] = useState(false);
+   const [showVoice, setShowVoice] = useState(false);
 
    // Filter Data based on Date
    const dateKey = selectedDate.toISOString().split('T')[0];
@@ -108,18 +110,6 @@ export const Dashboard = () => {
       // Just show top 3 pending habits for orbit visual
       return habits.filter(h => !h.completedDates.includes(dateKey)).slice(0, 5);
    }, [habits, dateKey]);
-
-   // Voice Logic Stub
-   const startVoice = () => {
-      setIsVoiceMode(true);
-      setTimeout(() => {
-         setIsVoiceMode(false);
-         const text = "Remind me to call Mom tomorrow at 5pm";
-         if (window.confirm(`Simulated Voice Input: "${text}"\n\nProcess this?`)) {
-            processBrainDump(text);
-         }
-      }, 2000);
-   };
 
    return (
       <div className="flex flex-col h-full space-y-6 animate-fade-in pb-24 md:pb-0">
@@ -212,6 +202,53 @@ export const Dashboard = () => {
             </div>
          </section>
 
+         {/* HABIT ORBIT - Interactive */}
+         < section className="px-2" >
+            < div
+               className="relative h-56 bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-xl group hover:border-emerald-200 transition-all"
+            >
+               <div className="absolute top-0 right-0 p-8 w-full h-full bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none" />
+               <div className="absolute inset-0 p-6 flex flex-col z-10">
+                  <div className="flex justify-between items-center mb-4 cursor-pointer" onClick={() => setView(ViewState.HABITS)}>
+                     <div>
+                        <h2 className="text-xl font-black text-slate-800 tracking-tight">Rituals</h2>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{activeHabits.length} Remaining</p>
+                     </div>
+                     <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                        <ChevronRight size={20} />
+                     </div>
+                  </div>
+
+                  {/* Horizontal Scrollable Habits */}
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 items-center h-full">
+                     {activeHabits.length === 0 ? (
+                        <div className="flex items-center gap-3 text-emerald-600 opacity-60">
+                           <CheckCircle2 size={24} />
+                           <span className="font-bold">All rituals complete.</span>
+                        </div>
+                     ) : (
+                        activeHabits.map((h, i) => (
+                           <button
+                              key={h.id}
+                              // onClick={() => toggleHabit(h.id)} // Assuming toggle/increment logic exists or we just view
+                              className="flex-shrink-0 w-20 h-24 bg-white border border-slate-100 shadow-sm rounded-2xl flex flex-col items-center justify-center gap-2 hover:scale-105 hover:shadow-md transition-all relative overflow-hidden"
+                           >
+                              <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-transparent opacity-50" />
+                              <div className="relative z-10 w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
+                                 <Flame size={20} />
+                              </div>
+                              <span className="relative z-10 text-[10px] font-bold text-slate-600 text-center leading-tight line-clamp-2 px-1">{h.title}</span>
+                           </button>
+                        ))
+                     )}
+                     <button onClick={() => setView(ViewState.HABITS)} className="flex-shrink-0 w-12 h-24 rounded-2xl border-2 border-dashed border-slate-100 flex items-center justify-center text-slate-300 hover:border-indigo-200 hover:text-indigo-400 transition-colors">
+                        <Plus size={20} />
+                     </button>
+                  </div>
+               </div>
+            </div >
+         </section>
+
          {/* 3. FINANCE SNAPSHOT (Interactive) */}
          < section className="px-2" >
             < div
@@ -273,12 +310,16 @@ export const Dashboard = () => {
          </section>
 
          {/* FLOATING MIC BUTTON */}
+         {/* FLOATING MIC BUTTON */}
          <button
-            onClick={startVoice}
-            className={`fixed bottom-24 right-6 md:hidden z-50 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all ${isVoiceMode ? 'bg-rose-500 animate-pulse text-white' : 'bg-slate-900 text-white hover:scale-110 active:scale-95'}`}
+            onClick={() => setShowVoice(true)}
+            className="fixed bottom-24 right-6 md:hidden z-50 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
          >
+            <div className="absolute inset-0 bg-slate-700/50 rounded-full animate-ping opacity-20 group-hover:opacity-40" />
             <Mic size={28} />
          </button>
+
+         <VoiceOverlay isOpen={showVoice} onClose={() => setShowVoice(false)} />
       </div>
    );
 };
