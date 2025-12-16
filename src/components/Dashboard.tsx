@@ -109,22 +109,38 @@ export const Dashboard = () => {
             </div>
             {/* NOTIFICATION BELL */}
             <button
-               onClick={() => {
-                  if ("Notification" in window && Notification.permission !== "granted") {
-                     Notification.requestPermission().then(p => {
-                        if (p === "granted") new Notification("Notifications Active", { body: "You will now receive precision alerts.", icon: "/icon-v2.png" });
-                     });
-                  } else {
-                     new Notification("Test Alert", { body: "Notifications are working perfectly.", icon: "/icon-v2.png" });
+               onClick={async () => {
+                  if (!("Notification" in window)) {
+                     alert("Notifications not supported");
+                     return;
                   }
+
+                  if (Notification.permission !== "granted") {
+                     const p = await Notification.requestPermission();
+                     if (p !== "granted") return;
+                  }
+
+                  // Toggle Preference
+                  const currentParams = user?.notificationPreferences || { enablePush: true, enableTimeSensitive: false };
+                  const newState = !currentParams.enableTimeSensitive;
+
+                  if (newState) {
+                     new Notification("Precision Alerts Active", { body: "LifeHub will now notify you at exact task times.", icon: "/icon-v2.png" });
+                  }
+
+                  updateNotificationSettings({
+                     ...currentParams,
+                     enablePush: true,
+                     enableTimeSensitive: newState
+                  });
                }}
-               className="p-3 bg-white rounded-full text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-all shadow-sm border border-slate-100"
-               title="Enable Alerts"
+               className={`p-3 rounded-full transition-all shadow-sm border border-slate-100 ${user?.notificationPreferences?.enableTimeSensitive ? 'bg-teal-50 text-teal-600' : 'bg-white text-slate-400 hover:text-teal-600'}`}
+               title={user?.notificationPreferences?.enableTimeSensitive ? "Disable Precision Alerts" : "Enable Precision Alerts"}
             >
                <div className="relative">
-                  <Bell size={20} />
-                  {("Notification" in window && Notification.permission === "granted") && (
-                     <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white"></span>
+                  <Bell size={20} fill={user?.notificationPreferences?.enableTimeSensitive ? "currentColor" : "none"} />
+                  {user?.notificationPreferences?.enableTimeSensitive && (
+                     <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse"></span>
                   )}
                </div>
             </button>
