@@ -54,16 +54,27 @@ export const parseQuickly = (text: string): BrainDumpResult | null => {
         let dueTime: string | undefined = undefined;
         let title = cleanText;
 
-        // Extract Time (e.g., "at 5pm", "at 17:30")
-        const timeMatch = title.match(/ at (\d{1,2}(?::\d{2})?(?:\s*(?:am|pm))?)/i);
+        // Detect Time (Robust Regex from Tasks.tsx)
+        // Matches: "at 5pm", "5pm", "11:20PM", "11:20 pm"
+        // Capture Groups: 1=Hours, 2=Minutes, 3=Meridian
+        const timeRegex = /\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b/i;
+        const timeMatch = title.match(timeRegex);
+
         if (timeMatch) {
-            dueTime = normalizeTime(timeMatch[1]);
-            title = title.replace(timeMatch[0], "");
+            let hours = parseInt(timeMatch[1]);
+            const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+            const meridian = timeMatch[3]?.trim().toLowerCase().replace(/\./g, '');
+
+            if (meridian === 'pm' && hours < 12) hours += 12;
+            if (meridian === 'am' && hours === 12) hours = 0;
+
+            dueTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            title = title.replace(timeRegex, "").trim();
         }
 
-        // Extract Date (e.g. "tomorrow", "next friday") -> Simple fallback or just let AI handle dates? 
-        // A simple "Tomorrow" check is 80% of specific cases.
-        if (title.includes("tomorrow")) {
+        // Detect Date (Keywords + Direct)
+        // 1. "Tomorrow"
+        if (/\btomorrow\b/i.test(title)) {
             const d = new Date();
             d.setDate(d.getDate() + 1);
             dueDate = d.toISOString().split('T')[0];
