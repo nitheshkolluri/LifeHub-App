@@ -52,69 +52,117 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
   if (isOpen === false) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="relative w-full max-w-sm bg-white/90 backdrop-blur-xl rounded-[40px] p-8 shadow-2xl animate-scale-in border border-white/50">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="relative w-full max-w-5xl bg-white shadow-2xl overflow-hidden animate-scale-in flex flex-col md:flex-row max-h-[90vh] rounded-none">
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
-            <Crown className="text-white" size={32} />
-          </div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight mb-2">Unlock Limitless</h2>
-          <p className="text-slate-500 font-medium">Elevate your operating system.</p>
-        </div>
+        {/* Left Side: Brand Narrative (Fortune 500 Style: Minimal, photographic feel) */}
+        <div className="bg-black w-full md:w-1/2 p-12 relative overflow-hidden flex flex-col justify-between text-white border-r border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-black opacity-90" />
 
-        {/* Features List */}
-        <div className="space-y-4 mb-8">
-          {[
-            { icon: Zap, text: "Unlimited AI Access" },
-            { icon: Shield, text: "Secure Cloud Vault" },
-            { icon: Star, text: "Infinite Habits & Tasks" },
-            { icon: Sparkles, text: "Premium Themes" }
-          ].map((feature, i) => (
-            <div key={i} className="flex items-center gap-4 p-3 rounded-2xl bg-white/50 border border-slate-100">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-900">
-                <feature.icon size={14} />
-              </div>
-              <span className="font-bold text-slate-700">{feature.text}</span>
+          <div className="relative z-10 space-y-6">
+            <div className="flex items-center gap-3 opacity-60">
+              <Crown size={20} />
+              <span className="text-xs font-bold tracking-[0.2em] uppercase">LifeHub Premium</span>
             </div>
-          ))}
+
+            <h2 className="text-5xl font-light tracking-tight leading-tight">
+              Mastery <br />
+              <span className="font-bold">By Design.</span>
+            </h2>
+
+            <p className="text-slate-400 font-light text-lg leading-relaxed max-w-sm">
+              For those who demand precision. The ultimate suite for financial, habit, and task orchestration.
+            </p>
+          </div>
+
+          <div className="relative z-10 grid grid-cols-2 gap-8 mt-12 border-t border-white/10 pt-8">
+            <div>
+              <p className="text-3xl font-light">∞ <span className="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1">Limitless</span></p>
+              <p className="text-xs text-slate-500 mt-1">Data Storage</p>
+            </div>
+            <div>
+              <p className="text-3xl font-light">A.I. <span className="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1">Native</span></p>
+              <p className="text-xs text-slate-500 mt-1">Neural Integration</p>
+            </div>
+          </div>
         </div>
 
-        {/* Pricing */}
-        <div className="text-center mb-8">
-          <span className="text-4xl font-black text-slate-900">$3.99</span>
-          <span className="text-slate-400 font-bold uppercase text-xs ml-1">/ month</span>
-          <p className="text-xs text-rose-500 font-bold uppercase tracking-widest mt-2">Launch Offer • Cancel Anytime</p>
-        </div>
+        {/* Right Side: Tiers (Clean, Corporate) */}
+        <div className="flex-1 p-12 bg-white flex flex-col justify-center relative">
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={handleUpgrade}
-            disabled={loading}
-            className="w-full bg-slate-900 hover:bg-black text-white py-4 rounded-[24px] font-bold text-lg shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          >
-            {loading ? <Loader2 className="animate-spin" /> : 'Upgrade Now'}
-            {!loading && <ArrowRight size={20} />}
-          </button>
-
+          {/* Explicit Close Button for 'Back' option */}
           <button
             onClick={handleClose}
-            className="w-full py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors"
+            className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-black transition-colors"
+            aria-label="Close"
           >
-            Maybe Later
+            <X size={28} strokeWidth={1.5} />
           </button>
+
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 uppercase tracking-widest mb-1">Select Tier</h3>
+              <p className="text-slate-400 font-light">Choose your level of engagement.</p>
+            </div>
+
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 uppercase tracking-widest mb-1">Account Tier</h3>
+                <p className="text-slate-400 font-light">Current vs Potential</p>
+              </div>
+
+              {/* Comparison Table */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Free Tier */}
+                <div className="border border-slate-200 p-4 opacity-50">
+                  <p className="font-bold text-sm text-slate-900 mb-2">Basic (Free)</p>
+                  <ul className="space-y-2 text-[10px] text-slate-500 uppercase tracking-widest">
+                    <li>• 500MB Storage</li>
+                    <li>• 15 Daily Tokens</li>
+                  </ul>
+                </div>
+
+                {/* Pro Tier */}
+                <div className="border-2 border-black p-4 bg-slate-50 relative shadow-lg">
+                  <div className="absolute -top-2 -right-2 bg-black text-white text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider">Selected</div>
+                  <p className="font-bold text-sm text-slate-900 mb-2">Executive (Pro)</p>
+                  <ul className="space-y-2 text-[10px] text-slate-900 font-bold uppercase tracking-widest">
+                    <li>• ∞ Unlimited Storage</li>
+                    <li>• ∞ Neural Access (AI)</li>
+                    <li>• Financial Vault</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <span className="text-3xl font-black text-slate-900">$3.99</span>
+                  <span className="text-slate-500 font-medium text-xs ml-1">/ month</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-slate-400 line-through">$9.99</p>
+                  <p className="text-[10px] text-rose-500 font-bold uppercase">Launch Price</p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleUpgrade}
+                disabled={loading}
+                className="w-full bg-black hover:bg-slate-800 text-white py-5 font-bold tracking-widest text-sm uppercase transition-all flex items-center justify-center gap-3"
+              >
+                {loading ? <Loader2 className="animate-spin" /> : 'Upgrade to Executive'}
+                <ArrowRight size={16} />
+              </button>
+
+              <button
+                onClick={handleClose}
+                className="w-full text-center text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
         </div>
-
-        {/* Close X (Absolute) */}
-        <button
-          onClick={handleClose}
-          className="absolute top-6 right-6 p-2 text-slate-300 hover:text-slate-500 transition-colors"
-        >
-          <X size={24} />
-        </button>
-
       </div>
     </div>
   );
