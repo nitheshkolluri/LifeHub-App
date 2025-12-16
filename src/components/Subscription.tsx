@@ -27,42 +27,23 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
     }
   };
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = () => {
     setLoading(true);
     try {
-      const priceId = getEnv('VITE_STRIPE_PRICE_ID_PRO_MONTHLY');
-      const publishableKey = getEnv('VITE_STRIPE_PUBLISHABLE_KEY');
+      // 1. Get Payment Link from Env
+      const paymentLink = getEnv('VITE_STRIPE_PAYMENT_LINK');
 
-      if (!priceId || !publishableKey) {
-        alert(`Configuration Error: Missing Stripe Keys.\n\nPlease check your .env file.`);
+      if (!paymentLink) {
+        alert("Configuration Error: Payment Link missing.\n\nPlease add VITE_STRIPE_PAYMENT_LINK to your .env file.");
+        setLoading(false);
         return;
       }
 
-      // Dynamic Import for performance
-      const { loadStripe } = await import('@stripe/stripe-js');
-      const stripe = await loadStripe(publishableKey);
+      // 2. Redirect
+      window.location.href = paymentLink;
 
-      if (!stripe) {
-        throw new Error('Stripe failed to load');
-      }
-
-      // Cast to any to avoid TS issues with dynamic import types
-      const { error } = await (stripe as any).redirectToCheckout({
-        lineItems: [{ price: priceId, quantity: 1 }],
-        mode: 'subscription',
-        successUrl: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${window.location.origin}/`,
-      });
-
-      if (error) {
-        console.error("Stripe Error:", error);
-        alert(`Payment Error: ${error.message}`);
-      }
-
-    } catch (error: any) {
-      console.error("Failed to checkout", error);
-      alert(`Checkout initialization failed: ${error.message || 'Unknown error'}`);
-    } finally {
+    } catch (error) {
+      console.error("Redirect failed", error);
       setLoading(false);
     }
   };
