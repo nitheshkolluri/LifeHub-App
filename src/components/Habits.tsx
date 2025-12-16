@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
+import { Habit } from '../types';
 import { Flame, Plus, Check, Star, Sparkles, X, Trash2 } from 'lucide-react';
 
 const ConstellationNode = ({ active }: { active: boolean }) => (
@@ -76,15 +77,35 @@ const HabitCard = ({ habit, onIncrement, deleteHabit, isDoneToday }: any) => {
 };
 
 export const Habits = () => {
-  const { habits, addHabit, incrementHabit, deleteHabit } = useApp();
+  const { habits, addHabit, updateHabit, incrementHabit, deleteHabit } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [title, setTitle] = useState('');
+  const [frequency, setFrequency] = useState<'daily' | 'weekly'>('daily');
   const today = new Date().toISOString().split('T')[0];
+
+  const openAddModal = () => {
+    setEditingHabit(null);
+    setTitle('');
+    setFrequency('daily');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (habit: Habit) => {
+    setEditingHabit(habit);
+    setTitle(habit.title);
+    setFrequency(habit.frequency);
+    setIsModalOpen(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title) {
-      addHabit(title, 'daily');
+      if (editingHabit) {
+        updateHabit(editingHabit.id, { title, frequency });
+      } else {
+        addHabit(title, frequency);
+      }
       setIsModalOpen(false);
       setTitle('');
     }
@@ -108,18 +129,19 @@ export const Habits = () => {
           </div>
         ) : (
           habits.map(habit => (
-            <HabitCard
-              key={habit.id}
-              habit={habit}
-              onIncrement={incrementHabit}
-              deleteHabit={deleteHabit}
-              isDoneToday={habit.completedDates.includes(today)}
-            />
+            <div key={habit.id} onClick={() => openEditModal(habit)} className="cursor-pointer">
+              <HabitCard
+                habit={habit}
+                onIncrement={incrementHabit}
+                deleteHabit={deleteHabit}
+                isDoneToday={habit.completedDates.includes(today)}
+              />
+            </div>
           ))
         )}
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openAddModal}
           className="mt-4 py-4 border-2 border-dashed border-slate-200 rounded-[32px] text-slate-400 font-bold hover:border-indigo-300 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2"
         >
           <Plus size={20} />
@@ -132,7 +154,7 @@ export const Habits = () => {
           <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
           <form onSubmit={handleSubmit} className="relative w-full max-w-sm bg-white rounded-[40px] p-8 shadow-2xl animate-scale-in">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-slate-900">New Ritual</h2>
+              <h2 className="text-2xl font-black text-slate-900">{editingHabit ? 'Edit Ritual' : 'New Ritual'}</h2>
               <button type="button" onClick={() => setIsModalOpen(false)}><X className="text-slate-400" /></button>
             </div>
 
@@ -144,8 +166,21 @@ export const Habits = () => {
               autoFocus
             />
 
+            <div className="flex gap-2 mb-8">
+              {(['daily', 'weekly'] as const).map(f => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFrequency(f)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase ${frequency === f ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+
             <button className="w-full bg-slate-900 text-white py-5 rounded-[24px] font-bold text-lg shadow-xl hover:bg-indigo-600 transition-all">
-              Start Tracking
+              {editingHabit ? 'Update Ritual' : 'Start Tracking'}
             </button>
           </form>
         </div>

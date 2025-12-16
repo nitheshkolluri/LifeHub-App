@@ -26,9 +26,10 @@ const liquidStyles = `
 `;
 
 export const Finance = () => {
-   const { finance, togglePaid, addFinanceItem, deleteFinanceItem } = useApp();
+   const { finance, togglePaid, addFinanceItem, deleteFinanceItem, updateFinanceItem } = useApp();
    const { isPremium, setShowPaywall } = useUsage();
    const [isModalOpen, setIsModalOpen] = useState(false);
+   const [editingItem, setEditingItem] = useState<FinanceItem | null>(null);
 
    // Stats
    const totalMonthly = finance.reduce((sum, item) => sum + item.amount, 0);
@@ -40,15 +41,39 @@ export const Finance = () => {
    const [amount, setAmount] = useState('');
    const [dueDay, setDueDay] = useState('');
 
+   const openAddModal = () => {
+      setEditingItem(null);
+      setTitle('');
+      setAmount('');
+      setDueDay('');
+      setIsModalOpen(true);
+   };
+
+   const openEditModal = (item: FinanceItem) => {
+      setEditingItem(item);
+      setTitle(item.title);
+      setAmount(item.amount.toString());
+      setDueDay(item.dueDay.toString());
+      setIsModalOpen(true);
+   };
+
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (title && amount) {
-         await addFinanceItem({
-            title,
-            amount: parseFloat(amount),
-            dueDay: parseInt(dueDay) || 1,
-            type: 'bill'
-         });
+         if (editingItem) {
+            updateFinanceItem(editingItem.id, {
+               title,
+               amount: parseFloat(amount),
+               dueDay: parseInt(dueDay) || 1
+            });
+         } else {
+            await addFinanceItem({
+               title,
+               amount: parseFloat(amount),
+               dueDay: parseInt(dueDay) || 1,
+               type: 'bill'
+            });
+         }
          setIsModalOpen(false);
          setTitle(''); setAmount(''); setDueDay('');
       }
@@ -66,7 +91,7 @@ export const Finance = () => {
                   <span>Offline Mode • Privacy Active</span>
                </div>
             </div>
-            <button onClick={() => setIsModalOpen(true)} className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+            <button onClick={openAddModal} className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
                <Plus size={20} />
             </button>
          </div>
@@ -120,7 +145,11 @@ export const Finance = () => {
                   </div>
                ) : (
                   finance.map(item => (
-                     <div key={item.id} className={`glass-card p-5 flex items-center justify-between group ${item.isPaidThisMonth ? 'opacity-60' : ''}`}>
+                     <div
+                        key={item.id}
+                        onClick={() => openEditModal(item)}
+                        className={`glass-card p-5 flex items-center justify-between group cursor-pointer hover:border-indigo-200 transition-all ${item.isPaidThisMonth ? 'opacity-60' : ''}`}
+                     >
                         <div className="flex items-center gap-4">
                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.type === 'income' ? 'bg-emerald-100 text-emerald-600' :
                               item.type === 'bill' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'
@@ -140,14 +169,14 @@ export const Finance = () => {
                            <div className="flex flex-col items-end gap-1">
                               {!item.isPaidThisMonth && item.type === 'bill' && (
                                  <button
-                                    onClick={() => togglePaid(item.id)}
+                                    onClick={(e) => { e.stopPropagation(); togglePaid(item.id); }}
                                     className="text-[10px] font-bold text-primary-500 bg-primary-50 px-2 py-1 rounded-md hover:bg-primary-100 transition-colors"
                                  >
                                     MARK PAID
                                  </button>
                               )}
                               <button
-                                 onClick={() => deleteFinanceItem(item.id)}
+                                 onClick={(e) => { e.stopPropagation(); deleteFinanceItem(item.id); }}
                                  className="text-[10px] font-bold text-slate-400 hover:text-rose-500 px-2 py-1 transition-colors"
                               >
                                  DELETE
@@ -162,7 +191,7 @@ export const Finance = () => {
 
          {/* Add Logic */}
          <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={openAddModal}
             className="fixed right-6 bottom-24 md:bottom-10 md:right-10 w-16 h-16 bg-slate-900 rounded-[24px] text-white shadow-2xl shadow-slate-900/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40"
          >
             <Plus size={32} />
@@ -173,7 +202,7 @@ export const Finance = () => {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
                <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
                <form onSubmit={handleSubmit} className="relative w-full max-w-sm bg-white rounded-[40px] p-8 shadow-2xl animate-scale-in">
-                  <h2 className="text-2xl font-black text-slate-900 mb-6">New Expense</h2>
+                  <h2 className="text-2xl font-black text-slate-900 mb-6">{editingItem ? 'Edit Expense' : 'New Expense'}</h2>
                   <div className="space-y-4">
                      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Netflix, Rent..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-slate-800 border-none focus:ring-2 focus:ring-indigo-100" autoFocus />
                      <div className="flex gap-4">
@@ -181,7 +210,9 @@ export const Finance = () => {
                         <input value={dueDay} onChange={e => setDueDay(e.target.value)} placeholder="Day (1-31)" type="number" className="w-1/3 p-4 bg-slate-50 rounded-2xl font-bold text-slate-800 border-none focus:ring-2 focus:ring-indigo-100 text-center" />
                      </div>
                   </div>
-                  <button className="w-full mt-8 bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:scale-[1.02] transition-transform">Add to Vault</button>
+                  <button className="w-full mt-8 bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:scale-[1.02] transition-transform">
+                     {editingItem ? 'Update Vault' : 'Add to Vault'}
+                  </button>
                </form>
             </div>
          )}

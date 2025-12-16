@@ -78,21 +78,21 @@ export const Tasks = () => {
     let date = null;
 
     // 1. Extract Time (at HH:MM AM/PM)
-    // Supported: 11:00am, 11:00 am, 11am, 11 am
-    const timeRegex = /\bat\s+(\d{1,2})(:(\d{2}))?\s*(am|pm)?\b/i;
+    // Supported: 11:00am, 11:00 am, 11am, 11 am, 11:17AM
+    const timeRegex = /\bat\s+(\d{1,2})(:(\d{2}))?(\s*(am|pm|a\.m\.|p\.m\.))?\b/i;
     const timeMatch = title.match(timeRegex);
 
     if (timeMatch) {
       // Convert to 24h
       let hours = parseInt(timeMatch[1]);
       const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
-      const meridian = timeMatch[4]?.toLowerCase();
+      const meridian = timeMatch[4]?.trim().toLowerCase().replace(/\./g, '');
 
       if (meridian === 'pm' && hours < 12) hours += 12;
       if (meridian === 'am' && hours === 12) hours = 0;
 
       time = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-      title = title.replace(timeMatch[0], '').trim();
+      title = title.replace(timeRegex, '').trim(); // Use regex in replace to ensure exact match removal
     }
 
     // 2. Extract Date (on DD/MM/YYYY or today/tomorrow)

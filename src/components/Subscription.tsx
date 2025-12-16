@@ -31,25 +31,36 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
     setLoading(true);
     try {
       const priceId = getEnv('VITE_STRIPE_PRICE_ID_PRO_MONTHLY');
+      const publishableKey = getEnv('VITE_STRIPE_PUBLISHABLE_KEY');
 
-      if (!priceId) {
-        alert(`Configuration Error: Price ID is missing.\n\nPlease check your Cloud Run FRONTEND variables.`);
+      if (!priceId || !publishableKey) {
+        alert(`Configuration Error: Missing Stripe Keys.\n\nPlease check your .env file.`);
         return;
       }
 
-      // Get current URL for redirect
-      const origin = window.location.origin;
-      const successUrl = `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
-      const cancelUrl = `${origin}/`;
+      // Dynamic Import for performance
+      const { loadStripe } = await import('@stripe/stripe-js');
+      const stripe = await loadStripe(publishableKey);
 
-      const { data } = await apiService.subscription.createCheckoutSession(priceId, successUrl, cancelUrl);
-
-      if (data.url) {
-        window.location.href = data.url;
+      if (!stripe) {
+        throw new Error('Stripe failed to load');
       }
-    } catch (error) {
+
+      const { error } = await stripe.redirectToCheckout({
+        lineItems: [{ price: priceId, quantity: 1 }],
+        mode: 'subscription',
+        successUrl: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/`,
+      });
+
+      if (error) {
+        console.error("Stripe Error:", error);
+        alert(`Payment Error: ${error.message}`);
+      }
+
+    } catch (error: any) {
       console.error("Failed to checkout", error);
-      alert("Checkout initialization failed. Please try again.");
+      alert(`Checkout initialization failed: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
