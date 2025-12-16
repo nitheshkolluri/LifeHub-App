@@ -77,22 +77,23 @@ export const Tasks = () => {
     let time = null;
     let date = null;
 
-    // 1. Extract Time (at HH:MM AM/PM)
-    // Supported: 11:00am, 11:00 am, 11am, 11 am, 11:17AM
-    const timeRegex = /\bat\s+(\d{1,2})(:(\d{2}))?(\s*(am|pm|a\.m\.|p\.m\.))?\b/i;
+    // 1. Extract Time (at HH:MM AM/PM or just HH:MM AM/PM)
+    // Matches: "at 5pm", "5pm", "11:20PM", "11:20 pm"
+    // Capture Groups: 1=Hours, 2=Minutes, 3=Meridian
+    const timeRegex = /\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b/i;
     const timeMatch = title.match(timeRegex);
 
     if (timeMatch) {
       // Convert to 24h
       let hours = parseInt(timeMatch[1]);
-      const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
-      const meridian = timeMatch[4]?.trim().toLowerCase().replace(/\./g, '');
+      const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+      const meridian = timeMatch[3]?.trim().toLowerCase().replace(/\./g, '');
 
       if (meridian === 'pm' && hours < 12) hours += 12;
       if (meridian === 'am' && hours === 12) hours = 0;
 
       time = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-      title = title.replace(timeRegex, '').trim(); // Use regex in replace to ensure exact match removal
+      title = title.replace(timeRegex, '').trim();
     }
 
     // 2. Extract Date (on DD/MM/YYYY or today/tomorrow)
@@ -100,10 +101,6 @@ export const Tasks = () => {
     const dateMatch = title.match(dateRegex);
     if (dateMatch) {
       // Naive parse, assume user matches regional format. For now, ISO or simple logic.
-      // Let's rely on standard ISO for storage if possible, or Keep regex simple.
-      // Actually, if we want reliable dates, we should standardized to YYYY-MM-DD.
-      // Since this is a simple strict implementation:
-      // Attempt to parse:
       const parts = dateMatch[1].split(/[-/]/);
       // Assume DD/MM/YYYY
       if (parts.length === 3) {
@@ -158,10 +155,8 @@ export const Tasks = () => {
           finalDate = parsedDate;
         } else if (finalTime) {
           // User mentioned time but no date.
-          // Prompt user to default to Today?
-          if (window.confirm("You scheduled a time but no date. Set for TODAY?")) {
-            finalDate = new Date().toISOString().split('T')[0];
-          }
+          // Auto-default to TODAY as requested (no prompt)
+          finalDate = new Date().toISOString().split('T')[0];
         }
       }
 
