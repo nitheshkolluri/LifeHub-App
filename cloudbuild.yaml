@@ -25,6 +25,8 @@ steps:
       - 'VITE_FIREBASE_APP_ID=1:868390342036:web:0cc18f05ee8d2065535381'
       - '--build-arg'
       - 'VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51SZ6MN3GzoSJKmxmfN98dDBakrTcQ133ogxMYMpbXTVGQaj00k5lGbkx99ioQecpLuAYNByHao8wPpPzvxruwLrM0098YjYmKP'
+      - '--build-arg'
+      - 'VITE_STRIPE_PAYMENT_LINK=$_VITE_STRIPE_PAYMENT_LINK'
       - '.'
 
   # Push the container image to Container Registry
