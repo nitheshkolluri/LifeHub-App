@@ -12,17 +12,20 @@ import {
   ArrowLeft,
   Save,
   AlertTriangle,
-  Loader2
+  Loader2,
+  History,
+  MessageSquare,
+  Plus
 } from 'lucide-react';
 import { ViewState } from '../types';
 
 export const Assistant = () => {
-  const { messages, setMessages, sendChatMessage, isLoadingAI, setView } = useApp();
+  const { messages, setMessages, sendChatMessage, isLoadingAI, setView, threads, loadThread, saveCurrentThread, clearCurrentChat } = useApp();
   const { usageCount, incrementUsage } = useUsage();
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [saveToMemory, setSaveToMemory] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const [showHistory, setShowHistory] = useState(false); // Sidebar state
   const endRef = useRef<HTMLDivElement>(null);
 
   // Voice Logic Refs
@@ -34,10 +37,12 @@ export const Assistant = () => {
   const pressStartTime = useRef<number>(0);
   const ignoreUpRef = useRef<boolean>(false);
 
-  // 1. Auto-Clear Chat on Mount
+  // 1. Initial Setup
   useEffect(() => {
-    // SECURITY: Ensure messages is an array immediately
-    setMessages([{ id: 'init', role: 'system', text: "Hello! I'm LifeHub. I'm here to listen. This chat will disappear when you leave, so let me know if you want me to remember anything." }]);
+    // Only set initial message if empty
+    if (!messages || messages.length === 0) {
+      setMessages([{ id: 'init', role: 'system', text: "Hello! I'm LifeHub. I'm here to listen. This chat will disappear when you leave, so let me know if you want me to remember anything." }]);
+    }
   }, []);
 
   useEffect(() => {
@@ -55,17 +60,36 @@ export const Assistant = () => {
 
   // -- Handlers --
   const handleExitRequest = () => {
-    if (messages && messages.length > 1) {
-      setShowExitWarning(true);
+    if (messages && messages.length > 2) { // Logic: If more than just system prompt + 1 user msg
+      // Actually, generic check
+      if (messages.length > 1) setShowExitWarning(true);
+      else setView(ViewState.DASHBOARD);
     } else {
       setView(ViewState.DASHBOARD);
     }
   };
 
-  const confirmExit = (shouldSave: boolean) => {
-    // API logic shim
+  const confirmExit = async (shouldSave: boolean) => {
+    if (shouldSave) {
+      await saveCurrentThread();
+    }
     setView(ViewState.DASHBOARD);
   };
+
+  const handleManualSave = async () => {
+    const id = await saveCurrentThread();
+    if (id) alert("Conversation Saved to Memory.");
+  };
+
+  const handleNewChat = () => {
+    clearCurrentChat();
+    setShowHistory(false);
+  };
+
+  const handleLoadThread = (id: string) => {
+    loadThread(id);
+    setShowHistory(false);
+  }
 
   const stopListening = () => {
     try {
@@ -217,19 +241,62 @@ export const Assistant = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] animate-slide-up relative">
+    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] animate-slide-up relative overflow-hidden">
+
+      {/* HISTORY SIDEBAR OVERLAY */}
+      {showHistory && (
+        <div className="absolute inset-0 z-40 flex animate-fade-in">
+          <div className="w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-4 flex flex-col border-r border-indigo-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-slate-800">Memory</h3>
+              <button onClick={() => setShowHistory(false)}><X size={18} className="text-slate-400" /></button>
+            </div>
+
+            <button
+              onClick={handleNewChat}
+              className="w-full py-3 mb-4 bg-indigo-50 text-indigo-600 rounded-xl font-bold flex items-center justify-center gap-2 border border-indigo-100 hover:bg-indigo-100 transition-colors"
+            >
+              <Plus size={18} /> New Thread
+            </button>
+
+            <div className="flex-1 overflow-y-auto space-y-2">
+              {threads.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => handleLoadThread(t.id)}
+                  className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors group"
+                >
+                  <p className="text-sm font-bold text-slate-700 truncate group-hover:text-indigo-600 transition-colors">{t.title}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{new Date(t.updatedAt).toLocaleDateString()}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 bg-slate-900/20 backdrop-blur-sm" onClick={() => setShowHistory(false)} />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 bg-white/60 backdrop-blur-md p-2 rounded-full border border-white/50 shadow-sm">
+      <div className="flex items-center justify-between mb-4 bg-white/60 backdrop-blur-md p-2 rounded-full border border-white/50 shadow-sm relative z-30">
         <button onClick={handleExitRequest} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
           <ArrowLeft size={20} />
         </button>
+
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Session Mode</span>
-          <button onClick={() => setSaveToMemory(!saveToMemory)} className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${saveToMemory ? 'bg-indigo-500 text-white shadow-indigo-200 shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
-            <div className={`w-2 h-2 rounded-full ${saveToMemory ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
-            <span className="text-xs font-bold">{saveToMemory ? 'Memory ON' : 'Memory OFF'}</span>
+          {/* <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Session Mode</span> */}
+          {/* History Toggle */}
+          <button onClick={() => setShowHistory(true)} className="px-4 py-2 rounded-full flex items-center gap-2 transition-all bg-slate-100 text-slate-500 hover:bg-slate-200">
+            <History size={16} />
+            <span className="text-xs font-bold hidden md:block">History</span>
+          </button>
+
+          {/* Save Button */}
+          <button onClick={handleManualSave} className="px-4 py-2 rounded-full flex items-center gap-2 transition-all bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100">
+            <Save size={16} />
+            <span className="text-xs font-bold hidden md:block">Save</span>
           </button>
         </div>
+
         <button onClick={handleExitRequest} className="md:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50"><X size={20} /></button>
       </div>
 

@@ -62,11 +62,19 @@ export interface FinanceItem {
 }
 
 export interface ChatMessage {
-  id: string;
-  role: 'user' | 'model';
+  id: string; // Document ID (or generated)
+  role: 'user' | 'model' | 'system';
   text: string;
-  timestamp: number;
+  timestamp: number; // Unix millis
   isThinking?: boolean;
+}
+
+export interface Thread {
+  id: string;
+  title: string;
+  lastMessage: string;
+  updatedAt: number;
+  messageCount: number;
 }
 
 export interface Report {

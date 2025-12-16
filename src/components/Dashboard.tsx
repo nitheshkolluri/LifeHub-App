@@ -1,288 +1,220 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
-import { VoiceRecorder } from './VoiceRecorder';
-import { CheckCircle2, DollarSign, Wind, ArrowRight, Zap, Droplets, Mountain, Globe, Bell, Mic } from 'lucide-react';
+import {
+   CheckCircle2,
+   Clock,
+   CreditCard,
+   LayoutDashboard,
+   MoreHorizontal,
+   Plus,
+   Sun,
+   Mic,
+   DollarSign,
+   ChevronRight,
+   Zap
+} from 'lucide-react';
 import { ViewState } from '../types';
 
-// --- STYLES & ANIMATIONS ---
-// We inject these styles dynamically for the fluid animations
-const fluidStyles = `
-  @keyframes morph {
-    0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-    50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
-    100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-  }
-  @keyframes float-y {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-  }
-  @keyframes orbit {
-    from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
-    to { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
-  }
-  @keyframes pulse-glow {
-    0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-    70% { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-  }
-  .blob {
-    animation: morph 8s ease-in-out infinite;
-    transition: all 1s ease;
-  }
-  .orbit-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 2px;
-    height: 2px;
-  }
-  .satellite {
-    position: absolute;
-    top: -20px;
-    left: -20px;
-    width: 40px;
-    height: 40px;
-  }
-`;
+// --- SUB-COMPONENTS ---
+
+// 1. Date Strip
+const DateStrip = ({ selectedDate, onSelectDate }: { selectedDate: Date, onSelectDate: (d: Date) => void }) => {
+   const dates = useMemo(() => {
+      const arr = [];
+      for (let i = -3; i <= 3; i++) {
+         const d = new Date();
+         d.setDate(d.getDate() + i);
+         arr.push(d);
+      }
+      return arr;
+   }, []);
+
+   return (
+      <div className="flex items-center justify-between gap-2 overflow-x-auto py-2 no-scrollbar px-2">
+         {dates.map((date, idx) => {
+            const isSelected = date.toDateString() === selectedDate.toDateString();
+            const isToday = date.toDateString() === new Date().toDateString();
+
+            return (
+               <button
+                  key={idx}
+                  onClick={() => onSelectDate(date)}
+                  className={`flex flex-col items-center justify-center min-w-[3.5rem] h-16 rounded-2xl transition-all duration-300 ${isSelected ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105' : 'bg-white text-slate-400 hover:bg-indigo-50 hover:text-indigo-500'}`}
+               >
+                  <span className="text-[10px] uppercase font-bold tracking-wider">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                  <span className={`text-xl font-bold ${isSelected ? 'text-white' : 'text-slate-700'}`}>{date.getDate()}</span>
+                  {isToday && !isSelected && <span className="w-1 h-1 bg-indigo-500 rounded-full mt-1"></span>}
+               </button>
+            )
+         })}
+      </div>
+   );
+};
+
+// 2. Metrics Card
+const MetricCard = ({ title, value, subtext, icon: Icon, color }: any) => (
+   <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 flex items-center justify-between">
+      <div>
+         <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">{title}</p>
+         <h3 className="text-2xl font-black text-slate-800">{value}</h3>
+         <p className="text-xs text-slate-500 font-medium mt-1">{subtext}</p>
+      </div>
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color}`}>
+         <Icon size={24} className="text-white" />
+      </div>
+   </div>
+);
 
 export const Dashboard = () => {
-   const { tasks, habits, finance, setView, toggleTask, incrementHabit, processBrainDump, updateNotificationSettings, toastMessage } = useApp();
    const { user } = useAuth();
-   const [mounted, setMounted] = useState(false);
-   const [isVoiceMode, setIsVoiceMode] = useState(false); // Voice Overlay State
+   const { tasks, habits, finance, setView, toggleTask, processBrainDump } = useApp();
+   const [selectedDate, setSelectedDate] = useState(new Date());
+   const [isVoiceMode, setIsVoiceMode] = useState(false);
 
-   useEffect(() => setMounted(true), []);
+   // Filter Data based on Date
+   const dateKey = selectedDate.toISOString().split('T')[0];
 
-   // -- DEFENSIVE CODING --
-   const safeTasks = Array.isArray(tasks) ? tasks : [];
-   const safeHabits = Array.isArray(habits) ? habits : [];
-   const safeFinance = Array.isArray(finance) ? finance : [];
-
-   // ... (stats logic unchanged)
-
-   const pendingTasks = safeTasks.filter(t => t.status === 'pending');
-   const completedToday = safeTasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
-   const totalTasks = completedToday + pendingTasks.length;
-   const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
-   const nextBill = safeFinance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
-   const activeHabits = safeHabits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
-   const stressLevel = pendingTasks.length;
-
-   const getMoodGradient = () => {
-      if (stressLevel >= 8) return 'from-teal-600 via-emerald-700 to-slate-900';
-      if (stressLevel >= 4) return 'from-emerald-600 via-teal-700 to-slate-900';
-      return 'from-sky-600 via-indigo-700 to-slate-900';
-   };
-
-   const getPulseColor = () => 'bg-teal-500/20';
-
-   if (!mounted) return null;
-
-   // -- Handlers --
-   const handleTaskToggle = (id: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      toggleTask(id);
-   };
-
-   const testNotification = async () => {
-      if (Notification.permission === 'granted') {
-         if ('serviceWorker' in navigator) {
-            const reg = await navigator.serviceWorker.ready;
-            reg.showNotification("System Check", { body: "Notifications are active.", icon: "/icon-v2.png" });
-         } else {
-            new Notification("System Check", { body: "Notifications are active." });
+   const todaysTasks = useMemo(() => {
+      return tasks.filter(t => {
+         if (t.status === 'completed' && t.dueDate === dateKey) return true; // Completed today
+         if (t.status === 'pending') {
+            // Show if due today or overdue (and selected date is Today)
+            if (t.dueDate === dateKey) return true;
+            if (!t.dueDate) return selectedDate.toDateString() === new Date().toDateString(); // Show backlog only on "Today"
+            // If viewing past, show what was due then? (Logic simplified for V2)
+            return false;
          }
-      }
+         return false;
+      });
+   }, [tasks, dateKey, selectedDate]);
+
+   const pendingCount = todaysTasks.filter(t => t.status === 'pending').length;
+   const completedCount = todaysTasks.filter(t => t.status === 'completed').length;
+
+   // Finance Calc
+   const monthlySpend = useMemo(() => {
+      return finance.reduce((acc, item) => acc + item.amount, 0);
+   }, [finance]);
+
+   const nextBill = useMemo(() => {
+      const pending = finance.filter(f => !f.isPaidThisMonth);
+      if (pending.length === 0) return null;
+      // Sort by due day logic (simplified)
+      return pending[0];
+   }, [finance]);
+
+   const activeHabits = useMemo(() => {
+      // Just show top 3 pending habits for orbit visual
+      return habits.filter(h => !h.completedDates.includes(dateKey)).slice(0, 5);
+   }, [habits, dateKey]);
+
+   // Voice Logic Stub
+   const startVoice = () => {
+      setIsVoiceMode(true);
+      setTimeout(() => {
+         setIsVoiceMode(false);
+         const text = "Remind me to call Mom tomorrow at 5pm";
+         if (window.confirm(`Simulated Voice Input: "${text}"\n\nProcess this?`)) {
+            processBrainDump(text);
+         }
+      }, 2000);
    };
 
    return (
-      <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10 bg-slate-50/50 relative">
+      <div className="flex flex-col h-full space-y-6 animate-fade-in pb-24 md:pb-0">
 
-         {/* TOAST NOTIFICATION */}
-         {toastMessage && (
-            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] animate-fade-in-down">
-               <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-slate-700/50 backdrop-blur-md">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                  <span className="font-medium text-sm">{toastMessage}</span>
-               </div>
-            </div>
-         )}
-
-         <header className="mb-8 animate-fade-in-up flex justify-between items-start">
+         {/* HEADER */}
+         <header className="flex items-center justify-between px-2">
             <div>
-               <h1 className="text-3xl md:text-5xl font-light text-slate-800 tracking-tight">
-                  <span className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-indigo-600">
-                     {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'},
-                  </span><br />
-                  {user?.name ? user.name.split(' ')[0] : 'Mindful One'}
+               <h1 className="text-3xl font-black text-slate-800 tracking-tight">
+                  Hello, {user?.name?.split(' ')[0] || 'User'}.
                </h1>
-               <p className="text-slate-500 font-medium mt-2 flex items-center gap-2">
-                  <Wind size={16} className="text-teal-500" />
-                  {stressLevel > 4 ? "Breathe. One step at a time." : "The current is calm today."}
-               </p>
+               <p className="text-slate-500 font-medium">Ready to conquer the day?</p>
             </div>
-            {/* NOTIFICATION BELL */}
-            <div className="flex gap-2">
-               <button
-                  onClick={testNotification}
-                  className="p-3 rounded-full text-slate-400 hover:bg-slate-100 transition-colors"
-                  title="Test Notification"
-               >
-                  <CheckCircle2 size={20} />
-               </button>
-               <button
-                  onClick={async () => {
-                     if (!("Notification" in window)) {
-                        alert("Notifications not supported");
-                        return;
-                     }
-
-                     if (Notification.permission !== "granted") {
-                        const p = await Notification.requestPermission();
-                        if (p !== "granted") return;
-                     }
-
-                     // Toggle Preference
-                     const currentParams = user?.notificationPreferences || { enablePush: true, enableTimeSensitive: false };
-                     const newState = !currentParams.enableTimeSensitive;
-
-                     // Instant feedback
-                     if (newState) testNotification();
-
-                     updateNotificationSettings({
-                        ...currentParams,
-                        enablePush: true,
-                        enableTimeSensitive: newState
-                     });
-                  }}
-                  className={`p-3 rounded-full transition-all shadow-sm border border-slate-100 ${user?.notificationPreferences?.enableTimeSensitive ? 'bg-teal-50 text-teal-600' : 'bg-white text-slate-400 hover:text-teal-600'}`}
-                  title={user?.notificationPreferences?.enableTimeSensitive ? "Disable Precision Alerts" : "Enable Precision Alerts"}
-               >
-                  <div className="relative">
-                     <Bell size={20} fill={user?.notificationPreferences?.enableTimeSensitive ? "currentColor" : "none"} />
-                     {user?.notificationPreferences?.enableTimeSensitive && (
-                        <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse"></span>
-                     )}
-                  </div>
-               </button>
+            <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 shadow-sm border border-white">
+               <Sun size={24} />
             </div>
          </header>
 
-         {/* BENTO GRID LAYOUT */}
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-stagger-in">
+         {/* TIME MACHINE / DATE PICKER */}
+         <section>
+            <div className="flex items-center justify-between mb-2 px-2">
+               <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Timeline</h2>
+               <button onClick={() => setSelectedDate(new Date())} className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Jump to Today</button>
+            </div>
+            <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+         </section>
 
-            {/* 1. MAIN FOCUS (Tasks) - Interactive */}
-            <div
-               className="md:col-span-2 relative h-64 md:h-80 bg-slate-900 rounded-[40px] overflow-hidden group shadow-2xl shadow-teal-900/20 hover:shadow-teal-900/30 transition-all"
-            >
-               {/* Backgrounds */}
-               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay pointer-events-none" />
-               <div className={`absolute inset-0 bg-gradient-to-br ${getMoodGradient()} opacity-90 transition-all duration-1000 pointer-events-none`} />
+         {/* KEY METRICS GRID */}
+         <section className="grid grid-cols-2 gap-4 px-2">
+            <MetricCard
+               title="Focus"
+               value={`${completedCount}/${pendingCount + completedCount}`}
+               subtext="Tasks Done"
+               icon={CheckCircle2}
+               color="bg-emerald-500"
+            />
+            <MetricCard
+               title="Finance"
+               value={`$${monthlySpend}`}
+               subtext="Monthly Burn"
+               icon={CreditCard}
+               color="bg-rose-500"
+            />
+         </section>
 
-               {/* LIFE CORE VISUALIZATION (Orb + Satellites) */}
-               <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-                  <div className={`w-64 h-64 ${getPulseColor()} rounded-full blur-3xl animate-pulse transition-colors duration-1000 z-0`} />
-
-                  {/* Orbit Container */}
-                  <div className="orbit-container animate-[orbit_20s_linear_infinite] z-0 opacity-50">
-                     {activeHabits.map((h, i) => (
-                        <div
-                           key={h.id}
-                           className="satellite bg-white/20 backdrop-blur rounded-full flex items-center justify-center border border-white/20 shadow-lg"
-                           style={{ transform: `rotate(${i * (360 / Math.max(activeHabits.length, 1))}deg) translateX(100px) rotate(-${i * (360 / Math.max(activeHabits.length, 1))}deg)` }}
-                        >
-                           <Zap size={16} className="text-white" />
-                        </div>
-                     ))}
-                  </div>
-               </div>
-
-               <div className="absolute inset-0 p-8 flex flex-col justify-between text-white z-10">
-                  <div className="flex justify-between items-start cursor-pointer" onClick={() => setView(ViewState.TASKS)}>
-                     <div>
-                        <h2 className="text-3xl font-black tracking-tight">{Math.round(progress)}% Focused</h2>
-                        <p className="text-white/70 font-medium">
-                           {stressLevel} missions remaining
-                        </p>
-                     </div>
-                     <div className="w-12 h-12 bg-white/10 backdrop-blur rounded-full flex items-center justify-center group-hover:rotate-45 transition-transform">
-                        <ArrowRight size={24} />
-                     </div>
-                  </div>
-
-                  {/* Interactive Task List */}
-                  <div className="space-y-3 z-20">
-                     {pendingTasks.slice(0, 3).map(t => (
-                        <div
-                           key={t.id}
-                           onClick={(e) => handleTaskToggle(t.id, e)}
-                           className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl backdrop-blur-sm border border-white/5 hover:bg-white/20 transition-colors cursor-pointer group/item"
-                        >
-                           <div className={`w-5 h-5 rounded-full border-2 border-white/30 flex items-center justify-center transition-colors group-hover/item:border-emerald-400 ${t.status === 'completed' ? 'bg-emerald-500 border-emerald-500' : ''}`}>
-                              {/* Checkbox visual */}
-                              <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                           </div>
-                           <span className="font-bold text-sm truncate group-hover/item:line-through transition-all">{t.title}</span>
-                        </div>
-                     ))}
-                     {pendingTasks.length === 0 && (
-                        <div className="text-indigo-200 font-bold flex items-center gap-2">
-                           <CheckCircle2 size={20} />
-                           <span>System Clear. Enjoy the calm.</span>
-                        </div>
-                     )}
-                  </div>
+         {/* FOCUS STREAM (Tasks) */}
+         <section className="flex-1 overflow-hidden flex flex-col px-2">
+            <div className="flex items-center justify-between mb-4">
+               <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Focus Stream</h2>
+               <div className="flex gap-2">
+                  <button onClick={() => setView(ViewState.TASKS)} className="bg-slate-100 p-2 rounded-xl text-slate-600 hover:bg-slate-200 transition-colors">
+                     <MoreHorizontal size={18} />
+                  </button>
+                  <button className="bg-indigo-600 p-2 rounded-xl text-white hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
+                     <Plus size={18} />
+                  </button>
                </div>
             </div>
 
-            {/* 2. HABIT ORBIT - Interactive */}
-            <div
-               className="relative h-64 md:h-80 bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-xl group hover:border-emerald-200 transition-all"
-            >
-               <div className="absolute top-0 right-0 p-8 w-full h-full bg-gradient-to-b from-emerald-50/50 to-transparent pointer-events-none" />
-               <div className="absolute inset-0 p-8 flex flex-col">
-                  <div className="flex justify-between items-center mb-6 cursor-pointer" onClick={() => setView(ViewState.HABITS)}>
-                     <h3 className="text-xl font-black text-slate-800">Habits</h3>
-                     <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl">
-                        <Zap size={20} fill="currentColor" />
-                     </div>
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+               {todaysTasks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-40 text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl">
+                     <LayoutDashboard size={32} className="mb-2 opacity-50" />
+                     <p className="font-medium text-sm">No tasks for this date.</p>
                   </div>
-
-                  <div className="flex-1 flex flex-col justify-center space-y-4">
-                     {activeHabits.length > 0 ? (
-                        activeHabits.slice(0, 3).map(h => (
-                           <div
-                              key={h.id}
-                              className="flex items-center justify-between cursor-pointer p-2 -mx-2 rounded-xl hover:bg-slate-50 transition-colors"
-                              onClick={() => incrementHabit(h.id)} // Direct increment
-                           >
-                              <span className="font-bold text-slate-600">{h.title}</span>
-                              <div className="h-6 w-24 bg-slate-100 rounded-full overflow-hidden relative">
-                                 <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-400 z-10">
-                                    Tap to Fill
-                                 </div>
-                                 <div className="h-full bg-emerald-500 w-1/5 transition-all duration-300" />
-                              </div>
+               ) : (
+                  todaysTasks.map(task => (
+                     <div key={task.id} className="group bg-white p-4 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
+                        <button
+                           onClick={() => toggleTask(task.id)}
+                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${task.status === 'completed' ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 hover:border-indigo-500'}`}
+                        >
+                           {task.status === 'completed' && <CheckCircle2 size={14} className="text-white" />}
+                        </button>
+                        <div className="flex-1">
+                           <h3 className={`font-bold text-slate-800 ${task.status === 'completed' ? 'line-through text-slate-400' : ''}`}>{task.title}</h3>
+                           <div className="flex items-center gap-2 mt-1">
+                              {task.dueTime && (
+                                 <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <Clock size={10} /> {task.dueTime}
+                                 </span>
+                              )}
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${task.priority === 'high' ? 'bg-rose-50 text-rose-500' : 'bg-slate-50 text-slate-400'}`}>
+                                 {task.priority}
+                              </span>
                            </div>
-                        ))
-                     ) : (
-                        <div className="text-center text-slate-400">
-                           <Mountain size={48} className="mx-auto mb-2 opacity-50" />
-                           <p className="text-xs font-bold uppercase">All Rituals Done</p>
                         </div>
-                     )}
-                  </div>
-
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-auto">
-                     {habits.length - activeHabits.length} / {habits.length} Complete
-                  </p>
-               </div>
+                     </div>
+                  ))
+               )}
             </div>
+         </section>
 
-            {/* 3. FINANCE SNAPSHOT (Interactive) */}
-            <div
+         {/* 3. FINANCE SNAPSHOT (Interactive) */}
+         < section className="px-2" >
+            < div
                onClick={() => setView(ViewState.FINANCE)}
                className="relative h-48 bg-slate-50 rounded-[40px] p-8 flex flex-col justify-between border border-dashed border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer group"
             >
@@ -298,112 +230,55 @@ export const Dashboard = () => {
                   </div>
                </div>
 
-               {nextBill ? (
-                  <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-                     <div>
-                        <p className="text-xs font-bold text-rose-500">Upcoming Bill</p>
-                        <p className="font-bold text-slate-700">{nextBill.title}</p>
+               {
+                  nextBill ? (
+                     <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                           <p className="text-xs font-bold text-rose-500">Upcoming Bill</p>
+                           <p className="font-bold text-slate-700">{nextBill.title}</p>
+                        </div>
                      </div>
-                     {/* <button className="text-[10px] bg-slate-900 text-white px-2 py-1 rounded">Pay</button> */}
-                  </div>
-               ) : (
-                  <div className="flex items-center gap-2 text-emerald-600">
-                     <CheckCircle2 size={16} />
-                     <span className="text-sm font-bold">No dues soon</span>
-                  </div>
-               )}
-            </div>
+                  ) : (
+                     <div className="flex items-center gap-2 text-emerald-600">
+                        <CheckCircle2 size={16} />
+                        <span className="text-sm font-bold">No dues soon</span>
+                     </div>
+                  )
+               }
+            </div >
+         </section>
 
-            {/* 4. AI ASSISTANT PROMPT */}
-            <div className="md:col-span-2 h-48 relative bg-gradient-to-r from-indigo-500 to-blue-500 rounded-[40px] p-1 overflow-hidden shadow-2xl shadow-blue-200 group">
+         {/* 4. AI ASSISTANT PROMPT */}
+         < section className="px-2" >
+            <div
+               onClick={() => setView(ViewState.ASSISTANT)}
+               className="h-48 relative bg-gradient-to-r from-indigo-500 to-blue-500 rounded-[40px] p-1 overflow-hidden shadow-2xl shadow-blue-200 group cursor-pointer"
+            >
                <div className="absolute inset-0 bg-white/10 backdrop-blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
                <div className="h-full bg-white/95 rounded-[36px] p-6 flex items-center gap-6 relative z-10">
                   <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg">
                      <Zap size={32} />
                   </div>
                   <div>
-                     <h3 className="text-xl font-bold text-slate-800">Need clarity?</h3>
-                     <p className="text-slate-500 text-sm mb-3">Ask about your day, budget, or justvent.</p>
-                     <button
-                        onClick={() => setView(ViewState.ASSISTANT)}
-                        className="text-indigo-600 font-black text-sm uppercase tracking-wide flex items-center gap-1 hover:gap-2 transition-all"
-                     >
-                        Chat with Assistant <ArrowRight size={14} />
-                     </button>
+                     <h3 className="text-xl font-bold text-slate-800 mb-1">LifeHub Assistant</h3>
+                     <p className="text-sm text-slate-500 leading-snug">
+                        AI-powered brain dump active. <br />Tap to organize your thoughts.
+                     </p>
                   </div>
-
-                  {/* Decorative */}
-                  <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
-                     <Globe size={120} />
+                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 ml-auto group-hover:translate-x-1 transition-transform">
+                     <ChevronRight size={20} />
                   </div>
                </div>
             </div>
+         </section>
 
-         </div>
-
-         {/* FLOATING MIC BUTTON (Invokes Voice Dashboard as Overlay) */}
+         {/* FLOATING MIC BUTTON */}
          <button
-            onClick={() => setIsVoiceMode(true)}
-            className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-16 h-16 bg-rose-600 rounded-full text-white shadow-2xl shadow-rose-500/50 flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 animate-bounce-in"
+            onClick={startVoice}
+            className={`fixed bottom-24 right-6 md:hidden z-50 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all ${isVoiceMode ? 'bg-rose-500 animate-pulse text-white' : 'bg-slate-900 text-white hover:scale-110 active:scale-95'}`}
          >
             <Mic size={28} />
          </button>
-
-         {/* VOICE MODE OVERLAY (Brain Dump) */}
-         {isVoiceMode && (
-            <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-xl animate-fade-in flex flex-col items-center justify-center p-6">
-
-               <button onClick={() => setIsVoiceMode(false)} className="absolute top-8 right-8 p-3 bg-white/10 rounded-full text-white/50 hover:bg-white/20 hover:text-white transition-all">
-                  <CheckCircle2 size={24} />
-               </button>
-
-               <div className="flex flex-col items-center justify-center max-w-md w-full text-center space-y-8 animate-slide-up">
-
-                  {/* Visualizer */}
-                  <div className="relative group cursor-pointer" onClick={() => setIsVoiceMode(false)}>
-                     <div className="absolute inset-0 bg-rose-500 rounded-full animate-ping opacity-20 duration-1000"></div>
-                     <div className="absolute inset-[-20px] bg-rose-500 rounded-full animate-pulse opacity-10"></div>
-                     <div className="w-32 h-32 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center text-white shadow-2xl shadow-rose-500/50 relative z-10 transition-transform group-hover:scale-95">
-                        <Wind size={48} className="animate-pulse" />
-                     </div>
-                  </div>
-
-                  <div className="space-y-4">
-                     <h2 className="text-4xl font-black text-white tracking-tight">Listening...</h2>
-                     <p className="text-lg text-slate-300 font-medium leading-relaxed">
-                        "Buy milk, gym at 5pm, and pay internet bill." <br />
-                        <span className="text-white/40 text-sm mt-2 block">Speak naturally. I'll sort it into Tasks, Habits, & Finance.</span>
-                     </p>
-                  </div>
-
-                  {/* Manual Controls (Hidden for seamless feel, but good for accessibility/fallback) */}
-                  <button
-                     onClick={() => { setView(ViewState.ASSISTANT); setIsVoiceMode(false); }}
-                     className="mt-8 text-sm font-bold text-white/30 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2"
-                  >
-                     Or swap to Chat <ArrowRight size={14} />
-                  </button>
-
-                  <VoiceRecorder
-                     onResult={async (text) => {
-                        // Auto-Process
-                        new Notification("Processing Brain Dump...", { body: " organizing your thoughts." });
-                        try {
-                           const result = await processBrainDump(text);
-                           setIsVoiceMode(false);
-                           // Show success feedback (toast replacement)
-                           alert(`Captured ${result.entities.length} items from your brain dump!`);
-                        } catch (e) {
-                           alert("Could not process voice. Please try again.");
-                        }
-                     }}
-                     onClose={() => setIsVoiceMode(false)}
-                  />
-               </div>
-            </div>
-         )}
       </div>
    );
 };
-
-// End of Dashboard

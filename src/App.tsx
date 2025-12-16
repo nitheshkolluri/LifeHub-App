@@ -46,7 +46,11 @@ const AppContent = () => {
     }
   }, [user]);
 
-  if (loading) {
+  // PREVENT LOGIN FLASH: Check local storage for token
+  const hasLocalToken = !!localStorage.getItem('authToken');
+
+  // If we are loading OR (we think we have a user but firebase is still checking), show spinner
+  if (loading || (hasLocalToken && !user)) {
     return (
       <div className="min-h-screen bg-surface-light flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
