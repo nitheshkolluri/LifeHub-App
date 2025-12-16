@@ -29,7 +29,49 @@ const addTaskTool: FunctionDeclaration = {
 
 const addHabitTool: FunctionDeclaration = {
   name: 'addHabit',
-  // ... (omitted unchanged parts)
+  description: 'Create a new habit to track.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING, description: 'The name of the habit.' },
+      frequency: { type: Type.STRING, description: 'Frequency: daily or weekly.' }
+    },
+    required: ['title']
+  }
+};
+
+const addFinanceTool: FunctionDeclaration = {
+  name: 'addFinanceItem',
+  description: 'Add a recurring bill or subscription.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING, description: 'Name of the bill or subscription.' },
+      amount: { type: Type.NUMBER, description: 'Amount in dollars.' },
+      dueDay: { type: Type.NUMBER, description: 'Day of the month it is due (1-31).' },
+      type: { type: Type.STRING, description: 'Type: bill, subscription, or one-time.' }
+    },
+    required: ['title', 'amount', 'dueDay']
+  }
+};
+
+const getSummaryTool: FunctionDeclaration = {
+  name: 'getLifeSummary',
+  description: 'Get a summary of current tasks, habits, and finances to answer user questions.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {},
+  }
+};
+
+export class GeminiService {
+  private ai: GoogleGenAI;
+  private chat: Chat | null = null;
+  private modelName = 'gemini-2.5-flash';
+
+  constructor() {
+    this.ai = new GoogleGenAI({ apiKey: getEnv('VITE_GEMINI_API_KEY') || '' });
+  }
 
   // --- BRAIN DUMP FEATURE ---
   async parseBrainDump(text: string): Promise<BrainDumpResult> {
