@@ -409,8 +409,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const toolHandlers = {
       addTask: async (args: any) => {
         if (checkLimit()) {
-          await addTask(args.title, args.priority || 'medium', args.dueDate);
-          return `Added task "${args.title}".`;
+          // Pass dueTime (arg 4)
+          await addTask(args.title, args.priority || 'medium', args.dueDate, args.dueTime);
+          return `Added task "${args.title}"${args.dueTime ? ' at ' + args.dueTime : ''}.`;
         }
         return `Limit reached. Upgrade to Pro.`;
       },
@@ -443,7 +444,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const processBrainDump = async (text: string): Promise<BrainDumpResult> => {
     // Limit check removed to allow backend to decide (Trial Logic)
     setIsLoadingAI(true);
-    setIsLoadingAI(true);
     let dumpResult: BrainDumpResult;
     try {
       // 1. Try Backend API (Preferred)
@@ -467,7 +467,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const promises: Promise<any>[] = [];
       if (result.entities) {
         result.entities.forEach((entity: { type: string; data: any; }) => {
-          if (entity.type === 'task') promises.push(addTask(entity.data.title, entity.data.priority, entity.data.dueDate));
+          if (entity.type === 'task') {
+            // Pass dueTime (arg 4)
+            promises.push(addTask(entity.data.title, entity.data.priority, entity.data.dueDate, entity.data.dueTime));
+          }
           else if (entity.type === 'habit') promises.push(addHabit(entity.data.title, entity.data.frequency));
           else if (entity.type === 'finance') promises.push(addFinanceItem(entity.data));
         });
