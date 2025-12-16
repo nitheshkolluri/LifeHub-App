@@ -48,52 +48,68 @@ const fluidStyles = `
 `;
 
 export const Dashboard = () => {
-   const { tasks, habits, finance, setView, toggleTask, incrementHabit, processBrainDump, updateNotificationSettings } = useApp();
+   const { tasks, habits, finance, setView, toggleTask, incrementHabit, processBrainDump, updateNotificationSettings, toastMessage } = useApp();
    const { user } = useAuth();
    const [mounted, setMounted] = useState(false);
    const [isVoiceMode, setIsVoiceMode] = useState(false); // Voice Overlay State
 
    useEffect(() => setMounted(true), []);
 
-   // -- DEFENSIVE CODING: Ensure arrays exist (Fix for "M is not a function") --
+   // -- DEFENSIVE CODING --
    const safeTasks = Array.isArray(tasks) ? tasks : [];
    const safeHabits = Array.isArray(habits) ? habits : [];
    const safeFinance = Array.isArray(finance) ? finance : [];
 
-   // -- STATS & DERIVED STATE --
+   // ... (stats logic unchanged)
+
    const pendingTasks = safeTasks.filter(t => t.status === 'pending');
    const completedToday = safeTasks.filter(t => t.status === 'completed' && new Date(t.createdAt).toDateString() === new Date().toDateString()).length;
    const totalTasks = completedToday + pendingTasks.length;
    const progress = totalTasks > 0 ? (completedToday / totalTasks) * 100 : 0;
    const nextBill = safeFinance.filter(f => !f.isPaidThisMonth).sort((a, b) => (a.dueDay || 32) - (b.dueDay || 32))[0];
    const activeHabits = safeHabits.filter(h => !h.completedDates.includes(new Date().toISOString().split('T')[0]));
-
-   // Dynamic Stress/Mood Logic (Depends on pendingTasks)
    const stressLevel = pendingTasks.length;
 
    const getMoodGradient = () => {
-      // ZEN DESIGN: Always peaceful, regardless of load.
-      // Subtle variations only to keep it alive, but never alarming.
-      if (stressLevel >= 8) return 'from-teal-600 via-emerald-700 to-slate-900'; // Deep Focus
-      if (stressLevel >= 4) return 'from-emerald-600 via-teal-700 to-slate-900'; // Flow
-      return 'from-sky-600 via-indigo-700 to-slate-900'; // Clarity
+      if (stressLevel >= 8) return 'from-teal-600 via-emerald-700 to-slate-900';
+      if (stressLevel >= 4) return 'from-emerald-600 via-teal-700 to-slate-900';
+      return 'from-sky-600 via-indigo-700 to-slate-900';
    };
 
-   const getPulseColor = () => {
-      return 'bg-teal-500/20'; // Always calm teal
-   };
+   const getPulseColor = () => 'bg-teal-500/20';
 
    if (!mounted) return null;
 
    // -- Handlers --
    const handleTaskToggle = (id: string, e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent card navigation
+      e.stopPropagation();
       toggleTask(id);
    };
 
+   const testNotification = async () => {
+      if (Notification.permission === 'granted') {
+         if ('serviceWorker' in navigator) {
+            const reg = await navigator.serviceWorker.ready;
+            reg.showNotification("System Check", { body: "Notifications are active.", icon: "/icon-v2.png" });
+         } else {
+            new Notification("System Check", { body: "Notifications are active." });
+         }
+      }
+   };
 
    return (
-      <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10 bg-slate-50/50">
+      <div className="h-full w-full overflow-y-auto p-4 md:p-8 font-sans scroll-smooth pb-32 md:pb-10 bg-slate-50/50 relative">
+
+         {/* TOAST NOTIFICATION */}
+         {toastMessage && (
+            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] animate-fade-in-down">
+               <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-slate-700/50 backdrop-blur-md">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="font-medium text-sm">{toastMessage}</span>
+               </div>
+            </div>
+         )}
+
          <header className="mb-8 animate-fade-in-up flex justify-between items-start">
             <div>
                <h1 className="text-3xl md:text-5xl font-light text-slate-800 tracking-tight">
@@ -108,42 +124,50 @@ export const Dashboard = () => {
                </p>
             </div>
             {/* NOTIFICATION BELL */}
-            <button
-               onClick={async () => {
-                  if (!("Notification" in window)) {
-                     alert("Notifications not supported");
-                     return;
-                  }
+            <div className="flex gap-2">
+               <button
+                  onClick={testNotification}
+                  className="p-3 rounded-full text-slate-400 hover:bg-slate-100 transition-colors"
+                  title="Test Notification"
+               >
+                  <CheckCircle2 size={20} />
+               </button>
+               <button
+                  onClick={async () => {
+                     if (!("Notification" in window)) {
+                        alert("Notifications not supported");
+                        return;
+                     }
 
-                  if (Notification.permission !== "granted") {
-                     const p = await Notification.requestPermission();
-                     if (p !== "granted") return;
-                  }
+                     if (Notification.permission !== "granted") {
+                        const p = await Notification.requestPermission();
+                        if (p !== "granted") return;
+                     }
 
-                  // Toggle Preference
-                  const currentParams = user?.notificationPreferences || { enablePush: true, enableTimeSensitive: false };
-                  const newState = !currentParams.enableTimeSensitive;
+                     // Toggle Preference
+                     const currentParams = user?.notificationPreferences || { enablePush: true, enableTimeSensitive: false };
+                     const newState = !currentParams.enableTimeSensitive;
 
-                  if (newState) {
-                     new Notification("Precision Alerts Active", { body: "LifeHub will now notify you at exact task times.", icon: "/icon-v2.png" });
-                  }
+                     // Instant feedback
+                     if (newState) testNotification();
 
-                  updateNotificationSettings({
-                     ...currentParams,
-                     enablePush: true,
-                     enableTimeSensitive: newState
-                  });
-               }}
-               className={`p-3 rounded-full transition-all shadow-sm border border-slate-100 ${user?.notificationPreferences?.enableTimeSensitive ? 'bg-teal-50 text-teal-600' : 'bg-white text-slate-400 hover:text-teal-600'}`}
-               title={user?.notificationPreferences?.enableTimeSensitive ? "Disable Precision Alerts" : "Enable Precision Alerts"}
-            >
-               <div className="relative">
-                  <Bell size={20} fill={user?.notificationPreferences?.enableTimeSensitive ? "currentColor" : "none"} />
-                  {user?.notificationPreferences?.enableTimeSensitive && (
-                     <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse"></span>
-                  )}
-               </div>
-            </button>
+                     updateNotificationSettings({
+                        ...currentParams,
+                        enablePush: true,
+                        enableTimeSensitive: newState
+                     });
+                  }}
+                  className={`p-3 rounded-full transition-all shadow-sm border border-slate-100 ${user?.notificationPreferences?.enableTimeSensitive ? 'bg-teal-50 text-teal-600' : 'bg-white text-slate-400 hover:text-teal-600'}`}
+                  title={user?.notificationPreferences?.enableTimeSensitive ? "Disable Precision Alerts" : "Enable Precision Alerts"}
+               >
+                  <div className="relative">
+                     <Bell size={20} fill={user?.notificationPreferences?.enableTimeSensitive ? "currentColor" : "none"} />
+                     {user?.notificationPreferences?.enableTimeSensitive && (
+                        <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse"></span>
+                     )}
+                  </div>
+               </button>
+            </div>
          </header>
 
          {/* BENTO GRID LAYOUT */}
