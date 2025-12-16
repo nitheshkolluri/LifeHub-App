@@ -313,7 +313,7 @@ export const Dashboard = () => {
          {/* FLOATING MIC BUTTON */}
          <button
             onClick={() => setShowVoice(true)}
-            className="fixed bottom-24 right-6 md:hidden z-50 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
+            className="fixed bottom-24 right-6 z-50 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
          >
             <div className="absolute inset-0 bg-slate-700/50 rounded-full animate-ping opacity-20 group-hover:opacity-40" />
             <Mic size={28} />
