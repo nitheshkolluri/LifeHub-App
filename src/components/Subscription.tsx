@@ -46,7 +46,8 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
         throw new Error('Stripe failed to load');
       }
 
-      const { error } = await stripe.redirectToCheckout({
+      // Cast to any to avoid TS issues with dynamic import types
+      const { error } = await (stripe as any).redirectToCheckout({
         lineItems: [{ price: priceId, quantity: 1 }],
         mode: 'subscription',
         successUrl: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,

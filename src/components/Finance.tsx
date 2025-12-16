@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
 import { useUsage } from '../store/UsageContext';
+import { FinanceItem } from '../types';
 import { DollarSign, Check, Plus, Lock, TrendingUp, Layers, CreditCard } from 'lucide-react';
 
 // Styles for the liquid wave animation
