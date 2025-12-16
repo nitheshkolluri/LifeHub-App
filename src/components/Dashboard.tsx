@@ -48,7 +48,7 @@ const fluidStyles = `
 `;
 
 export const Dashboard = () => {
-   const { tasks, habits, finance, setView, toggleTask, incrementHabit, processBrainDump } = useApp();
+   const { tasks, habits, finance, setView, toggleTask, incrementHabit, processBrainDump, updateNotificationSettings } = useApp();
    const { user } = useAuth();
    const [mounted, setMounted] = useState(false);
    const [isVoiceMode, setIsVoiceMode] = useState(false); // Voice Overlay State
