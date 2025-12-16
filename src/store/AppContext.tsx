@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext';
 import { useUsage } from './UsageContext';
 import { db } from '../lib/firebase';
 import { apiService } from '../services/api.service';
+import { parseQuickly } from '../utils/quickParser';
 import { collection, query, onSnapshot, addDoc, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 
 // --- DEFINITIONS ---
@@ -657,7 +658,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addFinanceItem, updateFinanceItem, togglePaid, deleteFinanceItem,
       updateNotificationSettings,
       sendChatMessage, generateReport, processBrainDump,
-      messages, threads, saveCurrentThread, loadThread, deleteThread, clearCurrentChat
+      threads, saveCurrentThread, loadThread, deleteThread, clearCurrentChat
     }}>
       {children}
     </AppContext.Provider>
