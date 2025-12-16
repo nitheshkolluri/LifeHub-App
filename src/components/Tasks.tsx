@@ -71,20 +71,66 @@ export const Tasks = () => {
     setIsModalOpen(true);
   };
 
+  // --- NLP Utilities ---
+  const parseTimeInput = (input: string): { cleanTitle: string, parsedTime: string | null, parsedDate: string | null } => {
+    let title = input;
+    let time = null;
+    let date = null;
+
+    // 1. Extract Time (at HH:MM AM/PM)
+    // Supported: 11:00am, 11:00 am, 11am, 11 am
+    const timeRegex = /\bat\s+(\d{1,2})(:(\d{2}))?\s*(am|pm)?\b/i;
+    const timeMatch = title.match(timeRegex);
+
+    if (timeMatch) {
+      // Convert to 24h
+      let hours = parseInt(timeMatch[1]);
+      const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
+      const meridian = timeMatch[4]?.toLowerCase();
+
+      if (meridian === 'pm' && hours < 12) hours += 12;
+      if (meridian === 'am' && hours === 12) hours = 0;
+
+      time = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      title = title.replace(timeMatch[0], '').trim();
+    }
+
+    // 2. Extract Date (on DD/MM/YYYY or today/tomorrow)
+    const dateRegex = /\bon\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b/i;
+    const dateMatch = title.match(dateRegex);
+    if (dateMatch) {
+      // Naive parse, assume user matches regional format. For now, ISO or simple logic.
+      // Let's rely on standard ISO for storage if possible, or Keep regex simple.
+      // Actually, if we want reliable dates, we should standardized to YYYY-MM-DD.
+      // Since this is a simple strict implementation:
+      // Attempt to parse:
+      const parts = dateMatch[1].split(/[-/]/);
+      // Assume DD/MM/YYYY
+      if (parts.length === 3) {
+        const d = parts[0].padStart(2, '0');
+        const m = parts[1].padStart(2, '0');
+        const y = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+        date = `${y}-${m}-${d}`;
+        title = title.replace(dateMatch[0], '').trim();
+      }
+    } else {
+      if (/\btoday\b/i.test(title)) {
+        date = new Date().toISOString().split('T')[0];
+        title = title.replace(/\btoday\b/i, '').trim();
+      } else if (/\btomorrow\b/i.test(title)) {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        date = d.toISOString().split('T')[0];
+        title = title.replace(/\btomorrow\b/i, '').trim();
+      }
+    }
+
+    return { cleanTitle: title, parsedTime: time, parsedDate: date };
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-
-    if (!editingTask) {
-      if (!editingTask) {
-        // Enforce Usage Limit on New Tasks
-        // if (!isPremium && usageCount >= 3) {
-        //   setShowPaywall(true);
-        //   return;
-        // }
-        incrementUsage();
-      }
-    }
 
     if (editingTask) {
       updateTask(editingTask.id, {
@@ -93,10 +139,45 @@ export const Tasks = () => {
         dueDate: dueDate || null,
         dueTime: dueTime || null
       });
+      setIsModalOpen(false);
     } else {
-      addTask(title, priority, dueDate, dueTime);
+      // Logic for NEW Tasks (Inline or Modal)
+      // Check if this came from Inline Input (we can guess if modal is closed, but safely parsing always helps)
+
+      let finalTitle = title;
+      let finalDate = dueDate;
+      let finalTime = dueTime;
+
+      // Only run Parser if user didn't explicitly set date/time in Modal (assume form overrides NLP)
+      if (!isModalOpen) {
+        const { cleanTitle, parsedTime, parsedDate } = parseTimeInput(title);
+        finalTitle = cleanTitle;
+        if (parsedTime) finalTime = parsedTime;
+
+        if (parsedDate) {
+          finalDate = parsedDate;
+        } else if (finalTime) {
+          // User mentioned time but no date.
+          // Prompt user to default to Today?
+          if (window.confirm("You scheduled a time but no date. Set for TODAY?")) {
+            finalDate = new Date().toISOString().split('T')[0];
+          }
+        }
+      }
+
+      // Usage Logic (Removed Paywall)
+      incrementUsage();
+
+      addTask(finalTitle, priority, finalDate, finalTime);
+
+      // CRITICAL FIX: Clear the title after submission!
+      setTitle('');
+      setDueDate('');
+      setDueTime('');
     }
-    setIsModalOpen(false);
+
+    // Check if we need to close modal
+    if (isModalOpen) setIsModalOpen(false);
   };
 
   return (
