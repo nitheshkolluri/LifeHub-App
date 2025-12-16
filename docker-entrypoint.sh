@@ -17,6 +17,7 @@ echo "  VITE_STRIPE_PUBLISHABLE_KEY: \"${VITE_STRIPE_PUBLISHABLE_KEY}\"," >> "$f
 echo "  VITE_API_URL: \"${VITE_API_URL}\"," >> "$file_path"
 echo "  VITE_STRIPE_PRICE_ID_PRO_MONTHLY: \"${VITE_STRIPE_PRICE_ID_PRO_MONTHLY}\"," >> "$file_path"
 echo "  VITE_GEMINI_API_KEY: \"${VITE_GEMINI_API_KEY}\"," >> "$file_path"
+echo "  VITE_STRIPE_PAYMENT_LINK: \"${VITE_STRIPE_PAYMENT_LINK}\"," >> "$file_path"
 
 echo "};" >> "$file_path"
 
