@@ -14,6 +14,8 @@ import {
    ChevronRight,
    Zap,
    Flame,
+   Trash2,
+   Pencil,
 } from 'lucide-react';
 import { ViewState } from '../types';
 import { VoiceOverlay } from './VoiceOverlay';
@@ -70,7 +72,7 @@ const MetricCard = ({ title, value, subtext, icon: Icon, color }: any) => (
 
 export const Dashboard = () => {
    const { user } = useAuth();
-   const { tasks, habits, finance, setView, toggleTask, processBrainDump } = useApp();
+   const { tasks, habits, finance, setView, toggleTask, deleteTask, processBrainDump } = useApp();
    const [selectedDate, setSelectedDate] = useState(new Date());
    const [showVoice, setShowVoice] = useState(false);
 
@@ -176,7 +178,7 @@ export const Dashboard = () => {
                   </div>
                ) : (
                   todaysTasks.map(task => (
-                     <div key={task.id} className="group bg-white p-4 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
+                     <div key={task.id} className="group bg-white p-4 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 relative">
                         <button
                            onClick={() => toggleTask(task.id)}
                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${task.status === 'completed' ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 hover:border-indigo-500'}`}
@@ -195,6 +197,29 @@ export const Dashboard = () => {
                                  {task.priority}
                               </span>
                            </div>
+                        </div>
+
+                        {/* Actions (Visible on Hover/Focus) */}
+                        <div className="flex bg-white/80 backdrop-blur-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-1/2 -translate-y-1/2 shadow-sm border border-slate-100">
+                           <button
+                              onClick={() => { setView(ViewState.TASKS); /* Ideally open edit modal there */ }}
+                              className="p-2 text-slate-400 hover:text-indigo-500 transition-colors"
+                              title="Edit in Tasks View"
+                           >
+                              <Pencil size={14} />
+                           </button>
+                           <div className="w-[1px] bg-slate-100 my-1" />
+                           <button
+                              onClick={(e) => {
+                                 e.stopPropagation();
+                                 if (window.confirm('Delete this task?')) {
+                                    deleteTask(task.id);
+                                 }
+                              }}
+                              className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                           >
+                              <Trash2 size={14} />
+                           </button>
                         </div>
                      </div>
                   ))
