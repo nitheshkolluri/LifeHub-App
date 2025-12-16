@@ -488,23 +488,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const processBrainDump = async (text: string): Promise<BrainDumpResult> => {
     setIsLoadingAI(true);
-    let dumpResult: BrainDumpResult;
-    try {
-      console.log("BrainDump: Attempting Backend API...");
-      const { data } = await apiService.assistant.brainDump(text);
-      dumpResult = data;
-    } catch (e) {
-      console.warn("BrainDump: Backend failed. Falling back to Client-Side Gemini.", e);
+    let dumpResult: BrainDumpResult | null = null; // Allow null initially
+
+    // 1. FAST PATH: Quick Regex Parser
+    console.log("BrainDump: Trying Lightning Mode...");
+    const quickResult = parseQuickly(text);
+    if (quickResult) {
+      console.log("BrainDump: Lighting Match Found!", quickResult);
+      dumpResult = quickResult;
+    }
+
+    // 2. SLOW PATH: Cloud AI (Backend -> Client Fallback)
+    if (!dumpResult) {
       try {
-        dumpResult = await geminiService.parseBrainDump(text);
-      } catch (clientError) {
-        console.error("BrainDump: All attempts failed.", clientError);
-        throw clientError;
+        console.log("BrainDump: Attempting Backend API...");
+        const { data } = await apiService.assistant.brainDump(text);
+        dumpResult = data;
+      } catch (e) {
+        console.warn("BrainDump: Backend failed. Falling back to Client-Side Gemini.", e);
+        try {
+          dumpResult = await geminiService.parseBrainDump(text);
+        } catch (clientError) {
+          console.error("BrainDump: All attempts failed.", clientError);
+          setIsLoadingAI(false); // Ensure loading stops
+          throw clientError;
+        }
       }
     }
 
     try {
-      const result = dumpResult;
+      const result = dumpResult!; // Assert not null now
       const promises: Promise<any>[] = [];
       if (result.entities) {
         result.entities.forEach((entity: { type: string; data: any; }) => {
