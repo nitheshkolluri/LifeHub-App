@@ -96,24 +96,24 @@ export const Finance = () => {
          {/* --- SUMMARY CARDS --- */}
          <div className="grid grid-cols-2 gap-4 px-2 mb-8">
             <div className="p-6 rounded-[32px] bg-slate-900 text-white shadow-xl shadow-slate-200">
-               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Total Cap</span>
+               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest block mb-1">Total Cap</span>
                <span className="text-3xl font-black">${totalMonthly}</span>
             </div>
             <div className="p-6 rounded-[32px] bg-white border border-slate-100 shadow-xl shadow-slate-100">
-               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Remaining</span>
+               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest block mb-1">Remaining</span>
                <span className="text-3xl font-black text-indigo-600">${totalMonthly - paidThisMonth}</span>
             </div>
          </div>
 
          {/* --- EXPENSE TICKETS --- */}
          <div className="space-y-3 px-2">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-2 mb-2">Upcoming Tickets</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2 mb-2">Upcoming Tickets</h3>
 
             <div className="space-y-4">
                {finance.length === 0 ? (
                   <div className="glass-card text-center py-12">
                      <DollarSign size={32} className="mx-auto mb-2 text-slate-300" />
-                     <p className="text-slate-400 font-bold">No items in wallet.</p>
+                     <p className="text-slate-500 font-bold">No items in wallet.</p>
                   </div>
                ) : (
                   finance.map(item => (
@@ -130,7 +130,7 @@ export const Finance = () => {
                            </div>
                            <div>
                               <h3 className="font-bold text-slate-800">{item.title}</h3>
-                              <p className="text-xs text-slate-400 font-bold">
+                              <p className="text-xs text-slate-500 font-bold">
                                  Due Day: {item.dueDay}
                               </p>
                            </div>
@@ -150,14 +150,14 @@ export const Finance = () => {
                               {item.isPaidThisMonth && item.type === 'bill' && (
                                  <button
                                     onClick={(e) => { e.stopPropagation(); togglePaid(item.id); }}
-                                    className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md hover:bg-slate-200 transition-colors"
+                                    className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md hover:bg-slate-200 transition-colors"
                                  >
                                     UNDO
                                  </button>
                               )}
                               <button
                                  onClick={(e) => { e.stopPropagation(); deleteFinanceItem(item.id); }}
-                                 className="text-[10px] font-bold text-slate-400 hover:text-rose-500 px-2 py-1 transition-colors"
+                                 className="text-[10px] font-bold text-slate-500 hover:text-rose-500 px-2 py-1 transition-colors"
                               >
                                  DELETE
                               </button>
@@ -198,7 +198,7 @@ export const Finance = () => {
                   <button
                      type="button"
                      onClick={() => setIsModalOpen(false)}
-                     className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                     className="absolute top-4 right-4 p-2 text-slate-500 hover:text-slate-600 transition-colors"
                   >
                      <X size={24} />
                   </button>

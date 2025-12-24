@@ -31,7 +31,7 @@ export const RescheduleMenu: React.FC<RescheduleMenuProps> = ({ onSelectDate, on
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <Calendar size={18} className="text-indigo-600" /> Reschedule Task
                     </h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full text-slate-400 font-bold"><X size={18} /></button>
+                    <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full text-slate-500 font-bold"><X size={18} /></button>
                 </div>
 
                 <div className="p-2 space-y-1">
@@ -42,7 +42,7 @@ export const RescheduleMenu: React.FC<RescheduleMenuProps> = ({ onSelectDate, on
                         <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg group-hover:bg-indigo-200"><Sun size={18} /></div>
                         <div>
                             <p className="font-bold text-slate-800 text-sm">Today</p>
-                            <p className="text-xs text-slate-400">Move to current active view</p>
+                            <p className="text-xs text-slate-500">Move to current active view</p>
                         </div>
                     </button>
 
@@ -53,7 +53,7 @@ export const RescheduleMenu: React.FC<RescheduleMenuProps> = ({ onSelectDate, on
                         <div className="p-2 bg-amber-100 text-amber-600 rounded-lg group-hover:bg-amber-200"><Moon size={18} /></div>
                         <div>
                             <p className="font-bold text-slate-800 text-sm">Tomorrow</p>
-                            <p className="text-xs text-slate-400">Push to next day</p>
+                            <p className="text-xs text-slate-500">Push to next day</p>
                         </div>
                     </button>
 
@@ -61,7 +61,7 @@ export const RescheduleMenu: React.FC<RescheduleMenuProps> = ({ onSelectDate, on
                         <div className="p-2 bg-slate-100 text-slate-600 rounded-lg group-hover:bg-slate-200"><Calendar size={18} /></div>
                         <div className="flex-1">
                             <p className="font-bold text-slate-800 text-sm">Pick Date</p>
-                            <p className="text-xs text-slate-400">Select specific day</p>
+                            <p className="text-xs text-slate-500">Select specific day</p>
                         </div>
                         <div className="absolute inset-0 opacity-0">
                             <input

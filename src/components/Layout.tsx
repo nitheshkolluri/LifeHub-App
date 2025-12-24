@@ -86,15 +86,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             className="w-full px-4 py-2 flex items-center gap-3 mb-2 hover:bg-slate-50 rounded-xl transition-colors group text-left"
           >
             <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-hover:bg-white group-hover:border-indigo-200 transition-colors">
-              <User size={16} className="text-slate-400 group-hover:text-indigo-500" />
+              <User size={16} className="text-slate-500 group-hover:text-indigo-500" />
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-700">My Account</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Free Plan</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Free Plan</span>
             </div>
           </button>
 
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
             onClick={signOut}
           >
             <LogOut size={18} />
@@ -161,7 +161,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               </div>
 
               <div className="mt-auto">
-                <button onClick={signOut} className="w-full py-4 border-2 border-slate-100 rounded-2xl text-slate-400 font-bold hover:text-rose-500 hover:border-rose-100 transition-colors flex items-center justify-center gap-2">
+                <button onClick={signOut} className="w-full py-4 border-2 border-slate-100 rounded-2xl text-slate-500 font-bold hover:text-rose-500 hover:border-rose-100 transition-colors flex items-center justify-center gap-2">
                   <LogOut size={20} /> Sign Out
                 </button>
               </div>
@@ -184,7 +184,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300
                 ${currentView === item.view
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 -translate-y-4 scale-110'
-                : 'text-slate-400 hover:text-slate-600'
+                : 'text-slate-500 hover:text-slate-600'
               }`}
           >
             {item.icon}

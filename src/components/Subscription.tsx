@@ -82,7 +82,7 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
         <div className="flex-1 p-8 md:p-10 bg-white relative flex flex-col justify-center">
           <button
             onClick={handleClose}
-            className="absolute top-6 right-6 p-2 rounded-md hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors"
+            className="absolute top-6 right-6 p-2 rounded-md hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors"
           >
             <X size={20} />
           </button>
@@ -92,7 +92,7 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
               <span className="text-4xl font-extrabold text-zinc-900 tracking-tight">$3.99</span>
               <span className="text-zinc-500 font-medium">/month</span>
             </div>
-            <p className="text-xs text-zinc-400 font-medium mb-8">Billed monthly. 7-day free trial included.</p>
+            <p className="text-xs text-zinc-500 font-medium mb-8">Billed monthly. 7-day free trial included.</p>
 
             <ul className="space-y-3 mb-8">
               {[
@@ -119,7 +119,7 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
 
             <button
               onClick={handleClose}
-              className="w-full mt-4 text-center text-xs text-zinc-400 hover:text-zinc-900 font-medium transition-colors"
+              className="w-full mt-4 text-center text-xs text-zinc-500 hover:text-zinc-900 font-medium transition-colors"
             >
               Continue with Basic Plan
             </button>

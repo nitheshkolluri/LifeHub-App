@@ -33,7 +33,7 @@ const DateStrip = ({ selectedDate, onSelectDate }: { selectedDate: Date, onSelec
          <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm p-1.5 rounded-3xl border border-slate-200/50 shadow-sm">
             <button onClick={() => {
                const d = new Date(selectedDate); d.setDate(d.getDate() - 1); onSelectDate(d);
-            }} className="p-2 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all">
+            }} className="p-2 rounded-full hover:bg-white hover:shadow-sm text-slate-500 hover:text-indigo-600 transition-all">
                <ChevronLeft size={18} />
             </button>
 
@@ -48,7 +48,7 @@ const DateStrip = ({ selectedDate, onSelectDate }: { selectedDate: Date, onSelec
                                     relative flex flex-col items-center justify-center w-12 h-14 rounded-2xl transition-all duration-300
                                     ${isSelected
                               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-110 z-10'
-                              : 'bg-white text-slate-400 hover:text-indigo-500 hover:bg-indigo-50'
+                              : 'bg-white text-slate-500 hover:text-indigo-500 hover:bg-indigo-50'
                            }
                                 `}
                      >
@@ -65,7 +65,7 @@ const DateStrip = ({ selectedDate, onSelectDate }: { selectedDate: Date, onSelec
 
             <button onClick={() => {
                const d = new Date(selectedDate); d.setDate(d.getDate() + 1); onSelectDate(d);
-            }} className="p-2 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all">
+            }} className="p-2 rounded-full hover:bg-white hover:shadow-sm text-slate-500 hover:text-indigo-600 transition-all">
                <ChevronRight size={18} />
             </button>
          </div>
@@ -83,11 +83,11 @@ const SmartSection = ({ title, icon: Icon, color, count, children, onAdd }: any)
             </div>
             <div>
                <h3 className="text-lg font-bold text-slate-800">{title}</h3>
-               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{count} Items</p>
+               <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{count} Items</p>
             </div>
          </div>
          {onAdd && (
-            <button onClick={onAdd} className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+            <button onClick={onAdd} className="w-8 h-8 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
                <ListFilter size={16} />
             </button>
          )}
@@ -213,7 +213,7 @@ export const Dashboard = () => {
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                {new Date().getHours() < 12 ? 'Good morning' : 'Hello'}, {user?.name?.split(' ')[0] || 'Friend'}
             </h1>
-            <p className="text-slate-400 font-medium text-sm">Let's make today count.</p>
+            <p className="text-slate-500 font-medium text-sm">Let's make today count.</p>
          </header>
 
          <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
@@ -310,7 +310,7 @@ export const Dashboard = () => {
                               </div>
                               <div className="flex-1 min-w-0">
                                  <p className={`text-sm font-bold truncate ${isDone ? 'text-orange-900' : 'text-slate-600'}`}>{h.title}</p>
-                                 <p className="text-[10px] text-slate-400 font-bold uppercase">{h.streak} Day Streak</p>
+                                 <p className="text-[10px] text-slate-500 font-bold uppercase">{h.streak} Day Streak</p>
                               </div>
                               <button
                                  onClick={(e) => stopAndRun(e, () => setHabitMenuId(habitMenuId === h.id ? null : h.id))}

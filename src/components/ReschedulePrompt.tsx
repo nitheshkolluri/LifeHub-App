@@ -44,7 +44,7 @@ export const ReschedulePrompt: React.FC<ReschedulePromptProps> = ({ overdueTasks
                         <h3 className="text-xl font-black text-slate-800">Fresh Start?</h3>
                         <p className="text-slate-500 text-sm mt-1">You have {overdueTasks.length} incomplete items from yesterday.</p>
                     </div>
-                    <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 transition-colors">
+                    <button onClick={onDismiss} className="text-slate-500 hover:text-slate-600 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -62,7 +62,7 @@ export const ReschedulePrompt: React.FC<ReschedulePromptProps> = ({ overdueTasks
                             </div>
                             <div className="flex-1">
                                 <p className={`font-bold text-sm ${selectedIds.includes(task.id) ? 'text-indigo-900' : 'text-slate-500'}`}>{task.title}</p>
-                                {task.dueDate && <p className="text-xs text-slate-400">Was due {task.dueDate}</p>}
+                                {task.dueDate && <p className="text-xs text-slate-500">Was due {task.dueDate}</p>}
                             </div>
                         </div>
                     ))}

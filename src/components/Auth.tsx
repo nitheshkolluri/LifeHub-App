@@ -35,7 +35,7 @@ export const VerificationScreen = () => {
           {loading && <Loader2 className="animate-spin" size={18} />}
           I've Verified
         </button>
-        <button onClick={handleResend} className="w-full text-slate-400 font-bold text-sm hover:text-indigo-600 transition-colors">Resend Email</button>
+        <button onClick={handleResend} className="w-full text-slate-500 font-bold text-sm hover:text-indigo-600 transition-colors">Resend Email</button>
 
         {message && <div className="mt-4 p-3 bg-emerald-50 text-emerald-600 font-bold text-xs rounded-lg">{message}</div>}
         <button onClick={logout} className="mt-8 text-xs font-bold text-slate-300 hover:text-rose-500 transition-colors">Sign Out</button>
@@ -82,7 +82,7 @@ export const AuthScreen = () => {
           <h1 className="text-6xl font-black tracking-tighter text-white mb-6 drop-shadow-2xl">
             LifeHub.
           </h1>
-          <p className="text-xl text-slate-400 font-medium leading-relaxed">
+          <p className="text-xl text-slate-500 font-medium leading-relaxed">
             Master your <span className="text-primary-400">chaos</span>. <br />
             An intelligent OS for your life, habits, and wallet.
           </p>
@@ -126,7 +126,7 @@ export const AuthScreen = () => {
 
           <div className="relative flex items-center justify-center mb-8">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-            <span className="relative bg-white px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or with email</span>
+            <span className="relative bg-white px-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Or with email</span>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -152,7 +152,7 @@ export const AuthScreen = () => {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-slate-400 font-medium text-sm">
+          <p className="mt-8 text-center text-slate-500 font-medium text-sm">
             {isLogin ? "Don't have an account?" : "Already have an account?"}
             <button onClick={() => setIsLogin(!isLogin)} className="ml-2 text-indigo-600 font-bold hover:underline">
               {isLogin ? "Join now" : "Log in"}

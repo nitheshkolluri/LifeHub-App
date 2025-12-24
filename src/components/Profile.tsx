@@ -207,7 +207,7 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                      {!isPro && <div className="absolute inset-0 bg-white/50 opacity-0 group-hover:opacity-100 transition-opacity" />}
                   </button>
 
-                  <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                  <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-xs font-bold text-zinc-500 hover:bg-rose-50 hover:text-rose-600 transition-all">
                      <LogOut size={16} /> Sign Out
                   </button>
                </div>
@@ -215,7 +215,7 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 
             {/* MAIN CONTENT */}
             <div className="flex-1 bg-white overflow-y-auto relative">
-               <button onClick={onClose} className="absolute top-6 right-8 p-2 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors z-20">
+               <button onClick={onClose} className="absolute top-6 right-8 p-2 rounded-full hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors z-20">
                   <X size={20} />
                </button>
 
@@ -245,10 +245,10 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                                  </span>
                               </div>
                               <div>
-                                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Weekly Efficiency</p>
+                                 <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Weekly Efficiency</p>
                                  <div className="flex items-baseline gap-1">
                                     <span className="text-3xl font-black text-zinc-900">{completionRate}</span>
-                                    <span className="text-sm font-bold text-zinc-400">%</span>
+                                    <span className="text-sm font-bold text-zinc-500">%</span>
                                  </div>
                               </div>
                               {/* Progress Bar */}
@@ -264,10 +264,10 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                                  <span className="text-xs font-bold px-2 py-1 rounded-full bg-zinc-100 text-zinc-500">Level 1</span>
                               </div>
                               <div>
-                                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Ritual Streak</p>
+                                 <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Ritual Streak</p>
                                  <div className="flex items-baseline gap-1">
                                     <span className="text-3xl font-black text-zinc-900">{totalRituals}</span>
-                                    <span className="text-sm font-bold text-zinc-400">xp</span>
+                                    <span className="text-sm font-bold text-zinc-500">xp</span>
                                  </div>
                               </div>
                               <div className="w-full bg-zinc-100 h-1.5 rounded-full mt-4 overflow-hidden">
@@ -282,12 +282,12 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                                  <span className="text-xs font-bold px-2 py-1 rounded-full bg-zinc-100 text-zinc-500">Focus</span>
                               </div>
                               <div>
-                                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Top Category</p>
+                                 <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Top Category</p>
                                  <div className="flex items-center gap-2">
                                     <span className="text-xl font-bold text-zinc-900 truncate">Deep Work</span>
                                  </div>
                               </div>
-                              <div className="mt-4 text-xs font-medium text-zinc-400">
+                              <div className="mt-4 text-xs font-medium text-zinc-500">
                                  mostly active in mornings
                               </div>
                            </div>
@@ -319,7 +319,7 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                                     <User size={20} />
                                  </div>
                                  <div>
-                                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Member</p>
+                                    <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Member</p>
                                     <p className="font-bold text-zinc-900 truncate max-w-[120px]">{user?.email?.split('@')[0]}</p>
                                  </div>
                               </div>
@@ -371,7 +371,7 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                         <div className={`p-6 rounded-2xl border transition-all ${prefs.enableTimeSensitive ? 'bg-indigo-50 border-indigo-100 ring-1 ring-indigo-200' : 'bg-white border-zinc-200'}`}>
                            <div className="flex items-start justify-between">
                               <div className="flex gap-4">
-                                 <div className={`p-3 rounded-xl ${prefs.enableTimeSensitive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-300' : 'bg-zinc-100 text-zinc-400'}`}>
+                                 <div className={`p-3 rounded-xl ${prefs.enableTimeSensitive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-300' : 'bg-zinc-100 text-zinc-500'}`}>
                                     <Crosshair size={24} />
                                  </div>
                                  <div>
@@ -410,23 +410,23 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                         <div className="grid grid-cols-2 gap-4">
                            <div className="p-5 rounded-2xl border border-zinc-200 bg-white hover:border-indigo-200 transition-colors group">
                               <div className="flex items-center justify-between mb-3">
-                                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Kickoff</span>
+                                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Kickoff</span>
                                  <Zap size={14} className="text-amber-500" />
                               </div>
                               <div className="relative">
                                  <input type="time" value={prefs.morningBriefTime} onChange={e => setPrefs({ ...prefs, morningBriefTime: e.target.value })} className="w-full bg-transparent font-black text-2xl text-zinc-900 outline-none" />
-                                 <p className="text-xs text-zinc-400 mt-1 font-medium">Morning Brief</p>
+                                 <p className="text-xs text-zinc-500 mt-1 font-medium">Morning Brief</p>
                               </div>
                            </div>
 
                            <div className="p-5 rounded-2xl border border-zinc-200 bg-white hover:border-indigo-200 transition-colors group">
                               <div className="flex items-center justify-between mb-3">
-                                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cooldown</span>
+                                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Cooldown</span>
                                  <ShieldAlert size={14} className="text-indigo-500" />
                               </div>
                               <div className="relative">
                                  <input type="time" value={prefs.afterWorkTime} onChange={e => setPrefs({ ...prefs, afterWorkTime: e.target.value })} className="w-full bg-transparent font-black text-2xl text-zinc-900 outline-none" />
-                                 <p className="text-xs text-zinc-400 mt-1 font-medium">Evening Wrap</p>
+                                 <p className="text-xs text-zinc-500 mt-1 font-medium">Evening Wrap</p>
                               </div>
                            </div>
                         </div>

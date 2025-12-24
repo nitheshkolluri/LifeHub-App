@@ -30,7 +30,7 @@ const HabitCard = ({ habit, onIncrement, deleteHabit, isDoneToday }: any) => {
               </div>
             )}
           </div>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{habit.frequency}</p>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{habit.frequency}</p>
         </div>
 
         <div className="flex gap-2">
@@ -125,7 +125,7 @@ export const Habits = () => {
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
               <Star className="text-slate-300" size={32} />
             </div>
-            <p className="text-slate-400 font-bold">No rituals yet.</p>
+            <p className="text-slate-500 font-bold">No rituals yet.</p>
           </div>
         ) : (
           habits.map(habit => (
@@ -142,7 +142,7 @@ export const Habits = () => {
 
         <button
           onClick={openAddModal}
-          className="mt-4 py-4 border-2 border-dashed border-slate-200 rounded-[32px] text-slate-400 font-bold hover:border-indigo-300 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2"
+          className="mt-4 py-4 border-2 border-dashed border-slate-200 rounded-[32px] text-slate-500 font-bold hover:border-indigo-300 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2"
         >
           <Plus size={20} />
           <span>Add New Ritual</span>
@@ -155,7 +155,7 @@ export const Habits = () => {
           <form onSubmit={handleSubmit} className="relative w-full max-w-sm bg-white rounded-[40px] p-8 shadow-2xl animate-scale-in">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-black text-slate-900">{editingHabit ? 'Edit Ritual' : 'New Ritual'}</h2>
-              <button type="button" onClick={() => setIsModalOpen(false)}><X className="text-slate-400" /></button>
+              <button type="button" onClick={() => setIsModalOpen(false)}><X className="text-slate-500" /></button>
             </div>
 
             <input
@@ -172,7 +172,7 @@ export const Habits = () => {
                   key={f}
                   type="button"
                   onClick={() => setFrequency(f)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase ${frequency === f ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'}`}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase ${frequency === f ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}
                 >
                   {f}
                 </button>

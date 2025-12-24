@@ -48,7 +48,7 @@ export const SmartCard: React.FC<SmartCardProps> = ({
                 {/* 2. CONTENT ZONE */}
                 <div className="flex-1 cursor-pointer" onClick={(e) => stopAndRun(e, onEdit)}>
                     <div className="flex items-center gap-2">
-                        <h4 className={`font-medium leading-snug text-base ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                        <h4 className={`font-medium leading-snug text-base ${isCompleted ? 'text-slate-500 line-through' : 'text-slate-800'}`}>
                             {title}
                         </h4>
                         {/* Priority Badge (Icon) */}
@@ -56,7 +56,7 @@ export const SmartCard: React.FC<SmartCardProps> = ({
                         {icon && <span className={`${color}`}>{icon}</span>}
                     </div>
                     {subtitle && (
-                        <div className={`text-xs mt-1 font-mono flex items-center gap-1 ${isCompleted ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <div className={`text-xs mt-1 font-mono flex items-center gap-1 ${isCompleted ? 'text-slate-500' : 'text-slate-500'}`}>
                             {isOverdue && !isCompleted && <span className="text-amber-500 font-bold uppercase tracking-wider text-[10px]">Overdue • </span>}
                             {subtitle}
                         </div>
@@ -67,7 +67,7 @@ export const SmartCard: React.FC<SmartCardProps> = ({
                 <div className="relative flex items-center gap-1">
                     <button
                         onClick={(e) => stopAndRun(e, () => setShowMenu(!showMenu))}
-                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                     >
                         <MoreHorizontal size={16} />
                     </button>

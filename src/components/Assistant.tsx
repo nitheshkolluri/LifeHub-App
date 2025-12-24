@@ -233,7 +233,7 @@ export const Assistant = () => {
             <button onClick={() => confirmExit(false)} className="w-full py-4 bg-white border-2 border-slate-100 hover:bg-slate-50 text-slate-600 font-bold rounded-2xl transition-all">
               Just Exit
             </button>
-            <button onClick={() => setShowExitWarning(false)} className="text-sm font-bold text-slate-400 hover:text-slate-600">Cancel</button>
+            <button onClick={() => setShowExitWarning(false)} className="text-sm font-bold text-slate-500 hover:text-slate-600">Cancel</button>
           </div>
         </div>
       </div>
@@ -249,7 +249,7 @@ export const Assistant = () => {
           <div className="w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-4 flex flex-col border-r border-indigo-100">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-slate-800">Memory</h3>
-              <button onClick={() => setShowHistory(false)}><X size={18} className="text-slate-400" /></button>
+              <button onClick={() => setShowHistory(false)}><X size={18} className="text-slate-500" /></button>
             </div>
 
             <button
@@ -267,7 +267,7 @@ export const Assistant = () => {
                   className="w-full text-left p-3 rounded-lg hover:bg-slate-50 transition-colors group"
                 >
                   <p className="text-sm font-bold text-slate-700 truncate group-hover:text-indigo-600 transition-colors">{t.title}</p>
-                  <p className="text-[10px] text-slate-400 mt-1">{new Date(t.updatedAt).toLocaleDateString()}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">{new Date(t.updatedAt).toLocaleDateString()}</p>
                 </button>
               ))}
             </div>
@@ -283,7 +283,7 @@ export const Assistant = () => {
         </button>
 
         <div className="flex items-center gap-2">
-          {/* <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Session Mode</span> */}
+          {/* <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:block">Session Mode</span> */}
           {/* History Toggle */}
           <button onClick={() => setShowHistory(true)} className="px-4 py-2 rounded-full flex items-center gap-2 transition-all bg-slate-100 text-slate-500 hover:bg-slate-200">
             <History size={16} />
@@ -315,7 +315,7 @@ export const Assistant = () => {
             </div>
           ))
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
+          <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-50">
             <Bot size={48} className="mb-4" />
             <p>Ready to help.</p>
           </div>
@@ -339,7 +339,7 @@ export const Assistant = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={isListening ? "Listening..." : "Ask your AI Assistant..."}
-            className="w-full pl-6 pr-14 py-4 rounded-2xl border-0 bg-white/80 backdrop-blur shadow-lg shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/50 text-slate-800 placeholder:text-slate-400 transition-all font-medium"
+            className="w-full pl-6 pr-14 py-4 rounded-2xl border-0 bg-white/80 backdrop-blur shadow-lg shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/50 text-slate-800 placeholder:text-slate-500 transition-all font-medium"
             disabled={isLoadingAI}
           />
           <button
@@ -348,7 +348,7 @@ export const Assistant = () => {
             onMouseUp={onMicUp}
             onTouchStart={onMicDown}
             onTouchEnd={onMicUp}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'}`}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all duration-300 ${isListening ? 'text-white bg-rose-500 animate-pulse shadow-lg shadow-rose-500/30' : 'text-slate-500 hover:text-primary-600 hover:bg-primary-50'}`}
             title="Hold to Speak / Tap to Toggle"
           >
             {isListening ? <MicOff size={20} /> : <Mic size={20} />}
