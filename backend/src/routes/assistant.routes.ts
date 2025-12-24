@@ -169,6 +169,7 @@ router.post('/brain-dump', async (req: Request, res: Response) => {
                 summary: "I'm having trouble retrieving that right now. 🧠"
             });
         }
+    } catch (error: any) {
         // Detailed Logging for Debugging
         logger.error('Brain dump error details:', {
             message: error.message,
