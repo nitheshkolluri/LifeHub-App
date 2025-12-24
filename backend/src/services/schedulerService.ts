@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import { db } from '../config/firebase.config';
 
 // Ensure Firebase Admin is initialized (it is in firebase.config.ts)
 
@@ -12,7 +13,7 @@ export const triggerTaskCheck = async () => {
 
         // 1. UTC Timestamp Query (Global, O(1))
         // Requires Composite Index: collectionGroup: tasks -> status ASC, nextRemindAt ASC
-        const tasksSnapshot = await admin.firestore().collectionGroup('tasks')
+        const tasksSnapshot = await db.collectionGroup('tasks')
             .where('status', '==', 'pending')
             .where('nextRemindAt', '>=', startOfMinute)
             .where('nextRemindAt', '<', endOfMinute)
@@ -43,7 +44,7 @@ export const triggerTaskCheck = async () => {
             if (task.notified) continue;
 
             // 3. Get User FCM Tokens
-            const userDoc = await admin.firestore().collection('users').doc(userId).get();
+            const userDoc = await db.collection('users').doc(userId).get();
             const userData = userDoc.data();
             const tokens = userData?.fcmTokens || [];
 
