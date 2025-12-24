@@ -22,6 +22,8 @@ const Finance = lazy(() => import('./components/Finance').then(module => ({ defa
 const Assistant = lazy(() => import('./components/Assistant').then(module => ({ default: module.Assistant })));
 const Reports = lazy(() => import('./components/Reports').then(module => ({ default: module.Reports })));
 const Profile = lazy(() => import('./components/Profile').then(module => ({ default: module.ProfileModal })));
+const PrivacyPolicy = lazy(() => import('./pages/Legal').then(module => ({ default: module.PrivacyPolicy })));
+const TermsOfService = lazy(() => import('./pages/Legal').then(module => ({ default: module.TermsOfService })));
 
 const LoadingView = () => (
   <div className="h-full flex items-center justify-center">
@@ -61,6 +63,14 @@ const AppContent = () => {
         </div>
       </div>
     );
+  }
+
+  // PUBLIC ROUTES (No Auth Required)
+  if (window.location.pathname === '/privacy') {
+    return <Suspense fallback={<LoadingView />}><PrivacyPolicy /></Suspense>;
+  }
+  if (window.location.pathname === '/terms') {
+    return <Suspense fallback={<LoadingView />}><TermsOfService /></Suspense>;
   }
 
   if (!user) {
