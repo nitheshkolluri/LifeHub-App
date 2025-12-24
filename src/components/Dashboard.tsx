@@ -5,6 +5,7 @@ import { useUsage } from '../store/UsageContext';
 import { SmartCard } from './SmartCard';
 import { SwipeActionRow } from './SwipeActionRow';
 import { ReschedulePrompt } from './ReschedulePrompt';
+import { RescheduleMenu } from './RescheduleMenu';
 import { parseQuickly } from '../utils/quickParser';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import {
@@ -117,6 +118,9 @@ export const Dashboard = () => {
    const [overdueTasks, setOverdueTasks] = useState<any[]>([]);
    const [habitMenuId, setHabitMenuId] = useState<string | null>(null);
 
+   // Reschedule Single Task State
+   const [rescheduleTaskId, setRescheduleTaskId] = useState<string | null>(null);
+
    const stopAndRun = (e: React.MouseEvent, action: () => void) => {
       e.stopPropagation();
       action();
@@ -173,15 +177,25 @@ export const Dashboard = () => {
       }
    };
 
-   const handleReschedule = (ids: string[]) => {
+   // Bulk Reschedule (Prompt)
+   const handleBulkReschedule = (ids: string[]) => {
       const todayStr = new Date().toISOString().split('T')[0];
       ids.forEach(id => updateTask(id, { dueDate: todayStr }));
       setShowReschedule(false);
    };
 
+   // Single Task Reschedule (Menu)
+   const handleSingleReschedule = (dateStr: string) => {
+      if (rescheduleTaskId) {
+         updateTask(rescheduleTaskId, { dueDate: dateStr });
+         setRescheduleTaskId(null);
+         // Stay on current view
+      }
+   };
+
    // --- DASHBOARD RENDER ---
    return (
-      <div className="max-w-xl mx-auto pb-24 px-4 pt-6 font-sans text-slate-800 animate-fade-in">
+      <div className="max-w-xl mx-auto pb-24 px-4 pt-6 font-sans text-slate-800 animate-fade-in relative">
 
          <header className="mb-2 text-center">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
@@ -245,7 +259,7 @@ export const Dashboard = () => {
                      }
                      // Handlers
                      const handleEdit = () => { const newTitle = prompt("Edit Task", t.title); if (newTitle) updateTask(t.id, { title: newTitle }); };
-                     const handleResched = () => handleReschedule([t.id]);
+                     const handleResched = () => setRescheduleTaskId(t.id); // OPEN MENU
                      const handleDelete = () => deleteTask(t.id);
 
                      return (
@@ -258,7 +272,6 @@ export const Dashboard = () => {
                               isOverdue={isOverdue}
                               isCompleted={t.status === 'completed'}
                               onToggle={() => toggleTask(t.id)}
-                              // PASS SAME HANDLERS TO SMARTCARD (for Desktop Dots)
                               onEdit={handleEdit}
                               onReschedule={handleResched}
                               onDelete={handleDelete}
@@ -287,7 +300,6 @@ export const Dashboard = () => {
                                  <p className={`text-sm font-bold truncate ${isDone ? 'text-orange-900' : 'text-slate-600'}`}>{h.title}</p>
                                  <p className="text-[10px] text-slate-400 font-bold uppercase">{h.streak} Day Streak</p>
                               </div>
-                              {/* Desktop Menu for Habits (Manual fallback since not using SmartCard) */}
                               <button
                                  onClick={(e) => stopAndRun(e, () => setHabitMenuId(habitMenuId === h.id ? null : h.id))}
                                  className="p-1 text-slate-300 hover:text-slate-600 rounded-full hover:bg-black/5 opacity-0 group-hover:opacity-100 transition-all"
@@ -323,7 +335,6 @@ export const Dashboard = () => {
                            color="text-emerald-600"
                            isCompleted={f.isPaidThisMonth}
                            onToggle={() => togglePaid(f.id)}
-                           // PASS ACTIONS TO SMARTCARD TOO
                            onDelete={() => deleteFinanceItem(f.id)}
                         />
                      </SwipeActionRow>
@@ -333,8 +344,16 @@ export const Dashboard = () => {
 
          </div>
 
+         {/* 5. MODALS & PROMPTS */}
          {showReschedule && (
-            <ReschedulePrompt overdueTasks={overdueTasks} onReschedule={handleReschedule} onDismiss={() => setShowReschedule(false)} />
+            <ReschedulePrompt overdueTasks={overdueTasks} onReschedule={handleBulkReschedule} onDismiss={() => setShowReschedule(false)} />
+         )}
+
+         {rescheduleTaskId && (
+            <RescheduleMenu
+               onSelectDate={handleSingleReschedule}
+               onClose={() => setRescheduleTaskId(null)}
+            />
          )}
 
       </div>
