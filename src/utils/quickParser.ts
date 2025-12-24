@@ -216,6 +216,7 @@ export const parseQuickly = (text: string): BrainDumpResult | null => {
         "payment", "rent", "bill", // Finance context often needs AI
         "$", // Currency math
         ".and", "am.and", "pm.and", // Typos that regex struggles with
+        "bitcoin", "invest", "stock", "medical", "drug", "advice", // SAFETY: Force these to Backend for refusal
     ];
 
     if (complexityTriggers.some(trigger => rawLower.includes(trigger))) {

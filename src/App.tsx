@@ -101,7 +101,25 @@ const AppContent = () => {
         {/* Triggered Upsell Modal */}
         {isUpsellOpen && !showOnboarding && <SubscriptionModal isOpen={true} onClose={() => { setShowUpsell(false); setShowPaywall(false); }} />}
       </Suspense>
+
+      {/* TOAST NOTIFICATION (Global) */}
+      <Toast />
     </Layout>
+  );
+};
+
+// Simple Toast Component
+const Toast = () => {
+  const { toastMessage } = useApp();
+  if (!toastMessage) return null;
+
+  return (
+    <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <div className="bg-slate-900/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
+        <span className="text-xl">🤖</span>
+        <p className="text-sm font-medium pr-1">{toastMessage}</p>
+      </div>
+    </div>
   );
 };
 

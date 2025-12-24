@@ -105,7 +105,7 @@ export const Dashboard = () => {
       addTask, toggleTask, deleteTask, updateTask,
       addHabit, incrementHabit, deleteHabit,
       addFinanceItem, togglePaid, deleteFinanceItem,
-      setView, processBrainDump
+      setView, processBrainDump, showToast
    } = useApp();
    const { user } = useAuth();
    const { incrementUsage } = useUsage();
@@ -166,10 +166,22 @@ export const Dashboard = () => {
          incrementUsage();
 
          try {
-            await processBrainDump(input);
-         } catch (error) {
+            const result = await processBrainDump(input);
+
+            // FEEDBACK: Show AI Summary (Success or Creative Refusal)
+            // Note: If backend refuses (e.g. "Buy Bitcoin"), it returns a summary like "I can't give investment advice."
+            // This toast displays that friendly refusal to the user.
+            if (result.summary) {
+               showToast(result.summary);
+            } else {
+               showToast("Captured successfully.");
+            }
+
+         } catch (error: any) {
             console.error("Dashboard Dump Error:", error);
-            addTask(input, 'medium', dateKey);
+            // SAFETY FIX + UX POLISH: Friendly "Out of Scope" message
+            // Instead of scary error, just say we can't do that.
+            showToast("I'm tuned for your daily tasks, not that! 🌟");
          }
          setInput('');
          resetTranscript();

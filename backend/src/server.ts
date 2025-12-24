@@ -4,6 +4,10 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+
+// Load environment variables BEFORE importing routes
+dotenv.config();
+
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { requestLogger } from './middleware/monitoring.middleware';
@@ -20,12 +24,9 @@ import userRoutes from './routes/user.routes';
 
 import './config/firebase.config'; // Ensure Firebase is initialized explicitly
 
-// Load environment variables
-dotenv.config();
-
 const app: Application = express();
 console.log("Express app initialized.");
-const PORT = process.env.PORT || 3001; // Changed default to 3001 to avoid conflicts
+const PORT = process.env.PORT || 5000; // Alignment: Frontend expects 5000
 
 // Start Background Services
 // Start Background Services
@@ -76,8 +77,9 @@ app.use(helmet({
 }));
 
 // CORS configuration
+// CORS configuration
 const corsOptions = {
-    origin: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(','),
+    origin: ['http://localhost:3000', 'http://localhost:5000', 'http://127.0.0.1:3000'],
     credentials: true,
     optionsSuccessStatus: 200,
 };

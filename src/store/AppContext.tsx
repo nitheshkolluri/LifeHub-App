@@ -84,6 +84,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Helper: Toast
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // ... (Sync Effects remain unchanged)
+
+
 
   // --- DATA SYNC OPTIMIZATION ---
   // We use separate useEffects so that if one listener fails or re-runs, it doesn't kill the others.
@@ -273,7 +284,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       if (!checkLimit()) return '';
 
-      let nextRemindAt: number | undefined;
+      let nextRemindAt: number | null = null;
       // Calculate UTC Timestamp for Scheduler
       if (dueDate && dueTime) {
         // Create Date object assuming local client time (browser behavior)
@@ -289,10 +300,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         priority,
         dueDate: dueDate || null,
         dueTime: dueTime || null,
-        nextRemindAt, // Save for Backend Scheduler
+        nextRemindAt: nextRemindAt || null, // Ensure never undefined
         linkedFinanceId: linkedFinanceId || null,
         createdAt: Date.now()
       };
+      // @ts-ignore
+      Object.keys(newTask).forEach(key => newTask[key] === undefined && delete newTask[key]);
+
       const docRef = await addDoc(collection(db, 'users', user.id, 'tasks'), newTask);
       return docRef.id;
     } catch (e) {
@@ -556,25 +570,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return result;
       await Promise.all(promises);
       return result;
-    } catch (e) {
-      console.error("BrainDump: Backend failed. Engaging Emergency Protocol.", e);
-
-      // EMERGENCY FALLBACK: "Senior Engineer" Mode
-      // If Cloud fails, we use local logic to organize user thoughts smartly.
-      // This prevents the "Plain Text Dump" issue.
-      const emergencyResult = emergencyParse(text);
-
-      const promises: Promise<any>[] = [];
-      if (emergencyResult.entities) {
-        emergencyResult.entities.forEach((entity: { type: string; data: any; }) => {
-          // Treat all fallback entities as tasks for safety, but use their titles/dates
-          promises.push(addTask(entity.data.title, entity.data.priority, entity.data.dueDate));
-        });
-      }
-      // Wait for all emergency tasks to be added
       await Promise.all(promises);
+      return result;
+    } catch (e: any) {
+      console.error("BrainDump: Backend failed.", e);
 
+      // SECURITY CRITICAL: Do NOT use Emergency Fallback for 500 Errors during Audit.
+      // If the Backend (Safety Layer) fails, we must FAIL SAFE, not Open.
+      // Falling back to local regex would bypass the "No Financial Advice" check.
+
+      // Check if it's a network/server error vs a logic error
+      // For now, strict block.
+      throw new Error("Online Safety Check Failed. Cannot process request.");
+
+      /* 
+      // DISABLED FOR AUDIT COMPLIANCE
+      console.error("BrainDump: Engaging Emergency Protocol.", e);
+      const emergencyResult = emergencyParse(text);
+      // ... (fallback logic removed) 
       return emergencyResult;
+      */
     } finally {
       setIsLoadingAI(false);
     }
@@ -709,7 +724,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addFinanceItem, updateFinanceItem, togglePaid, deleteFinanceItem,
       updateNotificationSettings,
       sendChatMessage, generateReport, processBrainDump,
-      threads, saveCurrentThread, loadThread, deleteThread, clearCurrentChat
+      threads, saveCurrentThread, loadThread, deleteThread, clearCurrentChat,
+      showToast, toastMessage
     }}>
       {children}
     </AppContext.Provider>
