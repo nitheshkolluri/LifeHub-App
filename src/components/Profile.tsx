@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { apiService } from '../services/api.service';
 import { NotificationPreferences } from '../types';
+import { PrivacyModal, TermsModal } from '../pages/Legal';
 
 interface DeleteConfirmationModalProps {
    isOpen: boolean;
@@ -71,8 +72,8 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, isLoading }: Dele
                   onClick={onConfirm}
                   disabled={!isMatch || isLoading}
                   className={`px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all flex items-center gap-2 ${isMatch && !isLoading
-                     ? 'bg-rose-600 hover:bg-rose-700 hover:shadow-rose-500/20 active:scale-[0.98]'
-                     : 'bg-zinc-300 cursor-not-allowed opacity-70'
+                        ? 'bg-rose-600 hover:bg-rose-700 hover:shadow-rose-500/20 active:scale-[0.98]'
+                        : 'bg-zinc-300 cursor-not-allowed opacity-70'
                      }`}
                >
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
@@ -93,6 +94,8 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
    const { user, logout } = useAuth();
    const { tasks, habits, updateNotificationSettings, setShowUpsell } = useApp();
    const [showDeleteModal, setShowDeleteModal] = useState(false);
+   const [showPrivacy, setShowPrivacy] = useState(false);
+   const [showTerms, setShowTerms] = useState(false);
    const [activeTab, setActiveTab] = useState<'overview' | 'notifications'>('overview');
    const [loading, setLoading] = useState(false);
 
@@ -194,8 +197,8 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                   <button
                      onClick={() => setShowUpsell(true)}
                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold border transition-all shadow-sm group relative overflow-hidden ${isPro
-                        ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
-                        : 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-900 border-amber-200 hover:border-amber-300'
+                           ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
+                           : 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-900 border-amber-200 hover:border-amber-300'
                         }`}
                   >
                      <div className="flex items-center gap-2 relative z-10">
@@ -442,9 +445,9 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                   {/* LEGAL FOOTER */}
                   <div className="py-8 text-center">
                      <div className="flex justify-center gap-4 text-xs font-bold text-slate-500">
-                        <a href="#" className="hover:text-indigo-600 hover:underline">Terms of Service</a>
+                        <button onClick={() => setShowTerms(true)} className="hover:text-indigo-600 hover:underline">Terms of Service</button>
                         <span>•</span>
-                        <a href="#" className="hover:text-indigo-600 hover:underline">Privacy Policy</a>
+                        <button onClick={() => setShowPrivacy(true)} className="hover:text-indigo-600 hover:underline">Privacy Policy</button>
                      </div>
                      <p className="text-[10px] text-zinc-400 mt-2">v1.2.0 • LifeHub OS</p>
                   </div>
@@ -457,6 +460,8 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
             onConfirm={confirmDeleteAccount}
             isLoading={loading}
          />
+         <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
+         <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
       </div>
    );
 };

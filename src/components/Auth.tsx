@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../store/AuthContext';
 import { Logo } from './Logo';
 import { ArrowRight, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { PrivacyModal, TermsModal } from '../pages/Legal';
 
 export const VerificationScreen = () => {
   // ... kept same logic ...
@@ -50,6 +51,10 @@ export const AuthScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+
+  // Legal Modals State
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,7 +158,7 @@ export const AuthScreen = () => {
 
             <p className="text-center text-[10px] text-slate-500 mt-4 leading-relaxed">
               By continuing, you agree to LifeHub's <br />
-              <a href="#" className="underline hover:text-indigo-600">Terms of Service</a> and <a href="#" className="underline hover:text-indigo-600">Privacy Policy</a>.
+              <button type='button' onClick={() => setShowTerms(true)} className="underline hover:text-indigo-600">Terms of Service</button> and <button type='button' onClick={() => setShowPrivacy(true)} className="underline hover:text-indigo-600">Privacy Policy</button>.
             </p>
           </form>
 
@@ -165,6 +170,10 @@ export const AuthScreen = () => {
           </p>
         </div>
       </div>
+
+      {/* LEGAL MODALS */}
+      <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
+      <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
     </div>
   );
 };
