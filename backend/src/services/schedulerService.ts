@@ -10,12 +10,13 @@ export const startTaskScheduler = () => {
     cron.schedule('* * * * *', async () => {
         try {
             const now = new Date();
-            // Format: YYYY-MM-DD
-            const dateKey = now.toLocaleDateString('en-CA');
-            // Format: HH:MM
-            const timeKey = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-            // console.log(`Checking tasks for ${dateKey} at ${timeKey}...`);
+            // Robust Date/Time Formatting
+            const pad = (n: number) => n < 10 ? '0' + n : n;
+            const dateKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`; // YYYY-MM-DD
+            const timeKey = `${pad(now.getHours())}:${pad(now.getMinutes())}`; // HH:MM
+
+            console.log(`[Scheduler] Checking tasks for ${dateKey} at ${timeKey}...`);
 
             // 1. Query all users (Scalability Warning: For massive app, use Collection Group Index)
             // For now, iterating users is fine.
@@ -27,9 +28,12 @@ export const startTaskScheduler = () => {
                 .where('status', '==', 'pending')
                 .get();
 
-            if (tasksSnapshot.empty) return;
+            if (tasksSnapshot.empty) {
+                // console.log("[Scheduler] No tasks found."); // reducing noise
+                return;
+            }
 
-            console.log(`Found ${tasksSnapshot.size} tasks due now.`);
+            console.log(`[Scheduler] Found ${tasksSnapshot.size} tasks due now.`);
 
             // 2. Process each task
             for (const doc of tasksSnapshot.docs) {
@@ -47,9 +51,11 @@ export const startTaskScheduler = () => {
                 const tokens = userData?.fcmTokens || [];
 
                 if (tokens.length === 0) {
-                    console.log(`User ${userId} has no FCM tokens.`);
+                    console.log(`[Scheduler] User ${userId} has no FCM tokens.`);
                     continue;
                 }
+
+                console.log(`[Scheduler] Sending to ${tokens.length} devices for User ${userId}`);
 
                 // 4. Send Notification
                 const message: admin.messaging.MulticastMessage = {
@@ -81,7 +87,16 @@ export const startTaskScheduler = () => {
                 };
 
                 const response = await admin.messaging().sendEachForMulticast(message);
-                console.log(`Sent ${response.successCount} notifications for task ${doc.id}`);
+                console.log(`[Scheduler] Sent success: ${response.successCount}, failure: ${response.failureCount}`);
+
+                if (response.failureCount > 0) {
+                    response.responses.forEach((resp, idx) => {
+                        if (!resp.success) {
+                            console.error(`[Scheduler] Failure error:`, resp.error);
+                            // Remove bad tokens?
+                        }
+                    });
+                }
 
                 // 5. Mark as Notified
                 // await doc.ref.update({ notified: true });

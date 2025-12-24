@@ -104,12 +104,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* MOBILE HEADER */}
-      <header className="md:hidden bg-white/80 backdrop-blur-md sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center transition-transform active:scale-95">
-            <Logo size={20} />
+      <header className="md:hidden bg-white/80 backdrop-blur-md sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-neutral-100">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center transition-transform active:scale-95">
+            <Logo size={32} />
           </div>
-          <span className="font-black text-xl text-slate-900 tracking-tight">LifeHub</span>
+          <span className="font-black text-xl text-neutral-900 tracking-tight">LifeHub</span>
         </div>
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}

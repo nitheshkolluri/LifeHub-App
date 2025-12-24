@@ -18,6 +18,7 @@ import webhookRoutes from './routes/webhook.routes';
 import assistantRoutes from './routes/assistant.routes';
 import userRoutes from './routes/user.routes';
 import { startTaskScheduler } from './services/schedulerService';
+import './config/firebase.config'; // Ensure Firebase is initialized explicitly
 
 // Load environment variables
 dotenv.config();

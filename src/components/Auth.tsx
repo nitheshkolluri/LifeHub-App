@@ -74,18 +74,16 @@ export const AuthScreen = () => {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center text-center max-w-lg p-12">
-          {/* Logo with Blend Mode "Screen" to remove black box */}
-          <div className="mb-10 p-8 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 shadow-2xl shadow-indigo-500/10 animate-fade-in">
-            <div style={{ mixBlendMode: 'screen' }}>
-              <Logo size={80} />
-            </div>
+          {/* Logo with Blend Mode "Screen" removed, standard display */}
+          <div className="mb-8 animate-fade-in">
+            <Logo size={100} />
           </div>
 
           <h1 className="text-6xl font-black tracking-tighter text-white mb-6 drop-shadow-2xl">
             LifeHub.
           </h1>
           <p className="text-xl text-slate-400 font-medium leading-relaxed">
-            Master your <span className="text-indigo-400">chaos</span>. <br />
+            Master your <span className="text-primary-400">chaos</span>. <br />
             An intelligent OS for your life, habits, and wallet.
           </p>
         </div>
@@ -97,10 +95,10 @@ export const AuthScreen = () => {
         <div className="w-full max-w-md animate-slide-up">
           {/* Mobile Header - IN FLOW (Fixed Overlap) */}
           <div className="lg:hidden flex flex-col items-center mb-8">
-            <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg text-white mb-4">
-              <Logo size={24} className="text-white" filtered={true} />
+            <div className="mb-4">
+              <Logo size={48} />
             </div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">LifeHub</h2>
+            <h2 className="text-2xl font-black text-neutral-900 tracking-tight">LifeHub</h2>
           </div>
 
           <div className="text-center mb-10">

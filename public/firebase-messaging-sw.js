@@ -15,8 +15,13 @@ import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
 // Since this is a static file in public/, it doesn't get built by Vite.
 // We need to fetch the config.
 
+// To replace hardcoded config with values from .env, we need a mechanism for the Service Worker
+// to access these values. A common approach is to fetch a config file or have the client post it.
+// For now, we'll use placeholders assuming a build step or a global variable makes them available.
+// If using a build tool like Vite, these might be injected. If not, consider fetching a JSON config.
+// Hardcoded for Local Dev Stability
 const firebaseConfig = {
-    apiKey: "AIzaSyA2SeEaod4ciM0oUufN-C0bT73MMr5jI8Y", // Public
+    apiKey: "AIzaSyA2SeEaod4ciM0oUufN-C0bT73MMr5jI8Y",
     authDomain: "lifehub-d322e.firebaseapp.com",
     projectId: "lifehub-d322e",
     storageBucket: "lifehub-d322e.appspot.com",
