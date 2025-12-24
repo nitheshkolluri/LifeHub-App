@@ -1,41 +1,67 @@
+
 import { BrainDumpResult } from "../types";
 
-/**
- * LIGHTNING MODE PARSER
- * Rapidly decodes common user intents without hitting the Cloud AI.
- * Returns null if the intent is too complex, falling back to Gemini.
- */
-export const parseQuickly = (text: string): BrainDumpResult | null => {
-    const lower = text.trim().toLowerCase();
+// Helper: The core logic for ONE thought
+const parseSingleIntent = (text: string): BrainDumpResult | null => {
+    const lower = text.trim();
 
     // 1. HABIT: "Start habit [name]", "Add habit [name]"
-    const habitMatch = lower.match(/^(?:start|add) habit (.+)$/i);
+    // Also "Add a ritual to [name]"
+    const habitMatch = lower.match(/^(?:start|add|create)\s+(?:a\s+)?(?:habit|ritual)\s+(?:to\s+)?(.+)$/i);
     if (habitMatch) {
         return {
             entities: [{
                 type: 'habit',
                 confidence: 1.0,
                 data: {
-                    title: capitalize(habitMatch[1]),
-                    frequency: 'daily' // Default
+                    title: capitalize(habitMatch[1].replace(/^to\s+/, '')), // remove leading 'to' if dup
+                    frequency: 'daily'
                 }
             }],
-            summary: "Quickly added new habit."
+            summary: "Created habit."
         };
     }
 
-    // 2. FINANCE: "Spent $X on Y", "Add expense Y $X"
-    // "Spent $50 on Groceries"
-    const spentMatch = lower.match(/spent \$?(\d+(?:\.\d{2})?) on (.+)$/i);
+    // 2. FINANCE
+    // STRICTER: Must have explicit context OR currency symbol
+    // Matches: "Spent 50 on X", "Paid 50", "$50 for X", "50 dollars on"
+    const spentMatch = lower.match(/(?:spent|paid|cost|bought|added expense)\s+(?:.*?)\$?(\d+(?:\.\d{2})?)\s*(?:on|for)?\s*(.+)$/i) ||
+        lower.match(/\$(\d+(?:\.\d{2})?)\s*(?:on|for)?\s*(.+)$/i);
+
     if (spentMatch) {
+        const amount = parseFloat(spentMatch[1]);
+        const description = spentMatch[2].trim();
+        const keywords = ["afterpay", "zip", "klarna", "affirm"];
+        const isBNPL = keywords.some(k => lower.includes(k));
+
+        if (isBNPL) {
+            const installment = amount / 4;
+            const entities = [];
+            for (let i = 0; i < 4; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() + (i * 14));
+                entities.push({
+                    type: 'finance',
+                    confidence: 1.0,
+                    data: {
+                        title: `${capitalize(description)} (${i + 1}/4)`,
+                        amount: parseFloat(installment.toFixed(2)),
+                        dueDate: d.toISOString().split('T')[0],
+                        type: 'bill'
+                    }
+                });
+            }
+            return { entities, summary: `Split payment.` };
+        }
+
         return {
             entities: [{
                 type: 'finance',
                 confidence: 1.0,
                 data: {
-                    title: capitalize(spentMatch[2]),
-                    amount: parseFloat(spentMatch[1]),
-                    dueDay: new Date().getDate(), // Assumed paid today
+                    title: capitalize(description),
+                    amount: amount,
+                    dueDay: new Date().getDate(),
                     type: 'one-off'
                 }
             }],
@@ -43,20 +69,29 @@ export const parseQuickly = (text: string): BrainDumpResult | null => {
         };
     }
 
-    // 3. TASKS: "Remind me to [action] (time/date)"
-    // Very basic extraction. If complex (multiple dates), fail to AI.
-    // "Remind me to Call Mom tomorrow"
-    if (lower.startsWith("remind me to") || lower.startsWith("add task")) {
-        const cleanText = lower.replace("remind me to ", "").replace("add task ", "");
+    // 3. TASKS
+    // Expanded Verbs: "Call", "Buy", "Get", "Pay", "Check", "Email", "Text"
+    if (/remind me|add task|remember to|i want to|need to|call|buy|get|pay|check|email|text|msg|message|write/i.test(lower)) {
+        let cleanText = lower.replace(/remind me to |remind me |add task |remember to |i want to |need to |call |buy |get |pay |check |email |text |msg |message |write /gi, "");
 
-        // Simple heuristic for "tomorrow" or "today"
+        // ... (existing date logic) ...
+        // Note: We need to preserve the verb in the title if it wasn't a "command" verb like "add task".
+        // Logic: specific verbs like "Call" should probably stay in the title? "Call Mom" vs "Mom".
+        // The regex above strips them. Let's be careful.
+        // Actually, for "Call Mom", replacing "Call" leaves "Mom". Not ideal.
+        // Better: Don't strip the actionable verbs, only the "system verbs".
+
+        // Re-refining the replace list:
+        cleanText = lower.replace(/^(?:remind me to|remind me|add task|remember to|i want to|need to|to|please)\s+/i, "");
+
+        // ... (rest of logic) ...
+
         let dueDate: string | undefined = undefined;
         let dueTime: string | undefined = undefined;
         let title = cleanText;
 
-        // Detect Time (Robust Regex from Tasks.tsx)
-        // Matches: "at 5pm", "5pm", "11:20PM", "11:20 pm"
-        // Capture Groups: 1=Hours, 2=Minutes, 3=Meridian
+        // Detect Time (Robust Regex)
+        // Matches: "at 5pm", "5pm", "11:20PM", "11:20 pm", "09:20AM"
         const timeRegex = /\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b/i;
         const timeMatch = title.match(timeRegex);
 
@@ -64,19 +99,28 @@ export const parseQuickly = (text: string): BrainDumpResult | null => {
             let hours = parseInt(timeMatch[1]);
             const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
             const meridian = timeMatch[3]?.trim().toLowerCase().replace(/\./g, '');
-
             if (meridian === 'pm' && hours < 12) hours += 12;
             if (meridian === 'am' && hours === 12) hours = 0;
-
             dueTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
             title = title.replace(timeRegex, "").trim();
         }
 
-        // Detect Date (Keywords + Direct)
-        // 1. "Tomorrow"
+        // RUN-ON SENTENCE DETECTOR
+        // If the remaining title STILL contains action verbs like "Call", "Buy", "Remind",
+        // then the user likely chained commands without "AND".
+        // Example: "Buy coffee Call mom" -> Title: "coffee Call mom".
+        // Action: Fail to null -> Cloud AI handles sophisticated splitting.
+        const runOnRegex = /\b(remind me|add task|remember to|call|buy|get|pay|check|email|text|msg|message|write)\b/i;
+
+        const match = title.match(runOnRegex);
+        // If match found, AND it is NOT at the very start (index 0), then it's a run-on.
+        if (match && match.index! > 0) {
+            return null;
+        }
+
+        // Detect Date
         if (/\btomorrow\b/i.test(title)) {
-            const d = new Date();
-            d.setDate(d.getDate() + 1);
+            const d = new Date(); d.setDate(d.getDate() + 1);
             dueDate = d.toISOString().split('T')[0];
             title = title.replace("tomorrow", "");
         } else if (title.includes("today")) {
@@ -88,26 +132,130 @@ export const parseQuickly = (text: string): BrainDumpResult | null => {
             entities: [{
                 type: 'task',
                 confidence: 0.9,
-                data: {
-                    title: capitalize(title.trim()),
-                    priority: 'medium',
-                    dueDate,
-                    dueTime
-                }
+                data: { title: capitalize(title.trim()), priority: 'medium', dueDate, dueTime }
             }],
-            summary: "Quick task created."
+            summary: "Task created."
         };
     }
 
-    return null; // Fallback to AI
+    // 4. FALLBACK: RETURN NULL
+    return null;
 };
 
-// --- HELPERS ---
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+// EMERGENCY FALLBACK: When Cloud AI Fails (Offline/Error), we still try to be smart.
+export const emergencyParse = (text: string): BrainDumpResult => {
+    const rawLower = text.toLowerCase();
 
-const normalizeTime = (t: string): string => {
-    // Basic normalization for display. 
-    // If "5pm" -> "17:00". If "5:30pm" -> "17:30"
-    // This is valid enough for the 'dueTime' string field.
-    return t.replace(/\s/g, '').toLowerCase();
+    // 1. Afterpay/Split Logic (Local Implementation)
+    if (rawLower.includes("afterpay") || rawLower.includes("split")) {
+        // Try to extract amount: "$800" or "800 dollars"
+        const amountMatch = rawLower.match(/\$?(\d+)/);
+        const amount = amountMatch ? parseFloat(amountMatch[1]) : 0;
+        const perPayment = amount > 0 ? amount / 4 : 0;
+
+        const entities: any[] = [];
+        for (let i = 0; i < 4; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + (i * 14));
+            entities.push({
+                type: 'finance', // Fallback to task if finance not supported, but we use 'finance' here
+                // Actually, user wants Tasks for reminders usually? Let's use Task to be safe/visible
+                data: {
+                    title: `Pay Installment (${i + 1}/4) ${amount > 0 ? '$' + perPayment : ''} - ${text.slice(0, 20)}...`,
+                    priority: i === 0 ? 'high' : 'medium',
+                    dueDate: d.toISOString().split('T')[0]
+                }
+            });
+        }
+
+        // Also add the rest of the text as separate tasks if they exist
+        // e.g. "Buy milk and Afterpay..."
+        return {
+            entities: entities.map(e => ({ type: 'task', confidence: 0.5, data: e.data })),
+            summary: "Emergency Split (Offline Mode)"
+        };
+    }
+
+    // 2. Simple Sentence Splitter
+    // Split by period, "and", "then"
+    const segments = rawLower.split(/(?:[\.\?!]+|(?:\s+)(?:and|also|then)(?:\s+))/).map(s => s.trim()).filter(s => s.length > 2);
+
+    const entities = segments.map(seg => ({
+        type: 'task',
+        confidence: 0.8,
+        data: {
+            title: seg.charAt(0).toUpperCase() + seg.slice(1),
+            priority: 'medium',
+            dueDate: new Date().toISOString().split('T')[0]
+        }
+    }));
+
+    return {
+        entities: entities,
+        summary: "Offline Split"
+    };
 };
+
+export const parseQuickly = (text: string): BrainDumpResult | null => {
+    const rawLower = text.toLowerCase();
+
+    // --- COMPLEXITY SENTINEL ---
+    // If the input requires "High IQ" logic (BNPL, Finance Math, Complex chaining),
+    // we MUST delegate to the Cloud AI. Regex is too dumb for "$800 split into 4".
+    const complexityTriggers = [
+        "afterpay", "klarna", "zip", "affirm", "split", // BNPL
+        "payment", "rent", "bill", // Finance context often needs AI
+        "$", // Currency math
+        ".and", "am.and", "pm.and", // Typos that regex struggles with
+    ];
+
+    if (complexityTriggers.some(trigger => rawLower.includes(trigger))) {
+        return null; // Force Cloud Fallback
+    }
+
+    // PRE-PROCESSING: Split Logic
+    // "Do X and Do Y" -> ["Do X", "Do Y"]
+    // "Do X. Do Y" -> ["Do X", "Do Y"]
+    // "Do X.And Do Y" -> ["Do X", "Do Y"]
+    // const rawLower = text.toLowerCase(); // REMOVED DUPLICATE
+
+    // Aggressive Split:
+    // 1. Periods/Question Marks/Exclamations (with or without space)
+    // 2. Conjunctions (and, also, then, plus) surrounded by optional space
+    const segments = rawLower.split(/(?:[\.\?!]+|(?:\s+)(?:and|also|then|plus)(?:\s+))/).map(s => s.trim()).filter(s => s.length > 0);
+
+    if (segments.length > 1) {
+        let combinedEntities: any[] = [];
+        let summaries: string[] = [];
+        let successCount = 0;
+        let validSegments = 0;
+
+        segments.forEach(seg => {
+            if (seg.length < 3) return; // Ignore noise
+            validSegments++;
+
+            const res = parseSingleIntent(seg);
+            if (res && res.entities) {
+                combinedEntities = [...combinedEntities, ...res.entities];
+                summaries.push(res.summary);
+                successCount++;
+            }
+        });
+
+        // SAFETY CHECK:
+        if (successCount < validSegments) {
+            return null;
+        }
+
+        if (combinedEntities.length > 0) {
+            return {
+                entities: combinedEntities,
+                summary: summaries.join(" + ")
+            };
+        }
+    }
+
+    return parseSingleIntent(rawLower);
+};
+
+const capitalize = (s: string) => s && s.charAt(0).toUpperCase() + s.slice(1);

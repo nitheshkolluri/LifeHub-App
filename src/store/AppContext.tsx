@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 import { useUsage } from './UsageContext';
 import { db } from '../lib/firebase';
 import { apiService } from '../services/api.service';
-import { parseQuickly } from '../utils/quickParser';
+import { parseQuickly, emergencyParse } from '../utils/quickParser';
 import { collection, query, onSnapshot, addDoc, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 
 // --- DEFINITIONS ---
@@ -499,21 +499,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       dumpResult = quickResult;
     }
 
-    // 2. SLOW PATH: Cloud AI (Backend -> Client Fallback)
+    // 2. SLOW PATH: Cloud AI (Client-Side Gemini Priority)
+    // We skip the backend API because we want to use the updated Client Prompt logic directly.
     if (!dumpResult) {
       try {
-        console.log("BrainDump: Attempting Backend API...");
-        const { data } = await apiService.assistant.brainDump(text);
-        dumpResult = data;
-      } catch (e) {
-        console.warn("BrainDump: Backend failed. Falling back to Client-Side Gemini.", e);
-        try {
-          dumpResult = await geminiService.parseBrainDump(text);
-        } catch (clientError) {
-          console.error("BrainDump: All attempts failed.", clientError);
-          setIsLoadingAI(false); // Ensure loading stops
-          throw clientError;
-        }
+        console.log("BrainDump: Engaging Client-Side Gemini...");
+        dumpResult = await geminiService.parseBrainDump(text);
+      } catch (clientError) {
+        console.error("BrainDump: Client AI failed.", clientError);
+        // Throw to trigger the Emergency Fallback in the outer catch block
+        throw clientError;
       }
     }
 
@@ -531,9 +526,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       await Promise.all(promises);
       return result;
+      await Promise.all(promises);
+      return result;
     } catch (e) {
-      console.error(e);
-      throw e;
+      console.error("BrainDump: Backend failed. Engaging Emergency Protocol.", e);
+
+      // EMERGENCY FALLBACK: "Senior Engineer" Mode
+      // If Cloud fails, we use local logic to organize user thoughts smartly.
+      // This prevents the "Plain Text Dump" issue.
+      const emergencyResult = emergencyParse(text);
+
+      const promises: Promise<any>[] = [];
+      if (emergencyResult.entities) {
+        emergencyResult.entities.forEach((entity: { type: string; data: any; }) => {
+          // Treat all fallback entities as tasks for safety, but use their titles/dates
+          promises.push(addTask(entity.data.title, entity.data.priority, entity.data.dueDate));
+        });
+      }
+      // Wait for all emergency tasks to be added
+      await Promise.all(promises);
+
+      return emergencyResult;
     } finally {
       setIsLoadingAI(false);
     }

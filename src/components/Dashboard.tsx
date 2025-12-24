@@ -1,350 +1,368 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
+import { useUsage } from '../store/UsageContext';
+import { SmartCard } from './SmartCard';
+import { ReschedulePrompt } from './ReschedulePrompt';
+import { parseQuickly } from '../utils/quickParser';
+import { useVoiceInput } from '../hooks/useVoiceInput';
 import {
-   CheckCircle2,
-   Clock,
-   CreditCard,
-   LayoutDashboard,
-   MoreHorizontal,
-   Plus,
-   Sun,
-   Mic,
-   DollarSign,
-   ChevronRight,
-   Zap,
-   Flame,
-   Trash2,
-   Pencil,
+   Mic, ArrowRight, ChevronLeft, ChevronRight, Calendar,
+   CheckCircle2, Flame, Wallet, ListFilter, Sparkles, X
 } from 'lucide-react';
 import { ViewState } from '../types';
-import { VoiceOverlay } from './VoiceOverlay';
 
-// --- SUB-COMPONENTS ---
-
-// 1. Date Strip
+// --- SUB-COMPONENT: CREATIVE DATE STRIP ---
 const DateStrip = ({ selectedDate, onSelectDate }: { selectedDate: Date, onSelectDate: (d: Date) => void }) => {
+   // Generate window of dates centered on selected
    const dates = useMemo(() => {
       const arr = [];
-      for (let i = -3; i <= 3; i++) {
-         const d = new Date();
-         d.setDate(d.getDate() + i);
+      // Show 2 days before and 2 days after, sliding window
+      for (let i = -2; i <= 2; i++) {
+         const d = new Date(selectedDate); // clone pivot
+         d.setDate(selectedDate.getDate() + i);
          arr.push(d);
       }
       return arr;
-   }, []);
+   }, [selectedDate]);
+
+   const isToday = (d: Date) => d.toDateString() === new Date().toDateString();
 
    return (
-      <div className="flex items-center justify-between gap-2 overflow-x-auto py-2 no-scrollbar px-2">
-         {dates.map((date, idx) => {
-            const isSelected = date.toDateString() === selectedDate.toDateString();
-            const isToday = date.toDateString() === new Date().toDateString();
+      <div className="relative flex items-center justify-center py-4 mb-6">
+         <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm p-1.5 rounded-3xl border border-slate-200/50 shadow-sm">
+            <button onClick={() => {
+               const d = new Date(selectedDate); d.setDate(d.getDate() - 1); onSelectDate(d);
+            }} className="p-2 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all">
+               <ChevronLeft size={18} />
+            </button>
 
-            return (
-               <button
-                  key={idx}
-                  onClick={() => onSelectDate(date)}
-                  className={`flex flex-col items-center justify-center min-w-[3.5rem] h-16 rounded-2xl transition-all duration-300 ${isSelected ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105' : 'bg-white text-slate-400 hover:bg-indigo-50 hover:text-indigo-500'}`}
-               >
-                  <span className="text-[10px] uppercase font-bold tracking-wider">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                  <span className={`text-xl font-bold ${isSelected ? 'text-white' : 'text-slate-700'}`}>{date.getDate()}</span>
-                  {isToday && !isSelected && <span className="w-1 h-1 bg-indigo-500 rounded-full mt-1"></span>}
-               </button>
-            )
-         })}
+            <div className="flex gap-2">
+               {dates.map((date, i) => {
+                  const isSelected = date.toDateString() === selectedDate.toDateString();
+                  return (
+                     <button
+                        key={i}
+                        onClick={() => onSelectDate(date)}
+                        className={`
+                                    relative flex flex-col items-center justify-center w-12 h-14 rounded-2xl transition-all duration-300
+                                    ${isSelected
+                              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-110 z-10'
+                              : 'bg-white text-slate-400 hover:text-indigo-500 hover:bg-indigo-50'
+                           }
+                                `}
+                     >
+                        <span className="text-[9px] uppercase font-bold tracking-widest leading-none mb-1">
+                           {isToday(date) ? 'NOW' : date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 3)}
+                        </span>
+                        <span className={`text-lg font-black leading-none ${isSelected ? 'text-white' : 'text-slate-700'}`}>
+                           {date.getDate()}
+                        </span>
+                     </button>
+                  );
+               })}
+            </div>
+
+            <button onClick={() => {
+               const d = new Date(selectedDate); d.setDate(d.getDate() + 1); onSelectDate(d);
+            }} className="p-2 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all">
+               <ChevronRight size={18} />
+            </button>
+         </div>
       </div>
    );
 };
 
-// 2. Metrics Card
-const MetricCard = ({ title, value, subtext, icon: Icon, color }: any) => (
-   <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 flex items-center justify-between">
-      <div>
-         <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">{title}</p>
-         <h3 className="text-2xl font-black text-slate-800">{value}</h3>
-         <p className="text-xs text-slate-500 font-medium mt-1">{subtext}</p>
+// --- SUB-COMPONENT: SMART SECTION ---
+const SmartSection = ({ title, icon: Icon, color, count, children, onAdd }: any) => (
+   <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+         <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color.bg} ${color.text}`}>
+               <Icon size={20} />
+            </div>
+            <div>
+               <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{count} Items</p>
+            </div>
+         </div>
+         {onAdd && (
+            <button onClick={onAdd} className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+               <ListFilter size={16} />
+            </button>
+         )}
       </div>
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color}`}>
-         <Icon size={24} className="text-white" />
+      <div className="space-y-2">
+         {children}
       </div>
    </div>
 );
 
 export const Dashboard = () => {
+   // Context
+   const {
+      tasks, habits, finance,
+      addTask, toggleTask, deleteTask, updateTask,
+      addHabit, incrementHabit, deleteHabit,
+      addFinanceItem, togglePaid, deleteFinanceItem,
+      setView, processBrainDump
+   } = useApp();
    const { user } = useAuth();
-   const { tasks, habits, finance, setView, toggleTask, deleteTask, processBrainDump } = useApp();
+   const { incrementUsage } = useUsage();
+
+   // State
    const [selectedDate, setSelectedDate] = useState(new Date());
-   const [showVoice, setShowVoice] = useState(false);
+   const [input, setInput] = useState('');
+   const [isSubmitting, setIsSubmitting] = useState(false);
+   const [showReschedule, setShowReschedule] = useState(false);
+   const [overdueTasks, setOverdueTasks] = useState<any[]>([]);
 
-   // Filter Data based on Date
+   // Voice
+   const { isListening, transcript, startListening, stopListening, resetTranscript } = useVoiceInput();
+
+   // --- EFFECTS ---
+
+   // 1. Sync Voice
+   useEffect(() => { if (transcript) setInput(transcript); }, [transcript]);
+
+   // 2. Check Overdue (Passive)
+   useEffect(() => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const pending = tasks.filter(t => t.status === 'pending' && t.dueDate && t.dueDate < todayStr);
+      setOverdueTasks(pending);
+      // Removed auto-popup: setShowReschedule(true);
+   }, [tasks]);
+
+   // --- FILTERING LOGIC ---
    const dateKey = selectedDate.toISOString().split('T')[0];
+   const isToday = dateKey === new Date().toISOString().split('T')[0];
 
-   const todaysTasks = useMemo(() => {
+   // Filter Tasks
+   const activeTasks = useMemo(() => {
       return tasks.filter(t => {
-         if (t.status === 'completed' && t.dueDate === dateKey) return true; // Completed today
-         if (t.status === 'pending') {
-            // Show if due today or overdue (and selected date is Today)
-            if (t.dueDate === dateKey) return true;
-            if (!t.dueDate) return selectedDate.toDateString() === new Date().toDateString(); // Show backlog only on "Today"
-            // If viewing past, show what was due then? (Logic simplified for V2)
-            return false;
-         }
+         // Show completed ONLY if completed ON selected date
+         if (t.status === 'completed') return false; // Hide completed for cleaner view? Or show strikethrough?
+         // User requested "Show analysis". Maybe we show completed at bottom.
+
+         // PENDING logic
+         if (t.dueDate === dateKey) return true; // Due today
+         if (!t.dueDate && isToday) return true; // Backlog shows on Today
          return false;
-      });
-   }, [tasks, dateKey, selectedDate]);
+      }).sort((a, b) => (a.priority === 'high' ? -1 : 1));
+   }, [tasks, dateKey, isToday]);
 
-   const pendingCount = todaysTasks.filter(t => t.status === 'pending').length;
-   const completedCount = todaysTasks.filter(t => t.status === 'completed').length;
+   const activeHabits = habits; // Show all habits everyday to check off? Or track history?
+   // Filtering for "Habits Done on Date" handled in card rendering
 
-   // Finance Calc
-   const monthlySpend = useMemo(() => {
-      return finance.reduce((acc, item) => acc + item.amount, 0);
-   }, [finance]);
+   const activeFinance = finance.filter(f => {
+      if (f.dueDate) return f.dueDate === dateKey;
+      if (f.dueDay) {
+         // Check if day matches selected date
+         return selectedDate.getDate() === f.dueDay;
+      }
+      return false;
+   });
 
-   const nextBill = useMemo(() => {
-      const pending = finance.filter(f => !f.isPaidThisMonth);
-      if (pending.length === 0) return null;
-      // Sort by due day logic (simplified)
-      return pending[0];
-   }, [finance]);
+   // --- HANDLERS ---
+   const handleMicClick = () => {
+      if (isListening) stopListening();
+      else { resetTranscript(); startListening(); }
+   };
 
-   const activeHabits = useMemo(() => {
-      // Just show top 3 pending habits for orbit visual
-      return habits.filter(h => !h.completedDates.includes(dateKey)).slice(0, 5);
-   }, [habits, dateKey]);
+   const handleDump = async (e?: React.KeyboardEvent) => {
+      if ((e && e.key === 'Enter') || !e) {
+         if (!input.trim()) return;
+         setIsSubmitting(true);
+         incrementUsage();
+
+         try {
+            // CRITICAL FIX: Use the centralized BrainDump processor (Quick + Cloud AI)
+            // Previously this component bypassed Cloud AI for plain tasks.
+            await processBrainDump(input);
+         } catch (error) {
+            console.error("Dashboard Dump Error:", error);
+            // Fallback (handled in processBrainDump generally, but extra safety here)
+            addTask(input, 'medium', dateKey);
+         }
+
+         setInput('');
+         resetTranscript();
+         setIsSubmitting(false);
+      }
+   };
+
+   const handleReschedule = (ids: string[]) => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      ids.forEach(id => updateTask(id, { dueDate: todayStr }));
+      setShowReschedule(false);
+   };
 
    return (
-      <div className="flex flex-col h-full space-y-6 animate-fade-in pb-24 md:pb-0">
+      <div className="max-w-xl mx-auto pb-24 px-4 pt-6 font-sans text-slate-800 animate-fade-in">
 
-         {/* HEADER */}
-         <header className="flex items-center justify-between px-2">
-            <div>
-               <h1 className="text-3xl font-black text-slate-800 tracking-tight">
-                  Hello, {user?.name?.split(' ')[0] || 'User'}.
-               </h1>
-               <p className="text-slate-500 font-medium">Ready to conquer the day?</p>
-            </div>
-            <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 shadow-sm border border-white">
-               <Sun size={24} />
-            </div>
+         {/* 1. GREETING & DATE */}
+         <header className="mb-2 text-center">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+               {new Date().getHours() < 12 ? 'Good morning' : 'Hello'}, {user?.name?.split(' ')[0] || 'Friend'}
+            </h1>
+            <p className="text-slate-400 font-medium text-sm">Let's make today count.</p>
          </header>
 
-         {/* TIME MACHINE / DATE PICKER */}
-         <section>
-            <div className="flex items-center justify-between mb-2 px-2">
-               <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Timeline</h2>
-               <button onClick={() => setSelectedDate(new Date())} className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Jump to Today</button>
-            </div>
-            <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-         </section>
+         <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
-         {/* KEY METRICS GRID */}
-         <section className="grid grid-cols-2 gap-4 px-2">
-            <MetricCard
-               title="Focus"
-               value={`${completedCount}/${pendingCount + completedCount}`}
-               subtext="Tasks Done"
-               icon={CheckCircle2}
-               color="bg-emerald-500"
-            />
-            <MetricCard
-               title="Finance"
-               value={`$${monthlySpend}`}
-               subtext="Monthly Burn"
-               icon={CreditCard}
-               color="bg-rose-500"
-            />
-         </section>
+         {/* 2. MAIN INPUT */}
+         <div className={`relative mb-10 transition-all ${isListening ? 'scale-105' : ''}`}>
+            <div className="relative group bg-white rounded-[28px] shadow-lg shadow-indigo-100 border border-slate-100 p-2 flex items-center transition-all focus-within:ring-4 focus-within:ring-indigo-50/50 focus-within:border-indigo-200">
+               <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleDump}
+                  placeholder={isListening ? "Listening..." : "Rent, Buy milk, Call mom..."}
+                  className="flex-1 bg-transparent border-none outline-none text-lg font-bold px-4 text-slate-800 placeholder:text-slate-300 h-14"
+                  disabled={isSubmitting}
+                  autoFocus
+               />
 
-         {/* FOCUS STREAM (Tasks) */}
-         <section className="flex-1 overflow-hidden flex flex-col px-2">
-            <div className="flex items-center justify-between mb-4">
-               <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Focus Stream</h2>
-               <div className="flex gap-2">
-                  <button onClick={() => setView(ViewState.TASKS)} className="bg-slate-100 p-2 rounded-xl text-slate-600 hover:bg-slate-200 transition-colors">
-                     <MoreHorizontal size={18} />
+               {/* CLEAR BUTTON */}
+               {input && !isListening && (
+                  <button
+                     onClick={() => { setInput(''); resetTranscript(); }}
+                     className="absolute right-16 p-2 text-slate-300 hover:text-rose-500 transition-colors"
+                  >
+                     <ListFilter size={20} className="rotate-45" /> {/* Using ListFilter as generic X since X isn't imported, wait, X is not in import list? Let's check imports. */}
                   </button>
-                  <button className="bg-indigo-600 p-2 rounded-xl text-white hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
-                     <Plus size={18} />
+               )}
+
+               {/* MIC BUTTON - HIGHLIGHTED */}
+               <button
+                  onClick={() => input && !isListening ? handleDump() : handleMicClick()}
+                  className={`w-14 h-14 rounded-[20px] flex items-center justify-center transition-all duration-300 ${isListening
+                     ? 'bg-rose-500 text-white shadow-lg shadow-rose-200 animate-pulse scale-105'
+                     : input
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:scale-105'
+                        : 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100'
+                     }`}
+               >
+                  {input && !isListening ? <ArrowRight size={24} /> : <Mic size={24} />}
+               </button>
+            </div>
+            {/* Visual Feedback for Input Type */}
+            <div className="absolute -bottom-6 left-6 text-xs font-bold uppercase tracking-wide text-slate-300 flex items-center gap-2">
+               <Sparkles size={12} className="text-indigo-400" />
+               <span>AI Auto-Categorization Active</span>
+            </div>
+         </div>
+
+         {/* 2.5. NOTIFICATIONS SECTION */}
+         {overdueTasks.length > 0 && (
+            <div className="mb-8 animate-slide-down">
+               <div className="bg-gradient-to-r from-indigo-50 to-white border border-indigo-100 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center animate-pulse">
+                        <Sparkles size={20} />
+                     </div>
+                     <div>
+                        <h3 className="font-bold text-slate-800 text-sm">Review Yesterday</h3>
+                        <p className="text-xs text-slate-500">{overdueTasks.length} tasks pending from the past.</p>
+                     </div>
+                  </div>
+                  <button
+                     onClick={() => setShowReschedule(true)}
+                     className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                  >
+                     Review
                   </button>
                </div>
             </div>
+         )}
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-               {todaysTasks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-40 text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl">
-                     <LayoutDashboard size={32} className="mb-2 opacity-50" />
-                     <p className="font-medium text-sm">No tasks for this date.</p>
-                  </div>
+         {/* 3. SECTIONS GRID */}
+         <div className="space-y-6">
+
+            {/* TASKS */}
+            <SmartSection
+               title="Focus"
+               count={activeTasks.length}
+               icon={CheckCircle2}
+               color={{ bg: 'bg-indigo-50', text: 'text-indigo-600' }}
+               onAdd={() => setView(ViewState.TASKS)}
+            >
+               {activeTasks.length === 0 ? (
+                  <div className="text-center py-8 text-slate-300 italic text-sm">No tasks for {isToday ? 'today' : 'this date'}. Enjoy the calm.</div>
                ) : (
-                  todaysTasks.map(task => (
-                     <div key={task.id} className="group bg-white p-4 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 relative">
-                        <button
-                           onClick={() => toggleTask(task.id)}
-                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${task.status === 'completed' ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 hover:border-indigo-500'}`}
-                        >
-                           {task.status === 'completed' && <CheckCircle2 size={14} className="text-white" />}
-                        </button>
-                        <div className="flex-1">
-                           <h3 className={`font-bold text-slate-800 ${task.status === 'completed' ? 'line-through text-slate-400' : ''}`}>{task.title}</h3>
-                           <div className="flex items-center gap-2 mt-1">
-                              {task.dueTime && (
-                                 <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                    <Clock size={10} /> {task.dueTime}
-                                 </span>
-                              )}
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${task.priority === 'high' ? 'bg-rose-50 text-rose-500' : 'bg-slate-50 text-slate-400'}`}>
-                                 {task.priority}
-                              </span>
-                           </div>
-                        </div>
-
-                        {/* Actions (Visible on Hover/Focus) */}
-                        <div className="flex bg-white/80 backdrop-blur-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-1/2 -translate-y-1/2 shadow-sm border border-slate-100">
-                           <button
-                              onClick={() => { setView(ViewState.TASKS); /* Ideally open edit modal there */ }}
-                              className="p-2 text-slate-400 hover:text-indigo-500 transition-colors"
-                              title="Edit in Tasks View"
-                           >
-                              <Pencil size={14} />
-                           </button>
-                           <div className="w-[1px] bg-slate-100 my-1" />
-                           <button
-                              onClick={(e) => {
-                                 e.stopPropagation();
-                                 if (window.confirm('Delete this task?')) {
-                                    deleteTask(task.id);
-                                 }
-                              }}
-                              className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
-                           >
-                              <Trash2 size={14} />
-                           </button>
-                        </div>
-                     </div>
+                  activeTasks.map(t => (
+                     <SmartCard
+                        key={t.id}
+                        title={t.title}
+                        subtitle={t.dueTime ? `Due ${t.dueTime}` : null}
+                        color="text-indigo-600"
+                        isCompleted={t.status === 'completed'}
+                        onToggle={() => toggleTask(t.id)}
+                        onDelete={() => deleteTask(t.id)}
+                     />
                   ))
                )}
-            </div>
-         </section>
+            </SmartSection>
 
-         {/* HABIT ORBIT - Interactive */}
-         < section className="px-2" >
-            < div
-               className="relative h-56 bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-xl group hover:border-emerald-200 transition-all"
+            {/* HABITS */}
+            <SmartSection
+               title="Rituals"
+               count={habits.length}
+               icon={Flame}
+               color={{ bg: 'bg-orange-50', text: 'text-orange-500' }}
+               onAdd={() => setView(ViewState.HABITS)}
             >
-               <div className="absolute top-0 right-0 p-8 w-full h-full bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none" />
-               <div className="absolute inset-0 p-6 flex flex-col z-10">
-                  <div className="flex justify-between items-center mb-4 cursor-pointer" onClick={() => setView(ViewState.HABITS)}>
-                     <div>
-                        <h2 className="text-xl font-black text-slate-800 tracking-tight">Rituals</h2>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{activeHabits.length} Remaining</p>
-                     </div>
-                     <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                        <ChevronRight size={20} />
-                     </div>
-                  </div>
-
-                  {/* Horizontal Scrollable Habits */}
-                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 items-center h-full">
-                     {activeHabits.length === 0 ? (
-                        <div className="flex items-center gap-3 text-emerald-600 opacity-60">
-                           <CheckCircle2 size={24} />
-                           <span className="font-bold">All rituals complete.</span>
+               <div className="grid grid-cols-2 gap-2">
+                  {habits.map(h => {
+                     const isDone = h.completedDates.includes(dateKey);
+                     return (
+                        <div key={h.id} onClick={() => incrementHabit(h.id)} className={`cursor-pointer p-4 rounded-2xl border transition-all flex items-center gap-3 ${isDone ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-transparent hover:bg-white hover:shadow-sm'}`}>
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isDone ? 'bg-orange-500 text-white' : 'bg-white text-slate-300'}`}>
+                              <Flame size={14} className={isDone ? 'fill-current' : ''} />
+                           </div>
+                           <div>
+                              <p className={`text-sm font-bold ${isDone ? 'text-orange-900' : 'text-slate-600'}`}>{h.title}</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase">{h.streak} Day Streak</p>
+                           </div>
                         </div>
-                     ) : (
-                        activeHabits.map((h, i) => (
-                           <button
-                              key={h.id}
-                              // onClick={() => toggleHabit(h.id)} // Assuming toggle/increment logic exists or we just view
-                              className="flex-shrink-0 w-20 h-24 bg-white border border-slate-100 shadow-sm rounded-2xl flex flex-col items-center justify-center gap-2 hover:scale-105 hover:shadow-md transition-all relative overflow-hidden"
-                           >
-                              <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-transparent opacity-50" />
-                              <div className="relative z-10 w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
-                                 <Flame size={20} />
-                              </div>
-                              <span className="relative z-10 text-[10px] font-bold text-slate-600 text-center leading-tight line-clamp-2 px-1">{h.title}</span>
-                           </button>
-                        ))
-                     )}
-                     <button onClick={() => setView(ViewState.HABITS)} className="flex-shrink-0 w-12 h-24 rounded-2xl border-2 border-dashed border-slate-100 flex items-center justify-center text-slate-300 hover:border-indigo-200 hover:text-indigo-400 transition-colors">
-                        <Plus size={20} />
-                     </button>
-                  </div>
+                     );
+                  })}
                </div>
-            </div >
-         </section>
+            </SmartSection>
 
-         {/* 3. FINANCE SNAPSHOT (Interactive) */}
-         < section className="px-2" >
-            < div
-               onClick={() => setView(ViewState.FINANCE)}
-               className="relative h-48 bg-slate-50 rounded-[40px] p-8 flex flex-col justify-between border border-dashed border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer group"
-            >
-               <div className="flex justify-between items-start">
-                  <div>
-                     <p className="text-xs font-bold text-slate-400 uppercase">Wallet</p>
-                     <p className="text-2xl font-black text-slate-800 mt-1">
-                        {nextBill ? `$${nextBill.amount}` : 'Healthy'}
-                     </p>
-                  </div>
-                  <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 group-hover:bg-slate-800 group-hover:text-white transition-colors">
-                     <DollarSign size={20} />
-                  </div>
-               </div>
+            {/* FINANCE */}
+            {activeFinance.length > 0 && (
+               <SmartSection
+                  title="Vault"
+                  count={activeFinance.length}
+                  icon={Wallet}
+                  color={{ bg: 'bg-emerald-50', text: 'text-emerald-600' }}
+               >
+                  {activeFinance.map(f => (
+                     <SmartCard
+                        key={f.id}
+                        title={f.title}
+                        subtitle={f.type === 'bill' ? 'Bill' : 'Expense'}
+                        icon={<span>${f.amount}</span>}
+                        color="text-emerald-600"
+                        isCompleted={f.isPaidThisMonth} // Simplification
+                        onToggle={() => togglePaid(f.id)}
+                     />
+                  ))}
+               </SmartSection>
+            )}
 
-               {
-                  nextBill ? (
-                     <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-                        <div>
-                           <p className="text-xs font-bold text-rose-500">Upcoming Bill</p>
-                           <p className="font-bold text-slate-700">{nextBill.title}</p>
-                        </div>
-                     </div>
-                  ) : (
-                     <div className="flex items-center gap-2 text-emerald-600">
-                        <CheckCircle2 size={16} />
-                        <span className="text-sm font-bold">No dues soon</span>
-                     </div>
-                  )
-               }
-            </div >
-         </section>
+         </div>
 
-         {/* 4. AI ASSISTANT PROMPT */}
-         < section className="px-2" >
-            <div
-               onClick={() => setView(ViewState.ASSISTANT)}
-               className="h-48 relative bg-gradient-to-r from-indigo-500 to-blue-500 rounded-[40px] p-1 overflow-hidden shadow-2xl shadow-blue-200 group cursor-pointer"
-            >
-               <div className="absolute inset-0 bg-white/10 backdrop-blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-               <div className="h-full bg-white/95 rounded-[36px] p-6 flex items-center gap-6 relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg">
-                     <Zap size={32} />
-                  </div>
-                  <div>
-                     <h3 className="text-xl font-bold text-slate-800 mb-1">LifeHub Assistant</h3>
-                     <p className="text-sm text-slate-500 leading-snug">
-                        AI-powered brain dump active. <br />Tap to organize your thoughts.
-                     </p>
-                  </div>
-                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 ml-auto group-hover:translate-x-1 transition-transform">
-                     <ChevronRight size={20} />
-                  </div>
-               </div>
-            </div>
-         </section>
+         {/* 4. RESCHEDULE PROMPT */}
+         {showReschedule && (
+            <ReschedulePrompt
+               overdueTasks={overdueTasks}
+               onReschedule={handleReschedule}
+               onDismiss={() => setShowReschedule(false)}
+            />
+         )}
 
-         {/* FLOATING MIC BUTTON */}
-         {/* FLOATING MIC BUTTON */}
-         <button
-            onClick={() => setShowVoice(true)}
-            className="fixed bottom-24 right-6 z-50 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
-         >
-            <div className="absolute inset-0 bg-slate-700/50 rounded-full animate-ping opacity-20 group-hover:opacity-40" />
-            <Mic size={28} />
-         </button>
-
-         <VoiceOverlay isOpen={showVoice} onClose={() => setShowVoice(false)} />
       </div>
    );
 };

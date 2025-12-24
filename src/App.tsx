@@ -14,6 +14,8 @@ import { Loader2 } from 'lucide-react';
 // This reduces the initial bundle size significantly
 const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })));
 const VoiceDashboard = lazy(() => import('./components/VoiceDashboard'));
+// const Home = lazy(() => import('./components/Home').then(module => ({ default: module.Home })));
+const Home = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard }))); // Quick Fix: Map Home to Dashboard
 const Tasks = lazy(() => import('./components/Tasks').then(module => ({ default: module.Tasks })));
 const Habits = lazy(() => import('./components/Habits').then(module => ({ default: module.Habits })));
 const Finance = lazy(() => import('./components/Finance').then(module => ({ default: module.Finance })));
@@ -67,13 +69,13 @@ const AppContent = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case ViewState.DASHBOARD: return <Dashboard />;
+      case ViewState.DASHBOARD: return <Home />; // The Atelier Dashboard
       case ViewState.TASKS: return <Tasks />;
       case ViewState.HABITS: return <Habits />;
       case ViewState.FINANCE: return <Finance />;
       case ViewState.ASSISTANT: return <Assistant />;
       case ViewState.PROFILE: return <Profile isOpen={true} onClose={() => setView(ViewState.DASHBOARD)} />;
-      default: return <Dashboard />;
+      default: return <Assistant />;
     }
   };
 
@@ -86,17 +88,19 @@ const AppContent = () => {
 
   return (
     <Layout>
-      {renderView()}
+      <Suspense fallback={<LoadingView />}>
+        {renderView()}
 
-      {/* Onboarding Modal */}
-      <SubscriptionModal
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        isOnboarding={true}
-      />
+        {/* Onboarding Modal */}
+        <SubscriptionModal
+          isOpen={showOnboarding}
+          onClose={() => setShowOnboarding(false)}
+          isOnboarding={true}
+        />
 
-      {/* Triggered Upsell Modal */}
-      {isUpsellOpen && !showOnboarding && <SubscriptionModal isOpen={true} onClose={() => { setShowUpsell(false); setShowPaywall(false); }} />}
+        {/* Triggered Upsell Modal */}
+        {isUpsellOpen && !showOnboarding && <SubscriptionModal isOpen={true} onClose={() => { setShowUpsell(false); setShowPaywall(false); }} />}
+      </Suspense>
     </Layout>
   );
 };

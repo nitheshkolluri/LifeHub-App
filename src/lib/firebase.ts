@@ -74,4 +74,10 @@ export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Log successful initialization (without sensitive data)
-console.log('✅ Firebase initialized successfully for project:', firebaseConfig.projectId);
+// Log successful initialization (without sensitive data)
+console.log('✅ Firebase initialized successfully');
+console.log('   - Project:', firebaseConfig.projectId);
+console.log('   - Auth Domain:', firebaseConfig.authDomain);
+console.log('   - Source:', (window as any).env ? 'Runtime (window.env)' : 'Build-time (import.meta.env)');
+console.log('   - API Key Present:', !!firebaseConfig.apiKey);
+

@@ -149,8 +149,8 @@ out/
 
 # Emacs
 *~
-\#*\#
-.\#*
+#*#
+.#*
 
 # ============================================
 # OS FILES
@@ -212,3 +212,9 @@ bundle-stats.html
 
 # Backend Error Logs
 backend/error.txt
+!.env.development
+backend/service-account.json
+
+backend/service-account.json
+
+backend/service-account.json

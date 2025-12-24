@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
 import { useUsage } from '../store/UsageContext';
 import { FinanceItem } from '../types';
-import { DollarSign, Check, Plus, Lock, TrendingUp, Layers, CreditCard } from 'lucide-react';
+import { DollarSign, Check, Plus, Lock, TrendingUp, Layers, CreditCard, X } from 'lucide-react';
 
 // Styles for the liquid wave animation
 const liquidStyles = `
@@ -40,13 +40,13 @@ export const Finance = () => {
    // Form
    const [title, setTitle] = useState('');
    const [amount, setAmount] = useState('');
-   const [dueDay, setDueDay] = useState('');
+   const [dueDate, setDueDate] = useState('');
 
    const openAddModal = () => {
       setEditingItem(null);
       setTitle('');
       setAmount('');
-      setDueDay('');
+      setDueDate('');
       setIsModalOpen(true);
    };
 
@@ -54,83 +54,54 @@ export const Finance = () => {
       setEditingItem(item);
       setTitle(item.title);
       setAmount(item.amount.toString());
-      setDueDay(item.dueDay.toString());
+      setDueDate(item.dueDate || ''); // Use dueDate if available
       setIsModalOpen(true);
    };
 
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (title && amount) {
+         const payload = {
+            title,
+            amount: parseFloat(amount),
+            dueDate: dueDate || undefined, // Send date string
+            dueDay: dueDate ? parseInt(dueDate.split('-')[2]) : 1, // Fallback for legacy sorting
+            type: 'bill' as const
+         };
+
          if (editingItem) {
-            updateFinanceItem(editingItem.id, {
-               title,
-               amount: parseFloat(amount),
-               dueDay: parseInt(dueDay) || 1
-            });
+            updateFinanceItem(editingItem.id, payload);
          } else {
-            await addFinanceItem({
-               title,
-               amount: parseFloat(amount),
-               dueDay: parseInt(dueDay) || 1,
-               type: 'bill'
-            });
+            await addFinanceItem(payload);
          }
          setIsModalOpen(false);
-         setTitle(''); setAmount(''); setDueDay('');
+         setTitle(''); setAmount(''); setDueDate('');
       }
    };
-
    return (
-      <div className="min-h-screen pb-32 pt-6 px-2 font-sans">
-         <style>{liquidStyles}</style>
-
+      <div className="min-h-screen pb-32 pt-6 px-2 font-sans text-slate-900">
          <div className="flex justify-between items-end mb-8 px-4">
             <div>
-               <h1 className="text-4xl font-black text-slate-800 tracking-tighter mb-1">Vault</h1>
-               <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100/50 px-2 py-1 rounded-lg w-fit">
+               <h1 className="text-4xl font-black tracking-tighter mb-1 text-violet-900">Finance</h1>
+               <div className="flex items-center gap-1 text-[10px] font-bold text-violet-400 bg-violet-50 px-2 py-1 rounded-lg w-fit">
                   <Lock size={10} />
-                  <span>Offline Mode • Privacy Active</span>
+                  <span>Secure Local Snapshot</span>
                </div>
             </div>
-            <button onClick={openAddModal} className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+            <button onClick={openAddModal} className="w-10 h-10 bg-violet-900 rounded-full flex items-center justify-center text-white shadow-lg shadow-violet-200 hover:scale-110 transition-transform">
                <Plus size={20} />
             </button>
          </div>
 
-         {/* --- LIQUID BUDGET CARD --- */}
-         <div className="liquid-container h-64 bg-slate-900 rounded-[40px] mb-8 relative shadow-2xl shadow-indigo-200 mx-2">
-            {/* The Liquid */}
-            <div
-               className="wave bg-gradient-to-t from-indigo-600 to-purple-600 opacity-80"
-               style={{ bottom: `${percentage - 110}%` }} // Adjust offset to fill up
-            />
-            <div
-               className="wave bg-indigo-500 opacity-40"
-               style={{ bottom: `${percentage - 115}%`, animationDuration: '12s' }}
-            />
-
-            {/* Content Overlay */}
-            <div className="absolute inset-0 p-8 flex flex-col justify-between z-10">
-               <div className="flex justify-between text-white/80">
-                  <span className="text-xs font-bold uppercase tracking-widest">Monthly Cap</span>
-                  <TrendingUp size={16} />
-               </div>
-
-               <div className="text-center">
-                  <span className="block text-5xl font-black text-white tracking-tight mb-2">${totalMonthly - paidThisMonth}</span>
-                  <span className="text-sm font-bold text-indigo-200 uppercase tracking-widest">Remaining</span>
-               </div>
-
-               <div className="flex justify-between items-end text-white">
-                  <div>
-                     <p className="text-[10px] font-bold uppercase opacity-60">Paid</p>
-                     <p className="font-bold text-lg">${paidThisMonth}</p>
-                  </div>
-                  <div className="text-right">
-                     <p className="text-[10px] font-bold uppercase opacity-60">Total</p>
-                     <p className="font-bold text-lg">${totalMonthly}</p>
-                  </div>
-               </div>
+         {/* --- SUMMARY CARDS --- */}
+         <div className="grid grid-cols-2 gap-4 px-2 mb-8">
+            <div className="p-6 rounded-[32px] bg-slate-900 text-white shadow-xl shadow-slate-200">
+               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Total Cap</span>
+               <span className="text-3xl font-black">${totalMonthly}</span>
+            </div>
+            <div className="p-6 rounded-[32px] bg-white border border-slate-100 shadow-xl shadow-slate-100">
+               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1">Remaining</span>
+               <span className="text-3xl font-black text-indigo-600">${totalMonthly - paidThisMonth}</span>
             </div>
          </div>
 
@@ -176,6 +147,14 @@ export const Finance = () => {
                                     MARK PAID
                                  </button>
                               )}
+                              {item.isPaidThisMonth && item.type === 'bill' && (
+                                 <button
+                                    onClick={(e) => { e.stopPropagation(); togglePaid(item.id); }}
+                                    className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md hover:bg-slate-200 transition-colors"
+                                 >
+                                    UNDO
+                                 </button>
+                              )}
                               <button
                                  onClick={(e) => { e.stopPropagation(); deleteFinanceItem(item.id); }}
                                  className="text-[10px] font-bold text-slate-400 hover:text-rose-500 px-2 py-1 transition-colors"
@@ -208,9 +187,21 @@ export const Finance = () => {
                      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Netflix, Rent..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-slate-800 border-none focus:ring-2 focus:ring-indigo-100" autoFocus />
                      <div className="flex gap-4">
                         <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="$0.00" type="number" className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-slate-800 border-none focus:ring-2 focus:ring-indigo-100" />
-                        <input value={dueDay} onChange={e => setDueDay(e.target.value)} placeholder="Day (1-31)" type="number" className="w-1/3 p-4 bg-slate-50 rounded-2xl font-bold text-slate-800 border-none focus:ring-2 focus:ring-indigo-100 text-center" />
+                        <input
+                           value={dueDate}
+                           onChange={e => setDueDate(e.target.value)}
+                           type="date"
+                           className="w-1/2 p-4 bg-slate-50 rounded-2xl font-bold text-slate-800 border-none focus:ring-2 focus:ring-indigo-100 text-center"
+                        />
                      </div>
                   </div>
+                  <button
+                     type="button"
+                     onClick={() => setIsModalOpen(false)}
+                     className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                     <X size={24} />
+                  </button>
                   <button className="w-full mt-8 bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:scale-[1.02] transition-transform">
                      {editingItem ? 'Update Vault' : 'Add to Vault'}
                   </button>

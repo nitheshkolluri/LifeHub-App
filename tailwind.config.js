@@ -7,58 +7,53 @@ export default {
     theme: {
         extend: {
             colors: {
+                // "Calm Daylight" Palette (Warm Paper, Natural, Peaceful)
+                canvas: {
+                    DEFAULT: '#FDFBF7', // Warm Alabaster / Milk
+                    muted: '#F5F5F4',   // Warm Stone 100
+                    subtle: '#E7E5E4',  // Warm Stone 200
+                    dark: '#292524',    // Contrast Dark
+                },
+                ink: {
+                    DEFAULT: '#292524', // Warm Charcoal (Stone 800)
+                    muted: '#78716C',   // Stone 500
+                    faint: '#A8A29E',   // Stone 400
+                    inverse: '#FAFAFA', // White
+                },
+                axiom: {
+                    orange: '#EA580C', // Burnt Orange (More natural than neon)
+                    gold: '#CA8A04',   // Deep Gold
+                    forest: '#15803D', // Deep Forest Green
+                    clay: '#E11D48',   // Rose
+                    slate: '#64748B',  // Slate Blue
+                },
+                // Aliases for compatibility
                 primary: {
-                    50: '#eef2ff',
-                    100: '#e0e7ff',
-                    200: '#c7d2fe',
-                    300: '#a5b4fc',
-                    400: '#818cf8',
-                    500: '#6366f1', // Indigo (Trust, Intelligence)
-                    600: '#4f46e5',
-                    700: '#4338ca',
-                    800: '#3730a3',
-                    900: '#312e81',
+                    DEFAULT: '#4F46E5', // Indigo 600 (Solid, Trusted)
+                    500: '#6366F1',
+                    600: '#4F46E5',
                 },
-                secondary: {
-                    50: '#fff1f2',
-                    100: '#ffe4e6',
-                    200: '#fecdd3',
-                    300: '#fda4af',
-                    400: '#fb7185',
-                    500: '#f43f5e', // Rose/Coral (Action, Warmth)
-                    600: '#e11d48',
-                    700: '#be123c',
-                    800: '#9f1239',
-                    900: '#881337',
-                },
-                glass: {
-                    100: 'rgba(255, 255, 255, 0.1)',
-                    200: 'rgba(255, 255, 255, 0.2)',
-                    300: 'rgba(255, 255, 255, 0.3)',
-                    400: 'rgba(255, 255, 255, 0.4)',
-                },
+                secondary: '#78716C',
                 surface: {
-                    light: '#f8fafc',
-                    dark: '#0f172a',
+                    light: '#FDFBF7',
+                    dark: '#292524',
+                    card: '#FFFFF',
                 }
             },
             fontFamily: {
-                sans: ['Plus Jakarta Sans', 'sans-serif'],
+                sans: ['Inter', 'sans-serif'], // Switch to Inter for "Swiss" cleanliness? Or stick to Plus Jakarta. Let's stick to Plus Jakarta for now but maybe Inter is more "Artistic". Let's keep existing fonts to not break imports.
                 display: ['Outfit', 'sans-serif'],
             },
+            backgroundImage: {
+                'matte-gradient': 'linear-gradient(to bottom right, #1c1917, #0c0a09)',
+            },
             animation: {
-                'float': 'float 6s ease-in-out infinite',
-                'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                'slide-up': 'slideUp 0.5s ease-out forwards',
-                'fade-in': 'fadeIn 0.3s ease-out forwards',
+                'fade-in': 'fadeIn 0.5s ease-out forwards',
             },
             keyframes: {
-                float: {
-                    '0%, 100%': { transform: 'translateY(0)' },
-                    '50%': { transform: 'translateY(-10px)' },
-                },
-                slideUp: {
-                    'to': { transform: 'scale(1)', opacity: '1' },
+                fadeIn: {
+                    'from': { opacity: '0', transform: 'translateY(5px)' },
+                    'to': { opacity: '1', transform: 'translateY(0)' },
                 },
             }
         },

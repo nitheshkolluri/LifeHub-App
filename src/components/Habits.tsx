@@ -35,13 +35,13 @@ const HabitCard = ({ habit, onIncrement, deleteHabit, isDoneToday }: any) => {
 
         <div className="flex gap-2">
           <button
-            onClick={() => deleteHabit(habit.id)}
+            onClick={(e) => { e.stopPropagation(); deleteHabit(habit.id); }}
             className="w-14 h-14 rounded-full flex items-center justify-center bg-white text-slate-200 hover:text-rose-500 hover:scale-110 shadow-lg transition-all"
           >
             <Trash2 size={24} />
           </button>
           <button
-            onClick={() => onIncrement(habit.id)}
+            onClick={(e) => { e.stopPropagation(); onIncrement(habit.id); }}
             disabled={isDoneToday}
             className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${isDoneToday
               ? 'bg-gradient-to-tr from-amber-400 to-orange-500 text-white scale-100'
@@ -115,8 +115,8 @@ export const Habits = () => {
     <div className="min-h-screen pb-32 pt-6 px-2 font-sans">
 
       <div className="flex flex-col items-start mb-8 px-4">
-        <h1 className="text-4xl font-black text-slate-800 tracking-tighter mb-1">Rituals</h1>
-        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Build your constellation</p>
+        <h1 className="text-4xl font-black text-emerald-900 tracking-tighter mb-1">Rituals</h1>
+        <p className="text-sm font-bold text-emerald-500 uppercase tracking-widest">Build your constellation</p>
       </div>
 
       <div className="grid gap-4">

@@ -181,9 +181,9 @@ export const Tasks = () => {
 
       {/* --- HEADER --- */}
       <div className="flex flex-col items-start mb-8 px-4">
-        <h1 className="text-4xl font-black text-slate-800 tracking-tighter mb-1">Flow State</h1>
+        <h1 className="text-4xl font-black text-indigo-900 tracking-tighter mb-1">Flow State</h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{filteredTasks.length} Active Items</span>
+          <span className="text-sm font-bold text-indigo-400 uppercase tracking-widest">{filteredTasks.length} Active Items</span>
 
           <div className="flex bg-white/50 backdrop-blur-md p-1 rounded-full border border-white/50">
             {(['all', 'completed'] as const).map(f => (

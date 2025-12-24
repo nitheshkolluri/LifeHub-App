@@ -1,198 +1,146 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
-import { Mic, MicOff, Terminal, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { useVoiceInput } from '../hooks/useVoiceInput';
+import { Mic, Square, Loader2, Sparkles, ArrowRight, Trash2, RotateCcw } from 'lucide-react';
 import { ViewState } from '../types';
 
 const VoiceDashboard = () => {
-    const { processBrainDump, currentView, setView } = useApp();
-    const { user } = useAuth();
-    const [isListening, setIsListening] = useState(false);
-    const [transcript, setTranscript] = useState('');
+    const { processBrainDump, setView } = useApp();
+    const { isListening, transcript, startListening, stopListening, resetTranscript, error: voiceError } = useVoiceInput();
+
     const [isProcessing, setIsProcessing] = useState(false);
-    const [status, setStatus] = useState<string>('Ready to listen');
-    const [error, setError] = useState<string | null>(null);
+    const [localError, setLocalError] = useState<string | null>(null);
 
-    const recognitionRef = useRef<any>(null);
-
-    useEffect(() => {
-        if ('webkitSpeechRecognition' in window) {
-            const SpeechRecognition = (window as any).webkitSpeechRecognition;
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = true;
-            recognitionRef.current.interimResults = true;
-
-            recognitionRef.current.onstart = () => {
-                setIsListening(true);
-                setStatus('Listening...');
-                setError(null);
-            };
-
-            recognitionRef.current.onend = () => {
-                setIsListening(false);
-                if (status !== 'Processing...') {
-                    setStatus('Tap microphone to start');
-                }
-            };
-
-            recognitionRef.current.onresult = (event: any) => {
-                let finalTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    }
-                }
-                if (finalTranscript) {
-                    setTranscript(prev => prev + ' ' + finalTranscript);
-                }
-            };
-
-            recognitionRef.current.onerror = (event: any) => {
-                console.error("Speech Error:", event.error);
-                setError(event.error === 'not-allowed' ? 'Microphone access denied' : 'Error recognizing speech');
-                setIsListening(false);
-            };
-
-        } else {
-            setError("Voice input not supported in this browser.");
-        }
-    }, []);
-
-    const toggleListening = () => {
-        if (!recognitionRef.current) return;
-
-        if (isListening) {
-            recognitionRef.current.stop();
-        } else {
-            setTranscript('');
-            recognitionRef.current.start();
-        }
-    };
+    // Derived State
+    const hasTranscript = transcript.trim().length > 0;
+    const isReviewMode = !isListening && hasTranscript && !isProcessing;
 
     const handleProcess = async () => {
-        if (!transcript.trim()) return;
+        if (!hasTranscript) return;
 
-        // Stop listening if active
-        if (isListening) recognitionRef.current.stop();
-
+        stopListening(); // Safety check
         setIsProcessing(true);
-        setStatus('Organizing your thoughts...');
+        setLocalError(null);
 
         try {
-            await processBrainDump(transcript);
-            setStatus('Done! Organizing...');
-            setTranscript('');
+            const result = await processBrainDump(transcript);
+
+            // Rejection / Zero-Action Handling
+            if (result.entities.length === 0) {
+                setLocalError(result.summary || "No actionable items found.");
+                setIsProcessing(false);
+                return; // Stay on screen so user can edit/retry
+            }
+
+            // Success Path
+            resetTranscript();
             setTimeout(() => setView(ViewState.TASKS), 1000);
         } catch (e) {
             console.error(e);
-            setStatus('Failed to process. Try again.');
+            setLocalError('Processing failed. Please try again.');
         } finally {
             setIsProcessing(false);
         }
     };
 
     return (
-        <div className="h-full flex flex-col items-center justify-center p-4 font-sans animate-fade-in relative overflow-hidden">
+        <div className="h-full flex flex-col items-center justify-center p-6 font-sans animate-fade-in relative overflow-hidden text-slate-800">
 
-            {/* Background Ambient Mesh */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-full blur-[100px] transition-all duration-1000 ${isListening ? 'scale-150 opacity-40' : 'scale-100 opacity-20'}`} />
+            {/* Ambient Background */}
+            <div className={`absolute inset-0 transition-opacity duration-1000 ${isListening ? 'opacity-30' : 'opacity-10'}`}>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-500 to-rose-500 rounded-full blur-[120px]" />
             </div>
 
-            <div className="z-10 w-full max-w-2xl flex flex-col items-center gap-8">
+            <div className="z-10 w-full max-w-xl flex flex-col items-center gap-10">
 
-                {/* Header */}
-                <div className="text-center space-y-2">
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tighter">
-                        What's on your mind?
+                {/* Header Text */}
+                <div className="text-center space-y-3">
+                    <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900">
+                        {isListening ? 'Listening...' : isReviewMode ? 'Review & Organize' : isProcessing ? 'Organizing...' : 'Voice Note'}
                     </h1>
                     <p className="text-slate-500 font-medium text-lg">
-                        Speak freely. We'll organize it.
+                        {isListening ? 'Speak freely. Capture everything.' : isReviewMode ? 'Ready to process your thoughts?' : isProcessing ? 'Magic is happening...' : 'Tap below to start recording.'}
                     </p>
                 </div>
 
-                {/* VISUALIZER / MICROPHONE */}
-                <button
-                    type="button"
-                    onClick={toggleListening}
-                    disabled={isProcessing}
-                    className={`relative w-40 h-40 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl group ${isListening
-                        ? 'bg-rose-500 shadow-rose-500/50 scale-110'
-                        : isProcessing
-                            ? 'bg-indigo-500 shadow-indigo-500/50 scale-90'
-                            : 'bg-slate-900 shadow-slate-900/30 hover:scale-105'
-                        }`}
-                >
-                    {/* Ripple Effects when Listening */}
-                    {isListening && (
-                        <>
-                            <div className="absolute inset-0 border-4 border-rose-400 rounded-full animate-ping opacity-20" style={{ animationDuration: '1.5s' }} />
-                            <div className="absolute inset-0 border-4 border-rose-400 rounded-full animate-ping opacity-20" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
-                        </>
+                {/* MAIN CONTROL AREA */}
+                <div className="relative">
+
+                    {/* 1. IDLE / RECORDING STATE */}
+                    {!isReviewMode && !isProcessing && (
+                        <button
+                            onClick={isListening ? stopListening : startListening}
+                            className={`w-32 h-32 rounded-[40px] flex items-center justify-center shadow-2xl transition-all duration-300 ${isListening
+                                ? 'bg-rose-500 shadow-rose-500/40 scale-110'
+                                : 'bg-slate-900 shadow-slate-900/20 hover:scale-105 hover:bg-indigo-600'
+                                }`}
+                        >
+                            {isListening ? (
+                                <Square size={40} className="text-white fill-current animate-pulse" />
+                            ) : (
+                                <Mic size={40} className="text-white" />
+                            )}
+                        </button>
                     )}
 
-                    {isProcessing ? (
-                        <Loader2 size={48} className="text-white animate-spin" />
-                    ) : isListening ? (
-                        <MicOff size={48} className="text-white" />
-                    ) : (
-                        <Mic size={48} className="text-white group-hover:scale-110 transition-transform" />
+                    {/* 2. PROCESSING STATE */}
+                    {isProcessing && (
+                        <div className="w-32 h-32 rounded-[40px] bg-white flex items-center justify-center shadow-xl border border-indigo-100">
+                            <Loader2 size={40} className="text-indigo-600 animate-spin" />
+                        </div>
                     )}
-                </button>
 
-                {/* Status Text */}
-                <div className="h-8 flex items-center justify-center gap-2">
-                    {error ? (
-                        <span className="text-rose-500 font-bold flex items-center gap-2"><AlertCircle size={16} /> {error}</span>
-                    ) : (
-                        <span className={`font-bold uppercase tracking-widest text-sm transition-colors ${isListening ? 'text-rose-500' : 'text-slate-400'}`}>
-                            {status}
-                        </span>
-                    )}
                 </div>
 
-                {/* Live Transcript Display */}
-                {(transcript || isListening) && (
-                    <div className="w-full bg-white/60 backdrop-blur-xl rounded-[32px] p-6 shadow-xl border border-white/50 min-h-[120px] relative animate-slide-up">
-                        <div className="absolute -top-3 left-6 flex gap-2">
-                            <span className="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">Live Input</span>
-                        </div>
-                        <p className="text-xl font-medium text-slate-700 leading-relaxed">
-                            {transcript || <span className="text-slate-300 italic">Listening for speech...</span>}
-                        </p>
+                {/* TRANSCRIPT CARD (Visible when has text) */}
+                {(hasTranscript || isProcessing) && (
+                    <div className="w-full bg-white/90 backdrop-blur-xl rounded-[32px] p-8 shadow-2xl border border-white/50 animate-slide-up flex flex-col gap-6">
 
-                        {/* Action Bar */}
-                        {transcript && !isProcessing && (
-                            <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+                        <div className="max-h-[30vh] overflow-y-auto">
+                            <p className="text-2xl font-medium text-slate-800 leading-relaxed">
+                                "{transcript}"
+                            </p>
+                        </div>
+
+                        {/* REVIEW ACTIONS (Only show when NOT listening/processing) */}
+                        {isReviewMode && (
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
                                 <button
-                                    type="button"
-                                    onClick={() => setTranscript('')}
-                                    className="px-4 py-2 text-slate-400 font-bold hover:text-slate-600 transition-colors"
+                                    onClick={resetTranscript}
+                                    className="py-4 rounded-2xl bg-slate-50 text-slate-500 font-bold hover:bg-rose-50 hover:text-rose-600 transition-colors flex items-center justify-center gap-2"
                                 >
-                                    Clear
+                                    <Trash2 size={20} />
+                                    <span>Discard</span>
                                 </button>
+
                                 <button
-                                    type="button"
                                     onClick={handleProcess}
-                                    className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:scale-105 transition-all flex items-center gap-2"
+                                    className="py-4 rounded-2xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                                 >
-                                    <Sparkles size={16} />
-                                    <span>Organize This</span>
+                                    <Sparkles size={20} />
+                                    <span>Organize</span>
                                 </button>
                             </div>
                         )}
+
+                        {/* RESUME (Optional small button) */}
+                        {isReviewMode && (
+                            <div className="text-center">
+                                <button onClick={startListening} className="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-500 flex items-center justify-center gap-1 mx-auto">
+                                    <RotateCcw size={12} /> Resume Recording
+                                </button>
+                            </div>
+                        )}
+
                     </div>
                 )}
 
-                {/* Suggestions */}
-                {!transcript && !isListening && (
-                    <div className="flex flex-wrap justify-center gap-3 opacity-60">
-                        {["Buy milk tomorrow", "Pay rent on Tuesday", "Meditate daily"].map(hint => (
-                            <span key={hint} className="px-3 py-1.5 bg-white rounded-lg text-xs font-bold text-slate-400 border border-slate-100">
-                                "{hint}"
-                            </span>
-                        ))}
+                {/* Error Message */}
+                {(voiceError || localError) && (
+                    <div className="bg-rose-50 text-rose-600 px-6 py-3 rounded-xl font-bold text-sm animate-bounce">
+                        {voiceError || localError}
                     </div>
                 )}
 
