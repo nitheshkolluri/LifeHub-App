@@ -3,9 +3,86 @@ import { useAuth } from '../store/AuthContext';
 import { useApp } from '../store/AppContext';
 import {
    X, LogOut, Bell, Zap, Crown, User, CreditCard, ChevronRight, Loader2,
-   TrendingUp, Trophy, Target, Sparkles, Activity, ShieldAlert, Crosshair
+   TrendingUp, Trophy, Target, Sparkles, Activity, ShieldAlert, Crosshair, Trash2
 } from 'lucide-react';
+import { apiService } from '../services/api.service';
 import { NotificationPreferences } from '../types';
+
+interface DeleteConfirmationModalProps {
+   isOpen: boolean;
+   onClose: () => void;
+   onConfirm: () => Promise<void>;
+   isLoading: boolean;
+}
+
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, isLoading }: DeleteConfirmationModalProps) => {
+   const [confirmText, setConfirmText] = useState('');
+
+   if (!isOpen) return null;
+
+   const isMatch = confirmText === 'DELETE';
+
+   return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-zinc-200 overflow-hidden animate-scale-in">
+            <div className="p-6">
+               <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-rose-100/50 rounded-full text-rose-600 border border-rose-100 shadow-inner">
+                     <ShieldAlert size={28} />
+                  </div>
+                  <div>
+                     <h3 className="text-xl font-bold text-zinc-900">Delete Account?</h3>
+                     <p className="text-sm font-medium text-rose-600">This action is permanent.</p>
+                  </div>
+               </div>
+
+               <div className="space-y-4">
+                  <p className="text-sm text-zinc-600 leading-relaxed">
+                     You are about to permanently destroy all your data, including
+                     <span className="font-bold text-zinc-900"> Tasks, Habits, Finance Records, and Subscription History</span>.
+                     Access will be revoked immediately.
+                  </p>
+
+                  <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
+                     <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                        To confirm, type <span className="text-zinc-900 select-all">DELETE</span> below:
+                     </label>
+                     <input
+                        type="text"
+                        value={confirmText}
+                        onChange={(e) => setConfirmText(e.target.value)}
+                        placeholder="DELETE"
+                        className="w-full px-4 py-3 bg-white border border-zinc-300 rounded-lg text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all placeholder:text-zinc-300"
+                        autoFocus
+                     />
+                  </div>
+               </div>
+            </div>
+
+            <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex items-center justify-end gap-3">
+               <button
+                  onClick={onClose}
+                  disabled={isLoading}
+                  className="px-5 py-2.5 text-sm font-bold text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 rounded-xl transition-colors"
+               >
+                  Cancel
+               </button>
+               <button
+                  onClick={onConfirm}
+                  disabled={!isMatch || isLoading}
+                  className={`px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all flex items-center gap-2 ${isMatch && !isLoading
+                     ? 'bg-rose-600 hover:bg-rose-700 hover:shadow-rose-500/20 active:scale-[0.98]'
+                     : 'bg-zinc-300 cursor-not-allowed opacity-70'
+                     }`}
+               >
+                  {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                  Permanently Delete
+               </button>
+            </div>
+         </div>
+      </div>
+   );
+};
 
 interface ProfileModalProps {
    isOpen: boolean;
@@ -15,6 +92,7 @@ interface ProfileModalProps {
 export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
    const { user, logout } = useAuth();
    const { tasks, habits, updateNotificationSettings, setShowUpsell } = useApp();
+   const [showDeleteModal, setShowDeleteModal] = useState(false);
    const [activeTab, setActiveTab] = useState<'overview' | 'notifications'>('overview');
    const [loading, setLoading] = useState(false);
 
@@ -34,6 +112,25 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
       setLoading(true);
       await updateNotificationSettings(prefs);
       setLoading(false);
+   };
+
+   // Open Custom Modal
+   const handleDeleteClick = () => setShowDeleteModal(true);
+
+   // Actual API Call (Passed to Modal)
+   const confirmDeleteAccount = async () => {
+      setLoading(true);
+      try {
+         await apiService.user.deleteAccount();
+         await logout();
+         setShowDeleteModal(false);
+         onClose(); // Close Profile Modal
+         // No alert needed, logout will redirect
+      } catch (error) {
+         console.error("Delete failed", error);
+         alert("Failed to delete account. You may need to re-login first for security.");
+         setLoading(false);
+      }
    };
 
    if (!isOpen) return null;
@@ -97,8 +194,8 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                   <button
                      onClick={() => setShowUpsell(true)}
                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold border transition-all shadow-sm group relative overflow-hidden ${isPro
-                           ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
-                           : 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-900 border-amber-200 hover:border-amber-300'
+                        ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
+                        : 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-900 border-amber-200 hover:border-amber-300'
                         }`}
                   >
                      <div className="flex items-center gap-2 relative z-10">
@@ -197,65 +294,72 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                         </div>
 
                         {/* PRO UPSELL BANNER */}
+                        {/* 1. COMPACT PRO BANNER (Visual Only) */}
                         {!isPro && (
-                           <div onClick={() => setShowUpsell(true)} className="group relative cursor-pointer overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-violet-50 p-8 shadow-sm transition-all hover:shadow-md">
-                              <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-indigo-100/50 to-transparent skew-x-12" />
-
-                              <div className="relative z-10 flex items-center justify-between">
-                                 <div className="space-y-2">
-                                    <h4 className="flex items-center gap-2 text-lg font-black text-indigo-900">
-                                       <Crown size={20} className="fill-indigo-500 text-indigo-600" />
-                                       Unlock Executive Features
-                                    </h4>
-                                    <p className="max-w-md text-sm font-medium text-indigo-900/60 leading-relaxed">
-                                       Get the "Fortune 500" experience with unlimited AI suggestions, financial vaults, and priority support.
-                                    </p>
+                           <div onClick={() => setShowUpsell(true)} className="relative group cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 p-1 shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] hover:shadow-xl">
+                              <div className="flex items-center justify-between px-6 py-4 bg-white/10 backdrop-blur-sm rounded-xl">
+                                 <div className="flex items-center gap-3 text-white">
+                                    <div className="p-2 bg-white/20 rounded-lg"><Crown size={20} className="text-amber-300 fill-amber-300" /></div>
+                                    <div>
+                                       <h4 className="font-black text-lg tracking-tight">Go Executive</h4>
+                                       <p className="text-indigo-100 text-xs font-medium">Unlock full potential</p>
+                                    </div>
                                  </div>
-                                 <div className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-indigo-200 group-hover:scale-105 transition-transform">
-                                    Upgrade Now <ChevronRight size={16} />
-                                 </div>
+                                 <ChevronRight size={20} className="text-white/80" />
                               </div>
                            </div>
                         )}
 
-                        {/* DETAILED STATS ROW */}
-                        <div className="grid grid-cols-2 gap-6">
-                           <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100">
-                              <h4 className="font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                                 <TrendingUp size={16} className="text-indigo-500" /> Recent Velocity
-                              </h4>
-                              <div className="space-y-3">
-                                 {[
-                                    { label: 'Tasks Completed', val: tasks.filter(t => t.status === 'completed').length },
-                                    { label: 'Pending Items', val: tasks.filter(t => t.status === 'todo').length },
-                                    { label: 'Active Rituals', val: habits.length }
-                                 ].map((stat, i) => (
-                                    <div key={i} className="flex justify-between items-center text-sm">
-                                       <span className="text-zinc-500">{stat.label}</span>
-                                       <span className="font-bold text-zinc-900">{stat.val}</span>
-                                    </div>
-                                 ))}
+                        {/* 2. VISUAL STATS GRID (No generic text) */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                           {/* Plan Badge */}
+                           <div className={`col-span-2 p-4 rounded-2xl border ${isPro ? 'bg-indigo-50 border-indigo-100' : 'bg-zinc-50 border-zinc-100'} flex items-center justify-between`}>
+                              <div className="flex items-center gap-3">
+                                 <div className={`p-2 rounded-xl ${isPro ? 'bg-indigo-100 text-indigo-600' : 'bg-zinc-200 text-zinc-500'}`}>
+                                    <User size={20} />
+                                 </div>
+                                 <div>
+                                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Member</p>
+                                    <p className="font-bold text-zinc-900 truncate max-w-[120px]">{user?.email?.split('@')[0]}</p>
+                                 </div>
                               </div>
+                              <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${isPro ? 'bg-indigo-600 text-white' : 'bg-zinc-200 text-zinc-500'}`}>
+                                 {isPro ? 'PRO' : 'FREE'}
+                              </span>
                            </div>
 
-                           <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100">
-                              <h4 className="font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                                 <User size={16} className="text-violet-500" /> Account Details
-                              </h4>
-                              <div className="space-y-3">
-                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-zinc-500">Plan Status</span>
-                                    <span className={`font-bold ${isPro ? 'text-indigo-600' : 'text-zinc-600'}`}>{isPro ? 'Active Executive' : 'Basic Tier'}</span>
+                           {/* Tasks */}
+                           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex flex-col items-center justify-center">
+                              <p className="text-2xl font-black text-emerald-600">{tasks.filter(t => t.status === 'completed').length}</p>
+                              <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-1">Done</p>
+                           </div>
+
+                           {/* Habits */}
+                           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex flex-col items-center justify-center">
+                              <p className="text-2xl font-black text-amber-600">{habits.length}</p>
+                              <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mt-1">Rituals</p>
+                           </div>
+                        </div>
+
+                        {/* DANGER ZONE (Compliance) */}
+                        <div className="mt-8 pt-8 border-t border-rose-100">
+                           <div className="flex items-center justify-between p-3 bg-rose-50/50 rounded-xl border border-rose-100 group hover:bg-rose-50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                 <div className="p-2 bg-rose-100 text-rose-500 rounded-lg group-hover:bg-rose-200 transition-colors">
+                                    <Trash2 size={18} />
                                  </div>
-                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-zinc-500">Email</span>
-                                    <span className="font-medium text-zinc-900 truncate max-w-[150px]">{user?.email}</span>
-                                 </div>
-                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-zinc-500">Member ID</span>
-                                    <span className="font-mono text-zinc-400 text-xs">#{user?.uid?.slice(0, 6)}</span>
+                                 <div>
+                                    <p className="font-bold text-rose-900 text-sm">Danger Zone</p>
+                                    <p className="text-[10px] text-rose-600/80 font-medium">Irreversible Account Deletion</p>
                                  </div>
                               </div>
+                              <button
+                                 onClick={handleDeleteClick}
+                                 disabled={loading}
+                                 className="px-3 py-1.5 bg-white text-rose-600 border border-rose-200 rounded-lg text-xs font-bold hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                              >
+                                 Delete
+                              </button>
                            </div>
                         </div>
 
@@ -337,6 +441,12 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                </div>
             </div>
          </div>
+         <DeleteConfirmationModal
+            isOpen={showDeleteModal}
+            onClose={() => setShowDeleteModal(false)}
+            onConfirm={confirmDeleteAccount}
+            isLoading={loading}
+         />
       </div>
    );
 };
