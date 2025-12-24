@@ -17,7 +17,7 @@ import subscriptionRoutes from './routes/subscription.routes';
 import webhookRoutes from './routes/webhook.routes';
 import assistantRoutes from './routes/assistant.routes';
 import userRoutes from './routes/user.routes';
-import { startTaskScheduler } from './services/schedulerService';
+
 import './config/firebase.config'; // Ensure Firebase is initialized explicitly
 
 // Load environment variables
@@ -27,7 +27,20 @@ const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 // Start Background Services
-startTaskScheduler();
+// Start Background Services
+// startTaskScheduler(); // Deprecated in favor of Cloud Scheduler trigger
+
+// Internal Cron Trigger (Secure this in production with API Key or IAM)
+app.post('/api/cron/trigger', async (req, res) => {
+    try {
+        const { triggerTaskCheck } = require('./services/schedulerService');
+        const result = await triggerTaskCheck();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Manual Trigger Error:', error);
+        res.status(500).json({ error: 'Failed to trigger task check' });
+    }
+});
 
 // ============================================
 // MIDDLEWARE
