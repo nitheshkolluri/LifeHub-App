@@ -76,15 +76,18 @@ export const SwipeActionRow: React.FC<SwipeActionRowProps> = ({
 
     // Unified Logic
     const updateOffset = (diff: number) => {
-        // Only allow swiping left (negative offset)
-        // If already open, allow swiping right to close area
         let newOffset = isOpen ? diff - maxOffset : diff;
-
-        // Clamp logic
-        if (newOffset > 0) newOffset = 0; // Can't swipe right past start
-        if (newOffset < -maxOffset - 50) newOffset = -maxOffset - 50; // Elastic limit
-
+        if (newOffset > 0) newOffset = 0;
+        if (newOffset < -maxOffset - 50) newOffset = -maxOffset - 50;
         setOffset(newOffset);
+    };
+
+    // Tap to Nudge Hint
+    const [isNudging, setIsNudging] = useState(false);
+    const handleTap = () => {
+        if (isOpen || isDragging) return;
+        setIsNudging(true);
+        setTimeout(() => setIsNudging(false), 300); // Quick bounce
     };
 
     // Close when clicking outside
@@ -149,9 +152,14 @@ export const SwipeActionRow: React.FC<SwipeActionRowProps> = ({
             <div
                 className="relative bg-white rounded-2xl touch-pan-y cursor-grab active:cursor-grabbing"
                 style={{
-                    transform: `translateX(${offset}px)`,
-                    transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                    transform: isDragging
+                        ? `translateX(${offset}px)`
+                        : isNudging
+                            ? `translateX(-15px)`
+                            : `translateX(${offset}px)`,
+                    transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
                 }}
+                onClick={handleTap}
                 // TOUCH
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}

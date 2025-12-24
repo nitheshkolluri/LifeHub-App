@@ -2,6 +2,11 @@
 import { BrainDumpResult } from "../types";
 
 // Helper: The core logic for ONE thought
+const getLocalDateString = (d: Date = new Date()) => {
+    const offset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offset).toISOString().split('T')[0];
+};
+
 const parseSingleIntent = (text: string): BrainDumpResult | null => {
     const lower = text.trim();
 
@@ -46,7 +51,7 @@ const parseSingleIntent = (text: string): BrainDumpResult | null => {
                     data: {
                         title: `${capitalize(description)} (${i + 1}/4)`,
                         amount: parseFloat(installment.toFixed(2)),
-                        dueDate: d.toISOString().split('T')[0],
+                        dueDate: getLocalDateString(d),
                         type: 'bill'
                     }
                 });
@@ -106,11 +111,7 @@ const parseSingleIntent = (text: string): BrainDumpResult | null => {
 
             // INTELLIGENT DEFAULT: If time is set, assume Today unless specified
             if (!dueDate) {
-                const now = new Date();
-                // If the time logic resulted in a past time today (e.g. user says 9am at 10am), 
-                // strictly speaking we might mean tomorrow, but "Remind me at 5pm" usually means today.
-                // Let's stick to Today for simplicity.
-                dueDate = now.toISOString().split('T')[0];
+                dueDate = getLocalDateString();
             }
         }
 
@@ -130,10 +131,10 @@ const parseSingleIntent = (text: string): BrainDumpResult | null => {
         // Detect Date
         if (/\btomorrow\b/i.test(title)) {
             const d = new Date(); d.setDate(d.getDate() + 1);
-            dueDate = d.toISOString().split('T')[0];
+            dueDate = getLocalDateString(d);
             title = title.replace("tomorrow", "");
         } else if (title.includes("today")) {
-            dueDate = new Date().toISOString().split('T')[0];
+            dueDate = getLocalDateString();
             title = title.replace("today", "");
         }
 
@@ -172,7 +173,7 @@ export const emergencyParse = (text: string): BrainDumpResult => {
                 data: {
                     title: `Pay Installment (${i + 1}/4) ${amount > 0 ? '$' + perPayment : ''} - ${text.slice(0, 20)}...`,
                     priority: i === 0 ? 'high' : 'medium',
-                    dueDate: d.toISOString().split('T')[0]
+                    dueDate: getLocalDateString(d)
                 }
             });
         }
@@ -195,7 +196,7 @@ export const emergencyParse = (text: string): BrainDumpResult => {
         data: {
             title: seg.charAt(0).toUpperCase() + seg.slice(1),
             priority: 'medium',
-            dueDate: new Date().toISOString().split('T')[0]
+            dueDate: getLocalDateString()
         }
     }));
 

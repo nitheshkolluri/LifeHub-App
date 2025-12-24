@@ -72,6 +72,13 @@ export const Tasks = () => {
   };
 
   // --- NLP Utilities ---
+  // Helper for Local Date
+  const getLocalToday = () => {
+    const d = new Date();
+    const offset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offset).toISOString().split('T')[0];
+  };
+
   const parseTimeInput = (input: string): { cleanTitle: string, parsedTime: string | null, parsedDate: string | null } => {
     let title = input;
     let time = null;
@@ -112,12 +119,13 @@ export const Tasks = () => {
       }
     } else {
       if (/\btoday\b/i.test(title)) {
-        date = new Date().toISOString().split('T')[0];
+        date = getLocalToday();
         title = title.replace(/\btoday\b/i, '').trim();
       } else if (/\btomorrow\b/i.test(title)) {
         const d = new Date();
         d.setDate(d.getDate() + 1);
-        date = d.toISOString().split('T')[0];
+        const offset = d.getTimezoneOffset() * 60000;
+        date = new Date(d.getTime() - offset).toISOString().split('T')[0];
         title = title.replace(/\btomorrow\b/i, '').trim();
       }
     }
@@ -155,8 +163,8 @@ export const Tasks = () => {
           finalDate = parsedDate;
         } else if (finalTime) {
           // User mentioned time but no date.
-          // Auto-default to TODAY as requested (no prompt)
-          finalDate = new Date().toISOString().split('T')[0];
+          // Auto-default to TODAY (Local) as requested (no prompt)
+          finalDate = getLocalToday();
         }
       }
 

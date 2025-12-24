@@ -63,33 +63,7 @@ export const SmartCard: React.FC<SmartCardProps> = ({
                     )}
                 </div>
 
-                {/* 3. ACTIONS ZONE */}
-                <div className="relative flex items-center gap-1">
-                    <button
-                        onClick={(e) => stopAndRun(e, () => setShowMenu(!showMenu))}
-                        className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                        <MoreHorizontal size={16} />
-                    </button>
-
-                    {showMenu && (
-                        <>
-                            <div className="fixed inset-0 z-40" onClick={(e) => stopAndRun(e, () => setShowMenu(false))} />
-                            <div className="absolute right-0 top-8 w-36 bg-white border border-slate-100 shadow-xl rounded-xl z-50 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
-                                <button onClick={(e) => stopAndRun(e, () => { onEdit?.(); setShowMenu(false); })} className="text-left px-3 py-2.5 text-xs hover:bg-slate-50 flex items-center gap-2 text-slate-700">
-                                    <Edit2 size={12} /> Edit
-                                </button>
-                                <button onClick={(e) => stopAndRun(e, () => { onReschedule?.(); setShowMenu(false); })} className="text-left px-3 py-2.5 text-xs hover:bg-slate-50 flex items-center gap-2 text-slate-700">
-                                    <Calendar size={12} /> Reschedule
-                                </button>
-                                <div className="h-px bg-slate-100 my-1" />
-                                <button onClick={(e) => stopAndRun(e, () => { onDelete?.(); setShowMenu(false); })} className="text-left px-3 py-2.5 text-xs text-rose-500 hover:bg-rose-50 flex items-center gap-2">
-                                    <Trash2 size={12} /> Delete
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </div>
+                {/* 3. ACTIONS ZONE (REMOVED) */}
             </div>
         </div>
     );

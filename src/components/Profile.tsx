@@ -3,7 +3,7 @@ import { useAuth } from '../store/AuthContext';
 import { useApp } from '../store/AppContext';
 import {
    X, LogOut, Bell, Zap, Crown, User, CreditCard, ChevronRight, Loader2,
-   TrendingUp, Trophy, Target, Sparkles, Activity, ShieldAlert, Crosshair, Trash2
+   TrendingUp, Trophy, Target, Sparkles, Activity, ShieldAlert, Crosshair, Trash2, ArrowLeft
 } from 'lucide-react';
 import { apiService } from '../services/api.service';
 import { NotificationPreferences } from '../types';
@@ -72,8 +72,8 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, isLoading }: Dele
                   onClick={onConfirm}
                   disabled={!isMatch || isLoading}
                   className={`px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all flex items-center gap-2 ${isMatch && !isLoading
-                        ? 'bg-rose-600 hover:bg-rose-700 hover:shadow-rose-500/20 active:scale-[0.98]'
-                        : 'bg-zinc-300 cursor-not-allowed opacity-70'
+                     ? 'bg-rose-600 hover:bg-rose-700 hover:shadow-rose-500/20 active:scale-[0.98]'
+                     : 'bg-zinc-300 cursor-not-allowed opacity-70'
                      }`}
                >
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
@@ -96,7 +96,13 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
    const [showDeleteModal, setShowDeleteModal] = useState(false);
    const [showPrivacy, setShowPrivacy] = useState(false);
    const [showTerms, setShowTerms] = useState(false);
+
+   // Tab State
    const [activeTab, setActiveTab] = useState<'overview' | 'notifications'>('overview');
+
+   // Mobile Logic: If null, show menu. If set, show content.
+   const [mobileView, setMobileView] = useState<'menu' | 'content'>('menu');
+
    const [loading, setLoading] = useState(false);
 
    // Local state for settings form
@@ -136,6 +142,11 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
       }
    };
 
+   const selectTab = (tab: 'overview' | 'notifications') => {
+      setActiveTab(tab);
+      setMobileView('content');
+   };
+
    if (!isOpen) return null;
 
    // Stats
@@ -150,14 +161,14 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
    const brandGradient = "bg-gradient-to-r from-indigo-600 to-violet-600";
 
    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-md animate-in fade-in duration-200 font-sans">
+      <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-4 bg-zinc-950/40 backdrop-blur-md animate-in fade-in duration-200 font-sans">
          <div className="absolute inset-0" onClick={onClose} />
 
          {/* Main Container */}
-         <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl flex flex-col md:flex-row h-[85vh] max-h-[750px] animate-scale-in border border-zinc-200 overflow-hidden text-zinc-900">
+         <div className="relative w-full max-w-5xl bg-white md:rounded-2xl rounded-t-3xl shadow-2xl flex flex-col md:flex-row h-[92vh] md:h-[85vh] max-h-[750px] animate-slide-up md:animate-scale-in border border-zinc-200 overflow-hidden text-zinc-900">
 
-            {/* SIDEBAR */}
-            <div className="w-full md:w-72 bg-zinc-50/80 backdrop-blur border-r border-zinc-200 p-6 flex flex-col">
+            {/* SIDEBAR (Visible on Desktop OR when mobileView is 'menu') */}
+            <div className={`w-full md:w-72 bg-zinc-50/80 backdrop-blur border-r border-zinc-200 p-6 flex-col ${mobileView === 'menu' ? 'flex' : 'hidden md:flex'}`}>
                <div className="mb-8 pl-2">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold mb-4 shadow-lg shadow-indigo-500/20 ${brandGradient}`}>
                      <span className="text-xl">{user?.name?.charAt(0).toUpperCase()}</span>
@@ -176,19 +187,21 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 
                <nav className="space-y-1 flex-1">
                   <button
-                     onClick={() => setActiveTab('overview')}
+                     onClick={() => selectTab('overview')}
                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all group ${activeTab === 'overview' ? 'bg-white text-indigo-900 shadow-sm ring-1 ring-zinc-200' : 'text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-900'}`}
                   >
                      <Activity size={18} className={activeTab === 'overview' ? 'text-indigo-600' : 'group-hover:text-zinc-700'} />
                      Dashboard
+                     <ChevronRight size={16} className="ml-auto opacity-30 md:hidden" />
                   </button>
                   <button
-                     onClick={() => setActiveTab('notifications')}
+                     onClick={() => selectTab('notifications')}
                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all group ${activeTab === 'notifications' ? 'bg-white text-indigo-900 shadow-sm ring-1 ring-zinc-200' : 'text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-900'}`}
                   >
                      <Bell size={18} className={activeTab === 'notifications' ? 'text-indigo-600' : 'group-hover:text-zinc-700'} />
                      Notifications
-                     {!prefs.enableTimeSensitive && <span className="ml-auto w-2 h-2 rounded-full bg-rose-500" />}
+                     {!prefs.enableTimeSensitive && <span className="ml-auto w-2 h-2 rounded-full bg-rose-500 md:mr-0 mr-2" />}
+                     <ChevronRight size={16} className="ml-auto opacity-30 md:hidden" />
                   </button>
                </nav>
 
@@ -197,8 +210,8 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                   <button
                      onClick={() => setShowUpsell(true)}
                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold border transition-all shadow-sm group relative overflow-hidden ${isPro
-                           ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
-                           : 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-900 border-amber-200 hover:border-amber-300'
+                        ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
+                        : 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-900 border-amber-200 hover:border-amber-300'
                         }`}
                   >
                      <div className="flex items-center gap-2 relative z-10">
@@ -216,14 +229,28 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                </div>
             </div>
 
-            {/* MAIN CONTENT */}
-            <div className="flex-1 bg-white overflow-y-auto relative">
-               <button onClick={onClose} className="absolute top-6 right-8 p-2 rounded-full hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors z-20">
+            {/* MAIN CONTENT (Visible on Desktop OR when mobileView is 'content') */}
+            <div className={`flex-1 bg-white overflow-y-auto relative ${mobileView === 'content' ? 'block' : 'hidden md:block'}`}>
+
+               {/* Mobile Back Header */}
+               <div className="md:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-100 p-4 flex items-center gap-3">
+                  <button onClick={() => setMobileView('menu')} className="p-2 -ml-2 hover:bg-zinc-100 rounded-full text-zinc-600">
+                     <ArrowLeft size={20} />
+                  </button>
+                  <span className="font-bold text-lg text-zinc-900">
+                     {activeTab === 'overview' ? 'Dashboard' : 'Notifications'}
+                  </span>
+                  <button onClick={onClose} className="ml-auto p-2 bg-zinc-100 rounded-full text-zinc-500">
+                     <X size={18} />
+                  </button>
+               </div>
+
+               <button onClick={onClose} className="hidden md:block absolute top-6 right-8 p-2 rounded-full hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 transition-colors z-20">
                   <X size={20} />
                </button>
 
-               <div className="p-10">
-                  <div className="mb-10">
+               <div className="p-6 md:p-10 pb-20 md:pb-10">
+                  <div className="mb-10 hidden md:block">
                      <h1 className="text-2xl font-black text-zinc-900 tracking-tight">
                         {activeTab === 'overview' ? 'Performance Overview' : 'Notification Center'}
                      </h1>
@@ -235,10 +262,10 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                   </div>
 
                   {activeTab === 'overview' ? (
-                     <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-300">
+                     <div className="space-y-6 md:space-y-8 animate-in slide-in-from-bottom-2 duration-300">
 
                         {/* VISUAL STATS ROW */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                            {/* Efficiency Card */}
                            <div className="p-5 rounded-2xl border border-zinc-100 bg-white shadow-xl shadow-zinc-200/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group">
                               <div className="flex justify-between items-start mb-4">
@@ -321,7 +348,7 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                                  <div className={`p-2 rounded-xl ${isPro ? 'bg-indigo-100 text-indigo-600' : 'bg-zinc-200 text-zinc-500'}`}>
                                     <User size={20} />
                                  </div>
-                                 <div>
+                                 <div className="min-w-0">
                                     <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Member</p>
                                     <p className="font-bold text-zinc-900 truncate max-w-[120px]">{user?.email?.split('@')[0]}</p>
                                  </div>

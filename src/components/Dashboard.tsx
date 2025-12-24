@@ -10,9 +10,16 @@ import { parseQuickly } from '../utils/quickParser';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import {
    Mic, ArrowRight, ChevronLeft, ChevronRight, Calendar,
-   CheckCircle2, Flame, Wallet, ListFilter, Sparkles, X
+   CheckCircle2, Flame, Wallet, ListFilter, Sparkles, X, AlertCircle
 } from 'lucide-react';
 import { ViewState } from '../types';
+
+// --- HELPER: LOCAL DATE STRING YYYY-MM-DD ---
+// This ensures we always compare against the user's local timeline, not UTC.
+const toLocalISOString = (date: Date) => {
+   const offset = date.getTimezoneOffset() * 60000;
+   return new Date(date.getTime() - offset).toISOString().split('T')[0];
+};
 
 // --- SUB-COMPONENT: CREATIVE DATE STRIP ---
 const DateStrip = ({ selectedDate, onSelectDate }: { selectedDate: Date, onSelectDate: (d: Date) => void }) => {
@@ -130,23 +137,49 @@ export const Dashboard = () => {
    const { isListening, transcript, startListening, stopListening, resetTranscript } = useVoiceInput();
 
    // --- EFFECTS ---
-   useEffect(() => { if (transcript) setInput(transcript); }, [transcript]);
-
    useEffect(() => {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const pending = tasks.filter(t => t.status === 'pending' && t.dueDate && t.dueDate < todayStr);
+      // 1. Calculate "Local Today" String (YYYY-MM-DD)
+      const todayStr = toLocalISOString(new Date());
+
+      // 2. Calculate "Local Midnight" timestamp
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const pending = tasks.filter(t => {
+         if (t.status === 'completed') return false;
+
+         // Case 1: Has a Due Date
+         if (t.dueDate) {
+            // Strict String Comparison: "2023-10-24" < "2023-10-25" is true.
+            return t.dueDate < todayStr;
+         }
+
+         // Case 2: No Due Date (Check creation time)
+         // If created before today 00:00 (Local), it's pending.
+         const created = new Date(t.createdAt);
+         return created < todayStart;
+      });
+
       setOverdueTasks(pending);
    }, [tasks]);
 
    // --- FILTERING ---
-   const dateKey = selectedDate.toISOString().split('T')[0];
-   const isToday = dateKey === new Date().toISOString().split('T')[0];
+   const dateKey = toLocalISOString(selectedDate);
+   const isToday = dateKey === toLocalISOString(new Date());
 
    const activeTasks = useMemo(() => {
       return tasks.filter(t => {
          if (t.status === 'completed') return false;
+
          if (t.dueDate === dateKey) return true;
-         if (!t.dueDate && isToday) return true;
+
+         // If "today" is selected, show undated tasks ONLY if created today (Local)
+         // This prevents yesterday's undated tasks from showing up here.
+         if (!t.dueDate && isToday) {
+            const createdLocal = toLocalISOString(new Date(t.createdAt));
+            return createdLocal === dateKey;
+         }
+
          return false;
       }).sort((a, b) => (a.priority === 'high' ? -1 : 1));
    }, [tasks, dateKey, isToday]);
@@ -169,8 +202,6 @@ export const Dashboard = () => {
             const result = await processBrainDump(input);
 
             // FEEDBACK: Show AI Summary (Success or Creative Refusal)
-            // Note: If backend refuses (e.g. "Buy Bitcoin"), it returns a summary like "I can't give investment advice."
-            // This toast displays that friendly refusal to the user.
             if (result.summary) {
                showToast(result.summary);
             } else {
@@ -179,8 +210,6 @@ export const Dashboard = () => {
 
          } catch (error: any) {
             console.error("Dashboard Dump Error:", error);
-            // SAFETY FIX + UX POLISH: Friendly "Out of Scope" message
-            // Instead of scary error, just say we can't do that.
             showToast("I'm tuned for your daily tasks, not that! 🌟");
          }
          setInput('');
@@ -191,7 +220,7 @@ export const Dashboard = () => {
 
    // Bulk Reschedule (Prompt)
    const handleBulkReschedule = (ids: string[]) => {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = toLocalISOString(new Date());
       ids.forEach(id => updateTask(id, { dueDate: todayStr }));
       setShowReschedule(false);
    };
@@ -238,20 +267,25 @@ export const Dashboard = () => {
                   {input && !isListening ? <ArrowRight size={24} /> : <Mic size={24} />}
                </button>
             </div>
-            <div className="absolute -bottom-6 left-6 text-xs font-bold uppercase tracking-wide text-slate-300 flex items-center gap-2">
-               <Sparkles size={12} className="text-indigo-400" /> <span>AI Auto-Categorization Active</span>
+            {/* UPDATED DISCLAIMER */}
+            <div className="absolute -bottom-6 left-6 text-[10px] font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
+               <AlertCircle size={10} className="text-slate-400" /> <span>AI-Powered. Verify Accuracy.</span>
             </div>
          </div>
 
+         {/* PENDING TASKS PROMPT */}
          {overdueTasks.length > 0 && (
-            <div className="mb-8 animate-slide-down">
-               <div className="bg-gradient-to-r from-indigo-50 to-white border border-indigo-100 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-                  <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center animate-pulse"><Sparkles size={20} /></div>
-                     <div><h3 className="font-bold text-slate-800 text-sm">Review Yesterday</h3><p className="text-xs text-slate-500">{overdueTasks.length} tasks pending.</p></div>
-                  </div>
-                  <button onClick={() => setShowReschedule(true)} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">Review</button>
+            <div className="mb-8 animate-slide-down bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-100 flex items-center justify-between shadow-sm">
+               <div className="flex flex-col">
+                  <strong className="text-amber-900 text-sm font-bold">Unfinished Business.</strong>
+                  <span className="text-[10px] text-amber-700 font-medium">You have {overdueTasks.length} pending tasks. Move to today?</span>
                </div>
+               <button
+                  onClick={() => setShowReschedule(true)}
+                  className="bg-white text-amber-600 px-4 py-2 rounded-xl text-xs font-bold border border-amber-200 hover:bg-amber-100 transition-colors shadow-sm"
+               >
+                  Reschedule
+               </button>
             </div>
          )}
 
@@ -263,12 +297,20 @@ export const Dashboard = () => {
                ) : (
                   activeTasks.map(t => {
                      let isOverdue = false;
-                     if (t.status === 'pending' && t.dueTime) {
+                     const todayStr = toLocalISOString(new Date());
+
+                     // 1. Check Date Overdue (Strict date check)
+                     if (t.dueDate && t.dueDate < todayStr && t.status === 'pending') {
+                        isOverdue = true;
+                     }
+                     // 2. Check Time Overdue (Today and time passed)
+                     else if (t.status === 'pending' && t.dueTime) {
                         const now = new Date();
                         const [h, m] = t.dueTime.split(':').map(Number);
-                        const dueToday = !t.dueDate || t.dueDate === new Date().toISOString().split('T')[0];
+                        const dueToday = !t.dueDate || t.dueDate === todayStr;
                         if (dueToday && (now.getHours() > h || (now.getHours() === h && now.getMinutes() > m))) isOverdue = true;
                      }
+
                      // Handlers
                      const handleEdit = () => { const newTitle = prompt("Edit Task", t.title); if (newTitle) updateTask(t.id, { title: newTitle }); };
                      const handleResched = () => setRescheduleTaskId(t.id); // OPEN MENU
@@ -302,16 +344,27 @@ export const Dashboard = () => {
                      return (
                         <SwipeActionRow key={h.id} onDelete={() => deleteHabit(h.id)}>
                            <div
-                              onClick={() => incrementHabit(h.id)}
                               className={`relative group cursor-pointer p-4 rounded-2xl border transition-all flex items-center gap-3 ${isDone ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-transparent hover:bg-white hover:shadow-sm'}`}
                            >
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isDone ? 'bg-orange-500 text-white' : 'bg-white text-slate-300'}`}>
+                              {/* --- QUICK FIRE BUTTON --- */}
+                              <button
+                                 onClick={(e) => {
+                                    e.stopPropagation();
+                                    incrementHabit(h.id);
+                                 }}
+                                 disabled={isDone}
+                                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm ${isDone
+                                    ? 'bg-orange-500 text-white cursor-default'
+                                    : 'bg-white text-slate-300 hover:text-orange-500 hover:scale-110'}`}
+                              >
                                  <Flame size={14} className={isDone ? 'fill-current' : ''} />
-                              </div>
-                              <div className="flex-1 min-w-0">
+                              </button>
+
+                              <div className="flex-1 min-w-0" onClick={() => setView(ViewState.HABITS)}>
                                  <p className={`text-sm font-bold truncate ${isDone ? 'text-orange-900' : 'text-slate-600'}`}>{h.title}</p>
                                  <p className="text-[10px] text-slate-500 font-bold uppercase">{h.streak} Day Streak</p>
                               </div>
+
                               <button
                                  onClick={(e) => stopAndRun(e, () => setHabitMenuId(habitMenuId === h.id ? null : h.id))}
                                  className="p-1 text-slate-300 hover:text-slate-600 rounded-full hover:bg-black/5 opacity-0 group-hover:opacity-100 transition-all"
