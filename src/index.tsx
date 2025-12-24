@@ -4,15 +4,8 @@ import './index.css';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-// FORCE UNREGISTER SERVICE WORKER TO CLEAR STALE CACHE
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function (registrations) {
-    for (let registration of registrations) {
-      console.log('Unregistering Service Worker:', registration);
-      registration.unregister();
-    }
-  });
-}
+// Service Worker registration is handled by Firebase SDK / fcmService
+// We removed the forced unregistration block to ensure Notifications work.
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
