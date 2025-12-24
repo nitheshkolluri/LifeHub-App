@@ -24,7 +24,8 @@ import './config/firebase.config'; // Ensure Firebase is initialized explicitly
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 5000;
+console.log("Express app initialized.");
+const PORT = process.env.PORT || 3001; // Changed default to 3001 to avoid conflicts
 
 // Start Background Services
 // Start Background Services
@@ -41,6 +42,21 @@ app.post('/api/cron/trigger', async (req, res) => {
         res.status(500).json({ error: 'Failed to trigger task check' });
     }
 });
+
+// DEV-ONLY: Simulate Google Cloud Scheduler locally for easier debugging
+// usage: npm run dev
+if (process.env.NODE_ENV !== 'production') {
+    console.log("🛠️  Development Mode: Auto-triggering Scheduler every 60s...");
+    setInterval(async () => {
+        try {
+            const { triggerTaskCheck } = require('./services/schedulerService');
+            // Check silently
+            await triggerTaskCheck();
+        } catch (err) {
+            console.error("Dev Scheduler Error:", err);
+        }
+    }, 60000); // 1 minute
+}
 
 // ============================================
 // MIDDLEWARE
@@ -125,10 +141,23 @@ app.use(errorHandler);
 // START SERVER
 // ============================================
 
+// ============================================
+// START SERVER
+// ============================================
+
+console.log("Attempting to start server...");
+console.log(`Configured PORT: ${PORT}`);
+
 const server = app.listen(PORT, () => {
+    console.log("------------------------------------------------");
     logger.info(`🚀 LifeHub Backend API running on port ${PORT}`);
     logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
     logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+    console.log("------------------------------------------------");
+});
+
+server.on('error', (e) => {
+    console.error("SERVER URL BIND ERROR:", e);
 });
 
 // Graceful shutdown

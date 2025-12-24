@@ -12,6 +12,11 @@ export const triggerTaskCheck = async () => {
         const dateKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`; // YYYY-MM-DD
         const timeKey = `${pad(now.getHours())}:${pad(now.getMinutes())}`; // HH:MM
 
+        console.log(`[Scheduler] Server Time (Absolute): ${now.toString()}`);
+        console.log(`[Scheduler] Server Date (ISO): ${now.toISOString()}`);
+        console.log(`[Scheduler] Generated Keys -> Date: ${dateKey}, Time: ${timeKey}`);
+
+        console.log(`[Scheduler] Querying: collectionGroup('tasks').where('dueDate', '==', '${dateKey}').where('dueTime', '==', '${timeKey}')`);
         console.log(`[Scheduler] Checking tasks for ${dateKey} at ${timeKey}...`);
 
         // 1. Query all users (Scalability Warning: For massive app, use Collection Group Index)

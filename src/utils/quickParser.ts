@@ -103,6 +103,15 @@ const parseSingleIntent = (text: string): BrainDumpResult | null => {
             if (meridian === 'am' && hours === 12) hours = 0;
             dueTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
             title = title.replace(timeRegex, "").trim();
+
+            // INTELLIGENT DEFAULT: If time is set, assume Today unless specified
+            if (!dueDate) {
+                const now = new Date();
+                // If the time logic resulted in a past time today (e.g. user says 9am at 10am), 
+                // strictly speaking we might mean tomorrow, but "Remind me at 5pm" usually means today.
+                // Let's stick to Today for simplicity.
+                dueDate = now.toISOString().split('T')[0];
+            }
         }
 
         // RUN-ON SENTENCE DETECTOR
