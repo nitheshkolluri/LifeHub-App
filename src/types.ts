@@ -16,11 +16,13 @@ export interface NotificationPreferences {
 export interface Task {
   id: string;
   title: string;
-  status: TaskStatus;
+  status: 'pending' | 'completed';
   priority: Priority;
-  dueDate?: string | null; // ISO Date string (YYYY-MM-DD) or null
-  dueTime?: string | null; // HH:MM 24h format
-  linkedFinanceId?: string; // Link to a finance item (e.g. an installment)
+  dueDate: string | null;  // YYYY-MM-DD (Local)
+  dueTime: string | null;  // HH:MM (Local)
+  nextRemindAt?: number;   // UTC Timestamp (milliseconds) for Backend Scheduler
+  linkedFinanceId: string | null;
+  notified?: boolean;
   tags?: string[];
   createdAt: number;
 }

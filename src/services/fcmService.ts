@@ -21,7 +21,7 @@ export const fcmService = {
                 });
 
                 if (token) {
-                    console.log("FCM Token:", token);
+                    // console.log("FCM Token:", token);
                     await this.saveTokenToUser(token);
                     return token;
                 }

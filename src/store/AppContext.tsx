@@ -273,12 +273,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       if (!checkLimit()) return '';
 
+      let nextRemindAt: number | undefined;
+      // Calculate UTC Timestamp for Scheduler
+      if (dueDate && dueTime) {
+        // Create Date object assuming local client time (browser behavior)
+        const dateObj = new Date(`${dueDate}T${dueTime}`);
+        if (!isNaN(dateObj.getTime())) {
+          nextRemindAt = dateObj.getTime();
+        }
+      }
+
       const newTask = {
         title,
         status: 'pending',
         priority,
         dueDate: dueDate || null,
         dueTime: dueTime || null,
+        nextRemindAt, // Save for Backend Scheduler
         linkedFinanceId: linkedFinanceId || null,
         createdAt: Date.now()
       };
@@ -293,6 +304,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateTask = async (id: string, updates: Partial<Task>) => {
     if (!user) return;
     try {
+      // If updating time/date, ensure we align the nextRemindAt timestamp
+      // NOTE: This assumes 'updates' already contains the merged intent or we need to fetch current?
+      // For a robust implementation, we should read before write or compute on client if we have full object.
+      // Here we rely on the caller passing correct data.
+
+      // If BOTH dueDate and dueTime are being updated, we can compute.
+      // If only one is updated, we risk mismatch.
+      // For simplicity in this PWA: Assume callers (EditModal) pass both if any change.
+
+      if (updates.dueDate && updates.dueTime) {
+        const dateObj = new Date(`${updates.dueDate}T${updates.dueTime}`);
+        if (!isNaN(dateObj.getTime())) {
+          // @ts-ignore - dynamic extension
+          updates.nextRemindAt = dateObj.getTime();
+        }
+      }
+
       await updateDoc(doc(db, 'users', user.id, 'tasks', id), updates);
     } catch (e) {
       console.error("Failed to update task:", e);

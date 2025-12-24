@@ -1,33 +1,25 @@
 import * as admin from 'firebase-admin';
 
-
 // Ensure Firebase Admin is initialized (it is in firebase.config.ts)
 
 export const triggerTaskCheck = async () => {
     try {
         const now = new Date();
+        const startOfMinute = now.getTime();
+        const endOfMinute = startOfMinute + 60000;
 
-        // Robust Date/Time Formatting
-        const pad = (n: number) => n < 10 ? '0' + n : n;
-        const dateKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`; // YYYY-MM-DD
-        const timeKey = `${pad(now.getHours())}:${pad(now.getMinutes())}`; // HH:MM
+        console.log(`[Scheduler] Checking for tasks due between ${new Date(startOfMinute).toISOString()} and ${new Date(endOfMinute).toISOString()}`);
 
-        console.log(`[Scheduler] Server Time (Absolute): ${now.toString()}`);
-        console.log(`[Scheduler] Server Date (ISO): ${now.toISOString()}`);
-        console.log(`[Scheduler] Generated Keys -> Date: ${dateKey}, Time: ${timeKey}`);
-
-        console.log(`[Scheduler] Querying: collectionGroup('tasks').where('dueDate', '==', '${dateKey}').where('dueTime', '==', '${timeKey}')`);
-        console.log(`[Scheduler] Checking tasks for ${dateKey} at ${timeKey}...`);
-
-        // 1. Query all users (Scalability Warning: For massive app, use Collection Group Index)
+        // 1. UTC Timestamp Query (Global, O(1))
+        // Requires Composite Index: collectionGroup: tasks -> status ASC, nextRemindAt ASC
         const tasksSnapshot = await admin.firestore().collectionGroup('tasks')
-            .where('dueDate', '==', dateKey)
-            .where('dueTime', '==', timeKey)
             .where('status', '==', 'pending')
+            .where('nextRemindAt', '>=', startOfMinute)
+            .where('nextRemindAt', '<', endOfMinute)
             .get();
 
         if (tasksSnapshot.empty) {
-            console.log("[Scheduler] No tasks found.");
+            console.log("[Scheduler] No tasks found in this minute window.");
             return {
                 status: 'success',
                 message: 'No tasks due',
@@ -36,6 +28,7 @@ export const triggerTaskCheck = async () => {
         }
 
         console.log(`[Scheduler] Found ${tasksSnapshot.size} tasks due now.`);
+
         let successCount = 0;
         let failureCount = 0;
 
@@ -46,7 +39,7 @@ export const triggerTaskCheck = async () => {
 
             if (!userId) continue;
 
-            // Check if already notified to avoid dupes (though query matches specifics)
+            // Double check 'notified' flag in case of retry overlaps
             if (task.notified) continue;
 
             // 3. Get User FCM Tokens
@@ -54,12 +47,10 @@ export const triggerTaskCheck = async () => {
             const userData = userDoc.data();
             const tokens = userData?.fcmTokens || [];
 
-            if (tokens.length === 0) {
+            if (!tokens || tokens.length === 0) {
                 console.log(`[Scheduler] User ${userId} has no FCM tokens.`);
                 continue;
             }
-
-            console.log(`[Scheduler] Sending to ${tokens.length} devices for User ${userId}`);
 
             // 4. Send Notification
             const message: admin.messaging.MulticastMessage = {
@@ -70,42 +61,30 @@ export const triggerTaskCheck = async () => {
                 },
                 data: {
                     taskId: doc.id,
-                    url: '/' // Click action
+                    url: '/',
+                    priority: task.priority || 'medium'
                 },
                 android: {
                     priority: 'high',
                     notification: {
                         icon: 'stock_ticker_update',
-                        color: '#4F46E5', // Indigo-600
-                        clickAction: 'FLUTTER_NOTIFICATION_CLICK' // Standard web
+                        color: '#4F46E5',
+                        clickAction: 'FLUTTER_NOTIFICATION_CLICK'
                     }
                 },
                 webpush: {
-                    headers: {
-                        Urgency: "high"
-                    },
-                    fcmOptions: {
-                        link: "https://lifehub-frontend-710009842508.us-central1.run.app/"
-                    }
+                    headers: { Urgency: "high" },
+                    fcmOptions: { link: "https://lifehub-frontend.web.app/" }
                 }
             };
 
             const response = await admin.messaging().sendEachForMulticast(message);
-            console.log(`[Scheduler] Sent success: ${response.successCount}, failure: ${response.failureCount}`);
 
-            successCount += response.successCount;
-            failureCount += response.failureCount;
-
-            if (response.failureCount > 0) {
-                response.responses.forEach((resp, idx) => {
-                    if (!resp.success) {
-                        console.error(`[Scheduler] Failure error:`, resp.error);
-                    }
-                });
+            if (response.successCount > 0) {
+                await doc.ref.update({ notified: true });
+                successCount += response.successCount;
             }
-
-            // 5. Mark as Notified
-            await doc.ref.update({ notified: true });
+            failureCount += response.failureCount;
         }
 
         return {
@@ -116,8 +95,14 @@ export const triggerTaskCheck = async () => {
             failures: failureCount
         };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Scheduler Error:", error);
+        // Helpful error for initial setup regarding missing index
+        if (error.code === 9 || error.message?.includes('index')) {
+            console.error("⚠️ MISSING INDEX: You must create a composite index in Firebase Console.");
+            console.error("Collection ID: tasks");
+            console.error("Fields: status (Ascending), nextRemindAt (Ascending)");
+        }
         throw error;
     }
 };
