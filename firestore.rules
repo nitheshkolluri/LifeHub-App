@@ -2,47 +2,29 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to check auth
+    // --- AUTH HELPERS ---
     function isAuthenticated() {
       return request.auth != null;
     }
-
-    // Helper to check if user owns the data
+    
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Zero Trust: Deny everything by default
+    // --- ZERO TRUST DEFAULT ---
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // User Data Isolation
-    // Only the authenticated user can read/write their own data
+    // --- USER DATA ISOLATION (STRICT) ---
     match /users/{userId} {
+      // Allow users to read/write their own profile
       allow read, write: if isOwner(userId);
 
-      // Subcollections (tasks, habits, etc.) inherit strict ownership
-      match /tasks/{taskId} {
+      // Recursive ownership for ALL subcollections
+      // This is safer than listing them individually as it covers future features
+      match /{document=**} {
         allow read, write: if isOwner(userId);
-      }
-      match /habits/{habitId} {
-        allow read, write: if isOwner(userId);
-      }
-      match /finance/{financeId} {
-        allow read, write: if isOwner(userId);
-      }
-      match /messages/{messageId} {
-        allow read, write: if isOwner(userId);
-      }
-      match /reports/{reportId} {
-        allow read, write: if isOwner(userId);
-      }
-      match /threads/{threadId} {
-        allow read, write: if isOwner(userId);
-        match /messages/{messageId} {
-          allow read, write: if isOwner(userId);
-        }
       }
     }
   }

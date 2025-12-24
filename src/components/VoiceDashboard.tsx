@@ -13,6 +13,18 @@ const VoiceDashboard = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
 
+    // AUDIT COMPLIANCE: Hard limit on recording time (15s)
+    useEffect(() => {
+        let timeout: NodeJS.Timeout;
+        if (isListening) {
+            timeout = setTimeout(() => {
+                stopListening();
+                setLocalError("Recording limited to 15s for privacy.");
+            }, 15000);
+        }
+        return () => clearTimeout(timeout);
+    }, [isListening, stopListening]);
+
     // Derived State
     const hasTranscript = transcript.trim().length > 0;
     const isReviewMode = !isListening && hasTranscript && !isProcessing;
@@ -56,13 +68,30 @@ const VoiceDashboard = () => {
             <div className="z-10 w-full max-w-xl flex flex-col items-center gap-10">
 
                 {/* Header Text */}
-                <div className="text-center space-y-3">
-                    <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900">
-                        {isListening ? 'Listening...' : isReviewMode ? 'Review & Organize' : isProcessing ? 'Organizing...' : 'Voice Note'}
-                    </h1>
-                    <p className="text-slate-500 font-medium text-lg">
-                        {isListening ? 'Speak freely. Capture everything.' : isReviewMode ? 'Ready to process your thoughts?' : isProcessing ? 'Magic is happening...' : 'Tap below to start recording.'}
-                    </p>
+                {/* Header Text / Recording Banner */}
+                <div className="text-center space-y-3 w-full">
+                    {isListening ? (
+                        <div className="animate-pulse flex flex-col items-center gap-4">
+                            <div className="px-6 py-2 bg-rose-600 rounded-full shadow-xl shadow-rose-200">
+                                <div className="text-white font-black tracking-widest uppercase text-sm flex items-center gap-2">
+                                    <div className="w-3 h-3 bg-white rounded-full animate-ping" />
+                                    Live Recording • Max 15s
+                                </div>
+                            </div>
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-rose-600">
+                                LISTENING...
+                            </h1>
+                        </div>
+                    ) : (
+                        <>
+                            <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900">
+                                {isReviewMode ? 'Review & Organize' : isProcessing ? 'Organizing...' : 'Voice Note'}
+                            </h1>
+                            <p className="text-slate-500 font-medium text-lg">
+                                {isReviewMode ? 'Ready to process your thoughts?' : isProcessing ? 'Magic is happening...' : 'Tap below to start recording.'}
+                            </p>
+                        </>
+                    )}
                 </div>
 
                 {/* MAIN CONTROL AREA */}
