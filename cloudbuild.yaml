@@ -29,6 +29,8 @@ steps:
       - 'VITE_STRIPE_PAYMENT_LINK=$_VITE_STRIPE_PAYMENT_LINK'
       - '--build-arg'
       - 'VITE_GEMINI_API_KEY=$_VITE_GEMINI_API_KEY'
+      - '--build-arg'
+      - 'VITE_FIREBASE_VAPID_KEY=$_VITE_FIREBASE_VAPID_KEY'
       - '.'
 
   # Push the container image to Container Registry

@@ -70,7 +70,9 @@ const app = initializeApp(firebaseConfig);
 
 // Export Firebase services
 export const auth = getAuth(app);
+import { getMessaging } from "firebase/messaging";
 export const db = getFirestore(app);
+export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 export const googleProvider = new GoogleAuthProvider();
 
 // Log successful initialization (without sensitive data)

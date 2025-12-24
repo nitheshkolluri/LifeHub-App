@@ -552,7 +552,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // --- THREAD ACTIONS ---
+  // 4. Initialize FCM (Official Notifications)
+  useEffect(() => {
+    if (user) {
+      // We only request permission if user is logged in
+      import('../services/fcmService').then(({ fcmService }) => {
+        fcmService.requestPermission();
+      });
+    }
+  }, [user]);
+
+  // --- DERIVED STATE ---
   const saveCurrentThread = async (title?: string) => {
     if (!user || messages.length <= 1) return '';
     const threadTitle = title || messages[messages.length - 1].text.slice(0, 30) + '...';

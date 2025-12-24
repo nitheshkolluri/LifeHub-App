@@ -17,12 +17,16 @@ import subscriptionRoutes from './routes/subscription.routes';
 import webhookRoutes from './routes/webhook.routes';
 import assistantRoutes from './routes/assistant.routes';
 import userRoutes from './routes/user.routes';
+import { startTaskScheduler } from './services/schedulerService';
 
 // Load environment variables
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
+
+// Start Background Services
+startTaskScheduler();
 
 // ============================================
 // MIDDLEWARE

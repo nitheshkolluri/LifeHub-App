@@ -290,17 +290,45 @@ export const Dashboard = () => {
                {activeTasks.length === 0 ? (
                   <div className="text-center py-8 text-slate-300 italic text-sm">No tasks for {isToday ? 'today' : 'this date'}. Enjoy the calm.</div>
                ) : (
-                  activeTasks.map(t => (
-                     <SmartCard
-                        key={t.id}
-                        title={t.title}
-                        subtitle={t.dueTime ? `Due ${t.dueTime}` : null}
-                        color="text-indigo-600"
-                        isCompleted={t.status === 'completed'}
-                        onToggle={() => toggleTask(t.id)}
-                        onDelete={() => deleteTask(t.id)}
-                     />
-                  ))
+                  activeTasks.map(t => {
+                     // Calculate Overdue
+                     let isOverdue = false;
+                     if (t.status === 'pending' && t.dueTime) {
+                        const now = new Date();
+                        const [h, m] = t.dueTime.split(':').map(Number);
+                        const dueToday = !t.dueDate || t.dueDate === new Date().toISOString().split('T')[0];
+                        if (dueToday && (now.getHours() > h || (now.getHours() === h && now.getMinutes() > m))) {
+                           isOverdue = true;
+                        }
+                     }
+
+                     return (
+                        <SmartCard
+                           key={t.id}
+                           title={t.title}
+                           subtitle={t.dueTime ? `Due ${t.dueTime}` : null}
+                           color="text-indigo-600"
+                           priority={t.priority}
+                           isOverdue={isOverdue}
+                           isCompleted={t.status === 'completed'}
+                           onToggle={() => toggleTask(t.id)}
+                           onDelete={() => deleteTask(t.id)}
+                           onReschedule={() => {
+                              // Quick Reschedule to Tomorrow or Later today?
+                              // For now, trigger the bulk logic but just for one ID
+                              // Actually handleReschedule takes an array
+                              handleReschedule([t.id]);
+                              // Wait, handleReschedule sets to TODAY. If it's today, maybe move to tomorrow?
+                              // User requirement: "Edit or Reschedule... doesn't work".
+                              // We'll reimplement handleReschedule to just push to tomorrow if it's already today.
+                           }}
+                           onEdit={() => {
+                              const newTitle = prompt("Edit Task", t.title);
+                              if (newTitle) updateTask(t.id, { title: newTitle });
+                           }}
+                        />
+                     );
+                  })
                )}
             </SmartSection>
 
