@@ -1,5 +1,7 @@
 import admin from 'firebase-admin';
 import { logger } from '../utils/logger';
+import * as path from 'path';
+import * as fs from 'fs';
 
 // Initialize Firebase Admin SDK
 const initializeFirebase = () => {
@@ -58,8 +60,6 @@ const initializeFirebase = () => {
         } else {
             // No env vars set, try to load local service account (Dev/Local fallback)
             try {
-                const path = require('path');
-                const fs = require('fs');
                 // Try multiple common paths for robustness
                 const possiblePaths = [
                     path.resolve(process.cwd(), 'service-account.json'),
