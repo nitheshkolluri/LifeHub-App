@@ -438,6 +438,16 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
                         </div>
                      </div>
                   )}
+
+                  {/* LEGAL FOOTER */}
+                  <div className="py-8 text-center">
+                     <div className="flex justify-center gap-4 text-xs font-bold text-slate-500">
+                        <a href="#" className="hover:text-indigo-600 hover:underline">Terms of Service</a>
+                        <span>•</span>
+                        <a href="#" className="hover:text-indigo-600 hover:underline">Privacy Policy</a>
+                     </div>
+                     <p className="text-[10px] text-zinc-400 mt-2">v1.2.0 • LifeHub OS</p>
+                  </div>
                </div>
             </div>
          </div>

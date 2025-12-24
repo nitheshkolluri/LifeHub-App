@@ -150,6 +150,11 @@ export const AuthScreen = () => {
             <button disabled={loading} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-indigo-600 hover:shadow-xl hover:shadow-indigo-200 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 mt-4">
               {loading ? <Loader2 className="animate-spin" /> : <><span>{isLogin ? 'Sign In' : 'Create Account'}</span><ArrowRight size={20} /></>}
             </button>
+
+            <p className="text-center text-[10px] text-slate-500 mt-4 leading-relaxed">
+              By continuing, you agree to LifeHub's <br />
+              <a href="#" className="underline hover:text-indigo-600">Terms of Service</a> and <a href="#" className="underline hover:text-indigo-600">Privacy Policy</a>.
+            </p>
           </form>
 
           <p className="mt-8 text-center text-slate-500 font-medium text-sm">
