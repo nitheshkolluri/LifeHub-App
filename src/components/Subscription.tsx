@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '../store/AuthContext';
 import { useApp } from '../store/AppContext';
 import { useUsage } from '../store/UsageContext';
-import { Check, Star, Zap, Shield, X, Loader2, Crown, Sparkles, ArrowRight } from 'lucide-react';
+import { Check, X, Loader2, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import { getEnv } from '../utils/env';
-import { apiService } from '../services/api.service';
+import { Logo } from './Logo';
 
 interface SubscriptionModalProps {
   isOpen?: boolean;
@@ -18,7 +18,6 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
   const { setShowPaywall } = useUsage();
   const [loading, setLoading] = useState(false);
 
-  // If not explicitly controlled, assume it's handling the global Upsell state
   const handleClose = () => {
     if (onClose) onClose();
     else {
@@ -30,137 +29,100 @@ export const SubscriptionModal = ({ isOpen, onClose, isOnboarding = false }: Sub
   const handleUpgrade = () => {
     setLoading(true);
     try {
-      // 1. Get Payment Link from Env
       const paymentLink = getEnv('VITE_STRIPE_PAYMENT_LINK');
-
       if (!paymentLink) {
-        alert("Configuration Error: Payment Link missing.\n\nPlease add VITE_STRIPE_PAYMENT_LINK to your .env file.");
+        alert("Payment Link Config missing. Please check .env");
         setLoading(false);
         return;
       }
-
-      // 2. Redirect
       window.location.href = paymentLink;
-
     } catch (error) {
       console.error("Redirect failed", error);
       setLoading(false);
     }
   };
 
-  // If being used as a controlled component (isOpen is passed)
   if (isOpen === false) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="relative w-full max-w-5xl bg-white shadow-2xl overflow-hidden animate-scale-in flex flex-col md:flex-row max-h-[90vh] rounded-none">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-md animate-in fade-in duration-200 font-sans">
+      <div className="relative w-full max-w-4xl bg-white shadow-2xl rounded-xl overflow-hidden animate-scale-in flex flex-col md:flex-row h-auto min-h-[500px] border border-zinc-200">
 
-        {/* Left Side: Brand Narrative (Fortune 500 Style: Minimal, photographic feel) */}
-        <div className="bg-black w-full md:w-1/2 p-12 relative overflow-hidden flex flex-col justify-between text-white border-r border-white/10">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-black opacity-90" />
-
-          <div className="relative z-10 space-y-6">
-            <div className="flex items-center gap-3 opacity-60">
-              <Crown size={20} />
-              <span className="text-xs font-bold tracking-[0.2em] uppercase">LifeHub Premium</span>
+        {/* LEFT PANEL: Branding (Linear/Vercel Style) */}
+        <div className="bg-zinc-50 w-full md:w-[40%] p-8 relative flex flex-col justify-between border-r border-zinc-200">
+          <div>
+            <div className="flex items-center gap-2 mb-8 opacity-90">
+              <Logo size={28} />
+              <span className="text-xl font-bold tracking-tight text-zinc-900">LifeHub</span>
             </div>
-
-            <h2 className="text-5xl font-light tracking-tight leading-tight">
-              Mastery <br />
-              <span className="font-bold">By Design.</span>
-            </h2>
-
-            <p className="text-slate-400 font-light text-lg leading-relaxed max-w-sm">
-              For those who demand precision. The ultimate suite for financial, habit, and task orchestration.
-            </p>
+            <div className="space-y-4">
+              <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 leading-tight">
+                Upgrade to <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 to-zinc-500">Executive</span>
+              </h2>
+              <p className="text-zinc-500 text-sm leading-relaxed">
+                The complete operating system for high-performance living. Unlimited vaults, AI architecture, and precision analytics.
+              </p>
+            </div>
           </div>
 
-          <div className="relative z-10 grid grid-cols-2 gap-8 mt-12 border-t border-white/10 pt-8">
-            <div>
-              <p className="text-3xl font-light">∞ <span className="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1">Limitless</span></p>
-              <p className="text-xs text-slate-500 mt-1">Data Storage</p>
+          <div className="mt-8 space-y-3">
+            <div className="flex items-center gap-3 text-xs font-medium text-zinc-600">
+              <ShieldCheck size={16} className="text-zinc-900" />
+              <span>Secure Stripe Checkout</span>
             </div>
-            <div>
-              <p className="text-3xl font-light">A.I. <span className="text-sm font-bold text-slate-500 uppercase tracking-wider ml-1">Native</span></p>
-              <p className="text-xs text-slate-500 mt-1">Neural Integration</p>
+            <div className="flex items-center gap-3 text-xs font-medium text-zinc-600">
+              <Zap size={16} className="text-zinc-900" />
+              <span>Cancel anytime</span>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Tiers (Clean, Corporate) */}
-        <div className="flex-1 p-12 bg-white flex flex-col justify-center relative">
-
-          {/* Explicit Close Button for 'Back' option */}
+        {/* RIGHT PANEL: Pricing */}
+        <div className="flex-1 p-8 md:p-10 bg-white relative flex flex-col justify-center">
           <button
             onClick={handleClose}
-            className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-black transition-colors"
-            aria-label="Close"
+            className="absolute top-6 right-6 p-2 rounded-md hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors"
           >
-            <X size={28} strokeWidth={1.5} />
+            <X size={20} />
           </button>
 
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 uppercase tracking-widest mb-1">Select Tier</h3>
-              <p className="text-slate-400 font-light">Choose your level of engagement.</p>
+          <div className="max-w-sm mx-auto w-full">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-4xl font-extrabold text-zinc-900 tracking-tight">$3.99</span>
+              <span className="text-zinc-500 font-medium">/month</span>
             </div>
+            <p className="text-xs text-zinc-400 font-medium mb-8">Billed monthly. 7-day free trial included.</p>
 
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 uppercase tracking-widest mb-1">Account Tier</h3>
-                <p className="text-slate-400 font-light">Current vs Potential</p>
-              </div>
+            <ul className="space-y-3 mb-8">
+              {[
+                "AI Strategy Architect",
+                "Unlimited Financial Vaults",
+                "Advanced Habit Analytics",
+                "Device Sync & Backup"
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-3 text-sm font-medium text-zinc-700">
+                  <Check size={16} className="text-zinc-900 stroke-[3px]" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
 
-              {/* Comparison Table */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Free Tier */}
-                <div className="border border-slate-200 p-4 opacity-50">
-                  <p className="font-bold text-sm text-slate-900 mb-2">Basic (Free)</p>
-                  <ul className="space-y-2 text-[10px] text-slate-500 uppercase tracking-widest">
-                    <li>• 500MB Storage</li>
-                    <li>• 15 Daily Tokens</li>
-                  </ul>
-                </div>
+            <button
+              onClick={handleUpgrade}
+              disabled={loading}
+              className="w-full bg-zinc-900 hover:bg-zinc-800 text-white py-3.5 rounded-lg font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2 group"
+            >
+              {loading ? <Loader2 size={16} className="animate-spin" /> : 'Start 7-Day Free Trial'}
+              {!loading && <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />}
+            </button>
 
-                {/* Pro Tier */}
-                <div className="border-2 border-black p-4 bg-slate-50 relative shadow-lg">
-                  <div className="absolute -top-2 -right-2 bg-black text-white text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider">Selected</div>
-                  <p className="font-bold text-sm text-slate-900 mb-2">Executive (Pro)</p>
-                  <ul className="space-y-2 text-[10px] text-slate-900 font-bold uppercase tracking-widest">
-                    <li>• ∞ Unlimited Storage</li>
-                    <li>• ∞ Neural Access (AI)</li>
-                    <li>• Financial Vault</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <div>
-                  <span className="text-3xl font-black text-slate-900">$3.99</span>
-                  <span className="text-slate-500 font-medium text-xs ml-1">/ month</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-slate-400 line-through">$9.99</p>
-                  <p className="text-[10px] text-rose-500 font-bold uppercase">Launch Price</p>
-                </div>
-              </div>
-
-              <button
-                onClick={handleUpgrade}
-                disabled={loading}
-                className="w-full bg-black hover:bg-slate-800 text-white py-5 font-bold tracking-widest text-sm uppercase transition-all flex items-center justify-center gap-3"
-              >
-                {loading ? <Loader2 className="animate-spin" /> : 'Upgrade to Executive'}
-                <ArrowRight size={16} />
-              </button>
-
-              <button
-                onClick={handleClose}
-                className="w-full text-center text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
-              >
-                Maybe Later
-              </button>
-            </div>
+            <button
+              onClick={handleClose}
+              className="w-full mt-4 text-center text-xs text-zinc-400 hover:text-zinc-900 font-medium transition-colors"
+            >
+              Continue with Basic Plan
+            </button>
           </div>
         </div>
       </div>

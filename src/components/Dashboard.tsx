@@ -3,6 +3,7 @@ import { useApp } from '../store/AppContext';
 import { useAuth } from '../store/AuthContext';
 import { useUsage } from '../store/UsageContext';
 import { SmartCard } from './SmartCard';
+import { SwipeActionRow } from './SwipeActionRow';
 import { ReschedulePrompt } from './ReschedulePrompt';
 import { parseQuickly } from '../utils/quickParser';
 import { useVoiceInput } from '../hooks/useVoiceInput';
@@ -14,12 +15,10 @@ import { ViewState } from '../types';
 
 // --- SUB-COMPONENT: CREATIVE DATE STRIP ---
 const DateStrip = ({ selectedDate, onSelectDate }: { selectedDate: Date, onSelectDate: (d: Date) => void }) => {
-   // Generate window of dates centered on selected
    const dates = useMemo(() => {
       const arr = [];
-      // Show 2 days before and 2 days after, sliding window
       for (let i = -2; i <= 2; i++) {
-         const d = new Date(selectedDate); // clone pivot
+         const d = new Date(selectedDate);
          d.setDate(selectedDate.getDate() + i);
          arr.push(d);
       }
@@ -118,7 +117,6 @@ export const Dashboard = () => {
    const [overdueTasks, setOverdueTasks] = useState<any[]>([]);
    const [habitMenuId, setHabitMenuId] = useState<string | null>(null);
 
-   // Helper for menu interactions
    const stopAndRun = (e: React.MouseEvent, action: () => void) => {
       e.stopPropagation();
       action();
@@ -128,56 +126,28 @@ export const Dashboard = () => {
    const { isListening, transcript, startListening, stopListening, resetTranscript } = useVoiceInput();
 
    // --- EFFECTS ---
-
-   // 1. Sync Voice
    useEffect(() => { if (transcript) setInput(transcript); }, [transcript]);
 
-   // 2. Check Overdue (Passive)
    useEffect(() => {
       const todayStr = new Date().toISOString().split('T')[0];
       const pending = tasks.filter(t => t.status === 'pending' && t.dueDate && t.dueDate < todayStr);
       setOverdueTasks(pending);
-      // Removed auto-popup: setShowReschedule(true);
    }, [tasks]);
 
-   // --- FILTERING LOGIC ---
+   // --- FILTERING ---
    const dateKey = selectedDate.toISOString().split('T')[0];
    const isToday = dateKey === new Date().toISOString().split('T')[0];
 
-   // Filter Tasks
    const activeTasks = useMemo(() => {
       return tasks.filter(t => {
-         // Show completed ONLY if completed ON selected date
-         if (t.status === 'completed') return false; // Hide completed for cleaner view? Or show strikethrough?
-         // User requested "Show analysis". Maybe we show completed at bottom.
-
-         // PENDING logic
-         if (t.dueDate === dateKey) return true; // Due today
-         if (!t.dueDate && isToday) return true; // Backlog shows on Today
+         if (t.status === 'completed') return false;
+         if (t.dueDate === dateKey) return true;
+         if (!t.dueDate && isToday) return true;
          return false;
       }).sort((a, b) => (a.priority === 'high' ? -1 : 1));
    }, [tasks, dateKey, isToday]);
 
-   const activeHabits = habits; // Show all habits everyday to check off? Or track history?
-   // Filtering for "Habits Done on Date" handled in card rendering
-
-   const activeFinance = finance.filter(f => {
-      // USER REQUEST: VISIBLE BY DEFAULT.
-      // Show if due anytime this month or if user explicitly selected a date.
-      // If selected date is today, show ALL bills for the month so they are aware? 
-      // Or just show all upcoming?
-
-      // Strict Date Filter (Old):
-      // if (f.dueDate) return f.dueDate === dateKey;
-      // if (f.dueDay) return selectedDate.getDate() === f.dueDay;
-
-      // Relaxed Filter: Show everything pending for transparency on Home
-      // But maybe just section it?
-      // Let's keep date filter but if nothing found, maybe show "Upcoming"?
-      // User said "not visible by default". This implies "I have items but they are hidden".
-      // Likely because they are due on other days.
-      return true; // Show ALL finance items for now to ensure visibility as requested.
-   });
+   const activeFinance = finance.filter(f => true);
 
    // --- HANDLERS ---
    const handleMicClick = () => {
@@ -192,15 +162,11 @@ export const Dashboard = () => {
          incrementUsage();
 
          try {
-            // CRITICAL FIX: Use the centralized BrainDump processor (Quick + Cloud AI)
-            // Previously this component bypassed Cloud AI for plain tasks.
             await processBrainDump(input);
          } catch (error) {
             console.error("Dashboard Dump Error:", error);
-            // Fallback (handled in processBrainDump generally, but extra safety here)
             addTask(input, 'medium', dateKey);
          }
-
          setInput('');
          resetTranscript();
          setIsSubmitting(false);
@@ -213,10 +179,10 @@ export const Dashboard = () => {
       setShowReschedule(false);
    };
 
+   // --- DASHBOARD RENDER ---
    return (
       <div className="max-w-xl mx-auto pb-24 px-4 pt-6 font-sans text-slate-800 animate-fade-in">
 
-         {/* 1. GREETING & DATE */}
          <header className="mb-2 text-center">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                {new Date().getHours() < 12 ? 'Good morning' : 'Hello'}, {user?.name?.split(' ')[0] || 'Friend'}
@@ -226,7 +192,6 @@ export const Dashboard = () => {
 
          <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
-         {/* 2. MAIN INPUT */}
          <div className={`relative mb-10 transition-all ${isListening ? 'scale-105' : ''}`}>
             <div className="relative group bg-white rounded-[28px] shadow-lg shadow-indigo-100 border border-slate-100 p-2 flex items-center transition-all focus-within:ring-4 focus-within:ring-indigo-50/50 focus-within:border-indigo-200">
                <input
@@ -238,207 +203,138 @@ export const Dashboard = () => {
                   disabled={isSubmitting}
                   autoFocus
                />
-
-               {/* CLEAR BUTTON */}
                {input && !isListening && (
-                  <button
-                     onClick={() => { setInput(''); resetTranscript(); }}
-                     className="absolute right-16 p-2 text-slate-300 hover:text-rose-500 transition-colors"
-                  >
-                     <ListFilter size={20} className="rotate-45" /> {/* Using ListFilter as generic X since X isn't imported, wait, X is not in import list? Let's check imports. */}
+                  <button onClick={() => { setInput(''); resetTranscript(); }} className="absolute right-16 p-2 text-slate-300 hover:text-rose-500 transition-colors">
+                     <ListFilter size={20} className="rotate-45" />
                   </button>
                )}
-
-               {/* MIC BUTTON - HIGHLIGHTED */}
-               <button
-                  onClick={() => input && !isListening ? handleDump() : handleMicClick()}
-                  className={`w-14 h-14 rounded-[20px] flex items-center justify-center transition-all duration-300 ${isListening
-                     ? 'bg-rose-500 text-white shadow-lg shadow-rose-200 animate-pulse scale-105'
-                     : input
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:scale-105'
-                        : 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100'
-                     }`}
-               >
+               <button onClick={() => input && !isListening ? handleDump() : handleMicClick()} className={`w-14 h-14 rounded-[20px] flex items-center justify-center transition-all duration-300 ${isListening ? 'bg-rose-500 text-white shadow-lg shadow-rose-200 animate-pulse scale-105' : input ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:scale-105' : 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100'}`}>
                   {input && !isListening ? <ArrowRight size={24} /> : <Mic size={24} />}
                </button>
             </div>
-            {/* Visual Feedback for Input Type */}
             <div className="absolute -bottom-6 left-6 text-xs font-bold uppercase tracking-wide text-slate-300 flex items-center gap-2">
-               <Sparkles size={12} className="text-indigo-400" />
-               <span>AI Auto-Categorization Active</span>
+               <Sparkles size={12} className="text-indigo-400" /> <span>AI Auto-Categorization Active</span>
             </div>
          </div>
 
-         {/* 2.5. NOTIFICATIONS SECTION */}
          {overdueTasks.length > 0 && (
             <div className="mb-8 animate-slide-down">
                <div className="bg-gradient-to-r from-indigo-50 to-white border border-indigo-100 p-4 rounded-2xl flex items-center justify-between shadow-sm">
                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center animate-pulse">
-                        <Sparkles size={20} />
-                     </div>
-                     <div>
-                        <h3 className="font-bold text-slate-800 text-sm">Review Yesterday</h3>
-                        <p className="text-xs text-slate-500">{overdueTasks.length} tasks pending from the past.</p>
-                     </div>
+                     <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center animate-pulse"><Sparkles size={20} /></div>
+                     <div><h3 className="font-bold text-slate-800 text-sm">Review Yesterday</h3><p className="text-xs text-slate-500">{overdueTasks.length} tasks pending.</p></div>
                   </div>
-                  <button
-                     onClick={() => setShowReschedule(true)}
-                     className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                  >
-                     Review
-                  </button>
+                  <button onClick={() => setShowReschedule(true)} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">Review</button>
                </div>
             </div>
          )}
 
-         {/* 3. SECTIONS GRID */}
          <div className="space-y-6">
-
             {/* TASKS */}
-            <SmartSection
-               title="Focus"
-               count={activeTasks.length}
-               icon={CheckCircle2}
-               color={{ bg: 'bg-indigo-50', text: 'text-indigo-600' }}
-               onAdd={() => setView(ViewState.TASKS)}
-            >
+            <SmartSection title="Focus" count={activeTasks.length} icon={CheckCircle2} color={{ bg: 'bg-indigo-50', text: 'text-indigo-600' }} onAdd={() => setView(ViewState.TASKS)}>
                {activeTasks.length === 0 ? (
                   <div className="text-center py-8 text-slate-300 italic text-sm">No tasks for today. Enjoy the calm.</div>
                ) : (
                   activeTasks.map(t => {
-                     // Calculate Overdue
                      let isOverdue = false;
                      if (t.status === 'pending' && t.dueTime) {
                         const now = new Date();
                         const [h, m] = t.dueTime.split(':').map(Number);
                         const dueToday = !t.dueDate || t.dueDate === new Date().toISOString().split('T')[0];
-                        if (dueToday && (now.getHours() > h || (now.getHours() === h && now.getMinutes() > m))) {
-                           isOverdue = true;
-                        }
+                        if (dueToday && (now.getHours() > h || (now.getHours() === h && now.getMinutes() > m))) isOverdue = true;
                      }
+                     // Handlers
+                     const handleEdit = () => { const newTitle = prompt("Edit Task", t.title); if (newTitle) updateTask(t.id, { title: newTitle }); };
+                     const handleResched = () => handleReschedule([t.id]);
+                     const handleDelete = () => deleteTask(t.id);
 
                      return (
-                        <SmartCard
-                           key={t.id}
-                           title={t.title}
-                           subtitle={t.dueTime ? `Due ${t.dueTime}` : null}
-                           color="text-indigo-600"
-                           priority={t.priority}
-                           isOverdue={isOverdue}
-                           isCompleted={t.status === 'completed'}
-                           onToggle={() => toggleTask(t.id)}
-                           onDelete={() => deleteTask(t.id)}
-                           onReschedule={() => handleReschedule([t.id])}
-                           onEdit={() => {
-                              const newTitle = prompt("Edit Task", t.title);
-                              if (newTitle) updateTask(t.id, { title: newTitle });
-                           }}
-                        />
+                        <SwipeActionRow key={t.id} onEdit={handleEdit} onReschedule={handleResched} onDelete={handleDelete}>
+                           <SmartCard
+                              title={t.title}
+                              subtitle={t.dueTime ? `Due ${t.dueTime}` : null}
+                              color="text-indigo-600"
+                              priority={t.priority}
+                              isOverdue={isOverdue}
+                              isCompleted={t.status === 'completed'}
+                              onToggle={() => toggleTask(t.id)}
+                              // PASS SAME HANDLERS TO SMARTCARD (for Desktop Dots)
+                              onEdit={handleEdit}
+                              onReschedule={handleResched}
+                              onDelete={handleDelete}
+                           />
+                        </SwipeActionRow>
                      );
                   })
                )}
             </SmartSection>
 
             {/* HABITS */}
-            <SmartSection
-               title="Rituals"
-               count={habits.length}
-               icon={Flame}
-               color={{ bg: 'bg-orange-50', text: 'text-orange-500' }}
-               onAdd={() => setView(ViewState.HABITS)}
-            >
-               <div className="grid grid-cols-2 gap-2">
+            <SmartSection title="Rituals" count={habits.length} icon={Flame} color={{ bg: 'bg-orange-50', text: 'text-orange-500' }} onAdd={() => setView(ViewState.HABITS)}>
+               <div className="grid grid-cols-1 gap-2">
                   {habits.map(h => {
                      const isDone = h.completedDates.includes(dateKey);
                      return (
-                        <div key={h.id}
-                           onClick={() => incrementHabit(h.id)}
-                           className={`relative group cursor-pointer p-4 rounded-2xl border transition-all flex items-center gap-3 ${isDone ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-transparent hover:bg-white hover:shadow-sm'}`}
-                        >
-                           <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isDone ? 'bg-orange-500 text-white' : 'bg-white text-slate-300'}`}>
-                              <Flame size={14} className={isDone ? 'fill-current' : ''} />
-                           </div>
-                           <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-bold truncate ${isDone ? 'text-orange-900' : 'text-slate-600'}`}>{h.title}</p>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase">{h.streak} Day Streak</p>
-                           </div>
-
-                           {/* HABIT MENU BUTTON */}
-                           <button
-                              onClick={(e) => stopAndRun(e, () => setHabitMenuId(habitMenuId === h.id ? null : h.id))}
-                              className="absolute top-2 right-2 p-1 text-slate-300 hover:text-slate-600 rounded-full hover:bg-black/5 opacity-0 group-hover:opacity-100 transition-all"
+                        <SwipeActionRow key={h.id} onDelete={() => deleteHabit(h.id)}>
+                           <div
+                              onClick={() => incrementHabit(h.id)}
+                              className={`relative group cursor-pointer p-4 rounded-2xl border transition-all flex items-center gap-3 ${isDone ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-transparent hover:bg-white hover:shadow-sm'}`}
                            >
-                              <ListFilter size={12} className="rotate-90" />
-                           </button>
-
-                           {/* DROPDOWN */}
-                           {habitMenuId === h.id && (
-                              <>
-                                 <div className="fixed inset-0 z-40" onClick={(e) => stopAndRun(e, () => setHabitMenuId(null))} />
-                                 <div className="absolute right-2 top-8 w-28 bg-white border border-slate-100 shadow-xl rounded-xl z-50 py-1 flex flex-col animate-in fade-in zoom-in-95 duration-200">
-                                    <button onClick={(e) => stopAndRun(e, () => {
-                                       const newName = prompt("Rename Ritual", h.title);
-                                       // Assuming updateHabit exists or we repurpose addHabit? 
-                                       // We might need to add updateHabit to context or just delete/re-create for now if API missing
-                                       // Checking context... useApp has: addHabit, incrementHabit, deleteHabit. No updateHabit.
-                                       // WORKAROUND: For now, just Delete option or implement update in Context separately?
-                                       // User asked for "Edit or Delete". I'll add "Delete" properly.
-                                       // For Edit, I'll log a warning or try to implement it if easy.
-                                       // Let's just stick to Delete for safety if update missing, OR show "Coming Soon".
-                                       // Wait, I can implement updateHabit in AppContext later. For now, let's put Delete.
-                                       if (newName) console.log("Rename not yet implemented");
-                                       setHabitMenuId(null);
-                                    })} className="text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 hidden">
-                                       Edit
-                                    </button>
-                                    <button onClick={(e) => stopAndRun(e, () => { deleteHabit(h.id); setHabitMenuId(null); })} className="text-left px-3 py-2 text-xs text-rose-500 hover:bg-rose-50">
-                                       Delete
-                                    </button>
-                                 </div>
-                              </>
-                           )}
-                        </div>
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isDone ? 'bg-orange-500 text-white' : 'bg-white text-slate-300'}`}>
+                                 <Flame size={14} className={isDone ? 'fill-current' : ''} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <p className={`text-sm font-bold truncate ${isDone ? 'text-orange-900' : 'text-slate-600'}`}>{h.title}</p>
+                                 <p className="text-[10px] text-slate-400 font-bold uppercase">{h.streak} Day Streak</p>
+                              </div>
+                              {/* Desktop Menu for Habits (Manual fallback since not using SmartCard) */}
+                              <button
+                                 onClick={(e) => stopAndRun(e, () => setHabitMenuId(habitMenuId === h.id ? null : h.id))}
+                                 className="p-1 text-slate-300 hover:text-slate-600 rounded-full hover:bg-black/5 opacity-0 group-hover:opacity-100 transition-all"
+                              >
+                                 <ListFilter size={16} className="rotate-90" />
+                              </button>
+                              {habitMenuId === h.id && (
+                                 <>
+                                    <div className="fixed inset-0 z-40" onClick={(e) => stopAndRun(e, () => setHabitMenuId(null))} />
+                                    <div className="absolute right-2 top-8 w-28 bg-white border border-slate-100 shadow-xl rounded-xl z-50 py-1 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+                                       <button onClick={(e) => stopAndRun(e, () => { deleteHabit(h.id); setHabitMenuId(null); })} className="text-left px-3 py-2 text-xs text-rose-500 hover:bg-rose-50">Delete</button>
+                                    </div>
+                                 </>
+                              )}
+                           </div>
+                        </SwipeActionRow>
                      );
                   })}
                </div>
             </SmartSection>
 
-            {/* FINANCE: ALWAYS VISIBLE NOW */}
-            <SmartSection
-               title="Vault"
-               count={activeFinance.length}
-               icon={Wallet}
-               color={{ bg: 'bg-emerald-50', text: 'text-emerald-600' }}
-            >
+            {/* FINANCE */}
+            <SmartSection title="Vault" count={activeFinance.length} icon={Wallet} color={{ bg: 'bg-emerald-50', text: 'text-emerald-600' }}>
                {activeFinance.length === 0 ? (
                   <div className="text-center py-4 text-slate-300 italic text-xs">No expenses tracked.</div>
                ) : (
                   activeFinance.map(f => (
-                     <SmartCard
-                        key={f.id}
-                        title={f.title}
-                        subtitle={f.type === 'bill' ? 'Bill' : 'Expense'}
-                        icon={<span>${f.amount}</span>}
-                        color="text-emerald-600"
-                        isCompleted={f.isPaidThisMonth}
-                        // RESTORE ACTIONS
-                        onToggle={() => togglePaid(f.id)}
-                        onDelete={() => deleteFinanceItem(f.id)}
-                     />
+                     <SwipeActionRow key={f.id} onDelete={() => deleteFinanceItem(f.id)}>
+                        <SmartCard
+                           title={f.title}
+                           subtitle={f.type === 'bill' ? 'Bill' : 'Expense'}
+                           icon={<span>${f.amount}</span>}
+                           color="text-emerald-600"
+                           isCompleted={f.isPaidThisMonth}
+                           onToggle={() => togglePaid(f.id)}
+                           // PASS ACTIONS TO SMARTCARD TOO
+                           onDelete={() => deleteFinanceItem(f.id)}
+                        />
+                     </SwipeActionRow>
                   ))
                )}
             </SmartSection>
 
          </div>
 
-         {/* 4. RESCHEDULE PROMPT */}
          {showReschedule && (
-            <ReschedulePrompt
-               overdueTasks={overdueTasks}
-               onReschedule={handleReschedule}
-               onDismiss={() => setShowReschedule(false)}
-            />
+            <ReschedulePrompt overdueTasks={overdueTasks} onReschedule={handleReschedule} onDismiss={() => setShowReschedule(false)} />
          )}
 
       </div>
