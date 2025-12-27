@@ -175,7 +175,7 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({ isOpen, onClose }) =
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-2xl animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-2xl animate-in fade-in duration-300">
             <style>{orbStyles}</style>
 
             <button

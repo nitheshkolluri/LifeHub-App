@@ -29,55 +29,58 @@ export const useVoiceInput = () => {
     const [transcript, setTranscript] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    // Use useRef to keep the instance stable across renders
     const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const isExplicitlyStopped = useRef(false);
 
     useEffect(() => {
         if (!isBrowser) return;
 
-        // Initialize only once
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            setError('Speech recognition not supported in this browser.');
+            console.warn("Speech Recognition not supported in this browser.");
+            setError('Browser not supported. Try Chrome or Safari.');
             return;
         }
 
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.interimResults = true; // Essential for real-time feedback
         recognition.lang = 'en-US';
 
         recognition.onresult = (event: any) => {
             let fullTranscript = '';
-            // Reconstruct full transcript from all results (fixes data loss on pause)
             for (let i = 0; i < event.results.length; ++i) {
                 fullTranscript += event.results[i][0].transcript;
             }
+            // Functional update ensures we don't need 'transcript' in dep array
             setTranscript(fullTranscript);
         };
 
         recognition.onerror = (event: any) => {
-            // Ignore common non-critical errors to prevent console spam
-            if (event.error === 'no-speech') {
+            console.error("Voice Error:", event.error);
+            if (event.error === 'not-allowed') {
+                setError('Microphone access denied. Please allow permissions.');
                 setIsListening(false);
-                return;
-            }
-            if (event.error === 'aborted') {
+            } else if (event.error === 'no-speech') {
+                // Ignore no-speech, it just means silence
+            } else {
+                setError(`Voice Error: ${event.error}`);
                 setIsListening(false);
-                return;
             }
-            console.error('Speech recognition error', event.error);
-            setError(event.error);
-            setIsListening(false);
         };
 
         recognition.onend = () => {
-            setIsListening(false);
+            if (isExplicitlyStopped.current) {
+                setIsListening(false);
+            } else {
+                // If not stopped by user (and no error), try to restart for continuous flow?
+                // For now, let's just stop to be safe and avoid infinite loops if mic is broken.
+                setIsListening(false);
+            }
         };
 
         recognitionRef.current = recognition;
 
-        // Cleanup
         return () => {
             if (recognitionRef.current) {
                 recognitionRef.current.abort();
@@ -86,30 +89,29 @@ export const useVoiceInput = () => {
     }, []);
 
     const startListening = useCallback(() => {
-        if (recognitionRef.current) {
+        if (recognitionRef.current && !isListening) {
             try {
-                // Determine if already started? The browser throws error if started.
+                isExplicitlyStopped.current = false;
                 recognitionRef.current.start();
                 setIsListening(true);
                 setError(null);
             } catch (e) {
-                // If already started, ignore
-                console.warn('Speech recognition already started or failed to start', e);
+                console.warn('Speech recognition start failed (likely already running)', e);
             }
         }
-    }, []);
+    }, [isListening]);
 
     const stopListening = useCallback(() => {
-        if (recognitionRef.current) {
+        if (recognitionRef.current && isListening) {
             try {
-                // Abort is safer to completely kill the session and prevent restart/ghost results
-                recognitionRef.current.abort();
+                isExplicitlyStopped.current = true;
+                recognitionRef.current.stop();
                 setIsListening(false);
             } catch (e) {
-                console.error(e);
+                console.error('Stop listening failed', e);
             }
         }
-    }, []);
+    }, [isListening]);
 
     const resetTranscript = useCallback(() => {
         setTranscript('');

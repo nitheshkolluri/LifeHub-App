@@ -27,10 +27,12 @@ interface AppContextType {
   currentView: ViewState;
   isLoadingAI: boolean;
   showUpsell: boolean;
+  editingTaskId: string | null;
 
   // Setters
   setView: (view: ViewState) => void;
   setShowUpsell: (show: boolean) => void;
+  setEditingTaskId: (id: string | null) => void;
   setMessages: (messages: ChatMessage[]) => void;
 
   // Actions
@@ -42,6 +44,7 @@ interface AppContextType {
   addHabit: (title: string, frequency?: 'daily' | 'weekly') => void;
   updateHabit: (id: string, updates: Partial<Habit>) => void;
   incrementHabit: (id: string) => void;
+  decrementHabit: (id: string) => void;
   deleteHabit: (id: string) => void;
 
   addFinanceItem: (data: Partial<FinanceItem>) => Promise<string>;
@@ -62,6 +65,8 @@ interface AppContextType {
   // UI Helpers
   showToast: (msg: string) => void;
   toastMessage: string | null;
+  triggerConfetti: () => void;
+  showConfetti: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -85,6 +90,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false); // Global Gamification
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null); // Global Navigation State
 
   // Helper: Toast
   const showToast = (msg: string) => {
@@ -92,9 +99,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  // Helper: Confetti
+  const triggerConfetti = () => {
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 5000); // 5s burst
+  };
+
   // ... (Sync Effects remain unchanged)
-
-
 
   // --- DATA SYNC OPTIMIZATION ---
   // We use separate useEffects so that if one listener fails or re-runs, it doesn't kill the others.
@@ -411,6 +422,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const decrementHabit = async (id: string) => {
+    if (!user) return;
+    try {
+      const habit = habits.find(h => h.id === id);
+      if (!habit) return;
+      const today = new Date().toISOString().split('T')[0];
+      if (!habit.completedDates.includes(today)) return;
+
+      const newDates = habit.completedDates.filter(d => d !== today);
+      await updateDoc(doc(db, 'users', user.id, 'habits', id), {
+        streak: Math.max(0, habit.streak - 1),
+        completedDates: newDates
+      });
+    } catch (e) {
+      console.error("Failed to decrement habit:", e);
+    }
+  };
+
+
   const addFinanceItem = async (data: Partial<FinanceItem>) => {
     if (!user) return '';
     try {
@@ -717,15 +747,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   return (
     <AppContext.Provider value={{
-      tasks, habits, finance, messages, setMessages, currentView, isLoadingAI, showUpsell, reports,
-      setView: setCurrentView, setShowUpsell,
+      tasks, habits, finance, messages, setMessages, currentView, isLoadingAI, showUpsell, reports, editingTaskId,
+      setView: setCurrentView, setShowUpsell, setEditingTaskId,
       addTask, updateTask, toggleTask, deleteTask,
-      addHabit, updateHabit, incrementHabit, deleteHabit,
+      addHabit, updateHabit, incrementHabit, decrementHabit, deleteHabit,
       addFinanceItem, updateFinanceItem, togglePaid, deleteFinanceItem,
       updateNotificationSettings,
       sendChatMessage, generateReport, processBrainDump,
       threads, saveCurrentThread, loadThread, deleteThread, clearCurrentChat,
-      showToast, toastMessage
+      showToast, toastMessage, triggerConfetti, showConfetti
     }}>
       {children}
     </AppContext.Provider>

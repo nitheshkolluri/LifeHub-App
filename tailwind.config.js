@@ -7,89 +7,93 @@ export default {
     theme: {
         extend: {
             colors: {
-                // FAANG-Level Design System (Royal Indigo)
+                // NEW DESIGN SYSTEM: "Calm & Soft"
+                // Primary: Soft Violet / Lavender (Replaces harsh Indigo)
                 primary: {
-                    900: '#312E81', // Deep Navy Indigo (Headings) - was primary-900
-                    700: '#4338CA', // Rich Indigo
-                    600: '#4F46E5', // Main Brand (Logo Match)
-                    500: '#6366F1', // Purple/Violet
-                    400: '#818CF8', // Lighter Violet (Hover)
-                    200: '#C7D2FE', // Pale Lavender (Subtle BG)
-                    50: '#EEF2FF', // Very Light Tint
-                    DEFAULT: '#4F46E5', // Logo Match
+                    900: '#3730A3', // Deep Violet (Text/Headings)
+                    800: '#4338CA',
+                    700: '#4F46E5', // Actionable
+                    600: '#6366F1', // Brand Base
+                    500: '#818CF8', // Soft Focus
+                    400: '#A5B4FC', // Hover/Active
+                    300: '#C7D2FE',
+                    200: '#E0E7FF', // Soft Backgrounds
+                    100: '#EEF2FF', // Tints
+                    50: '#F5F7FF',  // Base Tints
+                    DEFAULT: '#6366F1',
                 },
-                // Alias Indigo to Primary for Instant Global Theme Update
+                // Aliases for compatibility
                 indigo: {
-                    900: '#312E81',
-                    700: '#4338CA',
-                    600: '#4F46E5',
-                    500: '#6366F1',
-                    400: '#818CF8',
-                    200: '#C7D2FE',
-                    100: '#E0E7FF', // Added missing 100 for safety
-                    50: '#EEF2FF',
+                    900: '#3730A3',
+                    700: '#4F46E5',
+                    600: '#6366F1',
+                    500: '#818CF8',
+                    400: '#A5B4FC',
+                    200: '#E0E7FF',
+                    100: '#EEF2FF',
+                    50: '#F5F7FF',
                 },
+                // Surface Colors (Warm/Soft Grays)
                 neutral: {
-                    900: '#0F172A', // Near Black (Body Text)
-                    800: '#1E293B',
-                    700: '#334155', // Secondary Text
-                    500: '#64748B', // Borders/Icons
-                    400: '#94A3B8',
-                    300: '#CBD5E1',
-                    200: '#E2E8F0', // Surfaces/Cards
-                    100: '#F1F5F9',
-                    50: '#F8FAFC', // Almost White BG
-                    DEFAULT: '#64748B',
+                    900: '#1e293b', // Ink Black
+                    800: '#334155',
+                    700: '#475569',
+                    600: '#64748b', // Muted Text
+                    500: '#94a3b8',
+                    400: '#cbd5e1', // Borders
+                    300: '#e2e8f0', // Lines
+                    200: '#f1f5f9', // Card BG
+                    100: '#f8fafc', // Main BG
+                    50: '#fcfdff',  // Lightest
+                    DEFAULT: '#64748b',
                 },
-                // Alias Slate to Neutral for Instant Global Theme Update
+                // Alias Slate
                 slate: {
-                    900: '#0F172A',
-                    800: '#1E293B',
-                    700: '#334155',
-                    500: '#64748B',
-                    400: '#94A3B8',
-                    300: '#CBD5E1',
-                    200: '#E2E8F0',
-                    100: '#F1F5F9',
-                    50: '#F8FAFC',
+                    900: '#1e293b',
+                    800: '#334155',
+                    700: '#475569',
+                    600: '#64748b',
+                    500: '#94a3b8',
+                    400: '#cbd5e1',
+                    300: '#e2e8f0',
+                    200: '#f1f5f9',
+                    100: '#f8fafc',
+                    50: '#fcfdff',
                 },
                 success: {
-                    500: '#14B8A6', // Soft Teal
-                    600: '#0D9488',
+                    500: '#10B981', // Calm Emerald
+                    600: '#059669',
+                    50: '#ECFDF5',
                 },
                 warning: {
-                    500: '#F59E0B', // Low Saturation Amber
+                    500: '#F59E0B', // Warm Amber
+                    50: '#FFFBEB',
                 },
                 error: {
-                    500: '#BE123C', // Professional Deep Red
+                    500: '#F43F5E', // Soft Rose
+                    600: '#E11D48',
+                    50: '#FFF1F2',
                 },
-                // Aliases for Backward Compatibility (Mapping to new system)
-                canvas: {
-                    DEFAULT: '#FFFFFF', // Clean White
-                    muted: '#F8FAFC',   // neutral-50
-                    subtle: '#F1F5F9',  // neutral-100
-                    dark: '#0F172A',    // neutral-900
+                // Semantic
+                surface: {
+                    DEFAULT: '#FFFFFF',
+                    subtle: '#F8FAFC', // neutral-100
+                    muted: '#F1F5F9',  // neutral-200
                 },
-                ink: {
-                    DEFAULT: '#0F172A', // neutral-900
-                    muted: '#64748B',   // neutral-500
-                    faint: '#94A3B8',   // neutral-400
-                    inverse: '#FFFFFF',
-                },
-                axiom: {
-                    orange: '#F59E0B', // Remapped to Warning/Amber for consistency
-                }
             },
             fontFamily: {
-                sans: ['Inter', 'Plus Jakarta Sans', 'sans-serif'], // Added Inter
-                display: ['Inter', 'Plus Jakarta Sans', 'sans-serif'],
-            },
-            backgroundImage: {
-                'primary-gradient': 'linear-gradient(135deg, #4338CA 0%, #6366F1 50%, #818CF8 100%)', // primary-700 -> 500 -> 400
+                sans: ['Inter', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
             },
             boxShadow: {
-                'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-                'glow': '0 0 15px rgba(79, 70, 229, 0.3)',
+                'soft': '0 2px 10px rgba(0, 0, 0, 0.03), 0 10px 25px rgba(0, 0, 0, 0.04)',
+                'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)',
+                'glow': '0 0 20px rgba(99, 102, 241, 0.15)', // Soft purple glow
+                'float': '0 10px 40px -10px rgba(0,0,0,0.08)',
+            },
+            borderRadius: {
+                '3xl': '1.5rem',
+                '4xl': '2rem',
             }
         },
     },

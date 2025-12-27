@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Edit2, Trash2, Calendar } from 'lucide-react';
 
@@ -32,7 +33,7 @@ export const SwipeActionRow: React.FC<SwipeActionRowProps> = ({
     if (onReschedule) actions.push('reschedule');
     if (onDelete) actions.push('delete');
 
-    const maxOffset = actions.length * 60 + 20; // 60px per action + padding
+    const maxOffset = actions.length * 56 + 24; // Compact spacing
 
     // --- TOUCH HANDLERS ---
     const handleTouchStart = (e: React.TouchEvent) => {
@@ -113,7 +114,7 @@ export const SwipeActionRow: React.FC<SwipeActionRowProps> = ({
                 {onEdit && (
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(); setOffset(0); setIsOpen(false); }}
-                        className="w-10 h-10 rounded-full bg-white text-slate-700 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-colors pointer-events-auto"
+                        className="w-10 h-10 rounded-full bg-white text-neutral-600 shadow-sm flex items-center justify-center hover:bg-neutral-50 transition-all active:scale-95 pointer-events-auto"
                         title="Edit"
                     >
                         <Edit2 size={16} />
@@ -122,7 +123,7 @@ export const SwipeActionRow: React.FC<SwipeActionRowProps> = ({
                 {onReschedule && (
                     <button
                         onClick={(e) => { e.stopPropagation(); onReschedule(); setOffset(0); setIsOpen(false); }}
-                        className="w-10 h-10 rounded-full bg-white text-indigo-600 shadow-sm flex items-center justify-center hover:bg-indigo-50 transition-colors pointer-events-auto"
+                        className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 shadow-sm border border-indigo-100 flex items-center justify-center hover:bg-indigo-100 transition-all active:scale-95 pointer-events-auto"
                         title="Reschedule"
                     >
                         <Calendar size={16} />
@@ -131,7 +132,7 @@ export const SwipeActionRow: React.FC<SwipeActionRowProps> = ({
                 {onDelete && (
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); setOffset(0); setIsOpen(false); }}
-                        className="w-10 h-10 rounded-full bg-rose-500 text-white shadow-sm flex items-center justify-center hover:bg-rose-600 transition-colors pointer-events-auto"
+                        className="w-10 h-10 rounded-full bg-rose-50 text-rose-500 shadow-sm border border-rose-100 flex items-center justify-center hover:bg-rose-100 transition-all active:scale-95 pointer-events-auto"
                         title="Delete"
                     >
                         <Trash2 size={16} />
@@ -142,22 +143,22 @@ export const SwipeActionRow: React.FC<SwipeActionRowProps> = ({
     };
 
     return (
-        <div className="relative overflow-hidden rounded-2xl mb-3 select-none" ref={rowRef}>
+        <div className="relative overflow-hidden rounded-[1.8rem] mb-3 select-none" ref={rowRef}>
             {/* BACKGROUND ACTIONS LAYER */}
-            <div className="absolute inset-0 flex items-center justify-end px-4 gap-2 bg-slate-100 rounded-2xl">
+            <div className="absolute inset-0 flex items-center justify-end px-6 gap-3 bg-neutral-100/50 rounded-[1.8rem]">
                 {renderActionButtons()}
             </div>
 
             {/* FOREGROUND CONTENT LAYER */}
             <div
-                className="relative bg-white rounded-2xl touch-pan-y cursor-grab active:cursor-grabbing"
+                className="relative bg-transparent touch-pan-y cursor-grab active:cursor-grabbing"
                 style={{
                     transform: isDragging
                         ? `translateX(${offset}px)`
                         : isNudging
-                            ? `translateX(-15px)`
+                            ? `translateX(-12px)`
                             : `translateX(${offset}px)`,
-                    transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                    transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}
                 onClick={handleTap}
                 // TOUCH
@@ -171,7 +172,7 @@ export const SwipeActionRow: React.FC<SwipeActionRowProps> = ({
                 onMouseLeave={handleDragEnd}
             >
                 {/* Visual hint pill when swiping */}
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-1 bg-slate-200 rounded-full opacity-0 transition-opacity" style={{ opacity: isDragging ? 0.5 : 0 }} />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-1 bg-neutral-300/50 rounded-full opacity-0 transition-opacity" style={{ opacity: isDragging ? 1 : 0 }} />
 
                 {children}
             </div>

@@ -1,36 +1,26 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../store/AppContext';
 import { useUsage } from '../store/UsageContext';
 import { Task, Priority } from '../types';
-import { Trash2, Check, Plus, Calendar, Clock, X, Zap, Circle } from 'lucide-react';
-
-// --- STYLES ---
-const taskStyles = `
-  @keyframes float-slow {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-6px); }
-  }
-  @keyframes float-medium {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-4px); }
-  }
-  .task-card {
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  .task-card:active {
-    transform: scale(0.96);
-  }
-  .priority-glow-high { box-shadow: 0 0 20px -5px rgba(244, 63, 94, 0.4); }
-  .priority-glow-medium { box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.3); }
-  
-  .checkbox-spring:active { transform: scale(0.8); }
-`;
+import { Trash2, Check, Plus, Calendar, Clock, X, Zap, Circle, Filter, Sparkles, Layers, List, ChevronRight } from 'lucide-react';
 
 export const Tasks = () => {
-  const { tasks, toggleTask, deleteTask, addTask, updateTask } = useApp();
-  const { usageCount, isPremium, setShowPaywall, incrementUsage } = useUsage();
-  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const { tasks, toggleTask, deleteTask, addTask, updateTask, editingTaskId, setEditingTaskId } = useApp();
+  const { incrementUsage } = useUsage();
+
+  // Redirect to Edit from Dashboard
+  React.useEffect(() => {
+    if (editingTaskId) {
+      const task = tasks.find(t => t.id === editingTaskId);
+      if (task) {
+        openEditModal(task);
+      }
+      setEditingTaskId(null);
+    }
+  }, [editingTaskId]);
+
+  // New State: View Mode (Focus vs All)
+  const [viewMode, setViewMode] = useState<'focus' | 'all' | 'completed'>('focus');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,37 +32,7 @@ export const Tasks = () => {
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('');
 
-  const filteredTasks = tasks.filter(t => {
-    if (filter === 'all') return t.status !== 'completed'; // Default to active focus
-    return t.status === filter;
-  });
-
-  // Sort by priority and date
-  const sortedTasks = filteredTasks.sort((a, b) => {
-    const priorityScore = { high: 3, medium: 2, low: 1 };
-    return priorityScore[b.priority] - priorityScore[a.priority];
-  });
-
-  const openAddModal = () => {
-    setEditingTask(null);
-    setTitle('');
-    setPriority('medium');
-    setDueDate('');
-    setDueTime('');
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (task: Task) => {
-    setEditingTask(task);
-    setTitle(task.title);
-    setPriority(task.priority);
-    setDueDate(task.dueDate || '');
-    setDueTime(task.dueTime || '');
-    setIsModalOpen(true);
-  };
-
-  // --- NLP Utilities ---
-  // Helper for Local Date
+  // --- HELPER FUNCTIONS ---
   const getLocalToday = () => {
     const d = new Date();
     const offset = d.getTimezoneOffset() * 60000;
@@ -84,32 +44,22 @@ export const Tasks = () => {
     let time = null;
     let date = null;
 
-    // 1. Extract Time (at HH:MM AM/PM or just HH:MM AM/PM)
-    // Matches: "at 5pm", "5pm", "11:20PM", "11:20 pm"
-    // Capture Groups: 1=Hours, 2=Minutes, 3=Meridian
     const timeRegex = /\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b/i;
     const timeMatch = title.match(timeRegex);
-
     if (timeMatch) {
-      // Convert to 24h
       let hours = parseInt(timeMatch[1]);
       const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
       const meridian = timeMatch[3]?.trim().toLowerCase().replace(/\./g, '');
-
       if (meridian === 'pm' && hours < 12) hours += 12;
       if (meridian === 'am' && hours === 12) hours = 0;
-
       time = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
       title = title.replace(timeRegex, '').trim();
     }
 
-    // 2. Extract Date (on DD/MM/YYYY or today/tomorrow)
     const dateRegex = /\bon\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b/i;
     const dateMatch = title.match(dateRegex);
     if (dateMatch) {
-      // Naive parse, assume user matches regional format. For now, ISO or simple logic.
       const parts = dateMatch[1].split(/[-/]/);
-      // Assume DD/MM/YYYY
       if (parts.length === 3) {
         const d = parts[0].padStart(2, '0');
         const m = parts[1].padStart(2, '0');
@@ -129,8 +79,26 @@ export const Tasks = () => {
         title = title.replace(/\btomorrow\b/i, '').trim();
       }
     }
-
     return { cleanTitle: title, parsedTime: time, parsedDate: date };
+  };
+
+  // --- HANDLERS ---
+  const openAddModal = () => {
+    setEditingTask(null);
+    setTitle('');
+    setPriority('medium');
+    setDueDate('');
+    setDueTime('');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (task: Task) => {
+    setEditingTask(task);
+    setTitle(task.title);
+    setPriority(task.priority);
+    setDueDate(task.dueDate || '');
+    setDueTime(task.dueTime || '');
+    setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -146,178 +114,278 @@ export const Tasks = () => {
       });
       setIsModalOpen(false);
     } else {
-      // Logic for NEW Tasks (Inline or Modal)
-      // Check if this came from Inline Input (we can guess if modal is closed, but safely parsing always helps)
-
       let finalTitle = title;
       let finalDate = dueDate;
       let finalTime = dueTime;
+      // FIX: If we are in Focus mode, new tasks should be High Priority so they appear immediately.
+      // Default to user selection, but if using Quick Input in Focus mode, upgrade to High.
+      let finalPriority = priority;
 
-      // Only run Parser if user didn't explicitly set date/time in Modal (assume form overrides NLP)
       if (!isModalOpen) {
+        if (viewMode === 'focus') finalPriority = 'high';
         const { cleanTitle, parsedTime, parsedDate } = parseTimeInput(title);
         finalTitle = cleanTitle;
         if (parsedTime) finalTime = parsedTime;
-
-        if (parsedDate) {
-          finalDate = parsedDate;
-        } else if (finalTime) {
-          // User mentioned time but no date.
-          // Auto-default to TODAY (Local) as requested (no prompt)
-          finalDate = getLocalToday();
-        }
+        if (parsedDate) finalDate = parsedDate;
+        else if (finalTime) finalDate = getLocalToday();
       }
 
-      // Usage Logic (Removed Paywall)
       incrementUsage();
-
-      addTask(finalTitle, priority, finalDate, finalTime);
-
-      // CRITICAL FIX: Clear the title after submission!
-      setTitle('');
-      setDueDate('');
-      setDueTime('');
+      addTask(finalTitle, finalPriority, finalDate, finalTime);
+      setTitle(''); setDueDate(''); setDueTime('');
     }
-
-    // Check if we need to close modal
     if (isModalOpen) setIsModalOpen(false);
   };
 
-  return (
-    <div className="min-h-screen pb-32 pt-6 px-2 relative font-sans">
-      <style>{taskStyles}</style>
+  // --- FILTERING LOGIC ---
+  const filteredTasks = useMemo(() => {
+    if (viewMode === 'completed') {
+      return tasks.filter(t => t.status === 'completed');
+    }
 
-      {/* --- HEADER --- */}
-      <div className="flex flex-col items-start mb-8 px-4">
-        <h1 className="text-4xl font-black text-indigo-900 tracking-tighter mb-1">Flow State</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-bold text-indigo-400 uppercase tracking-widest">{filteredTasks.length} Active Items</span>
+    if (viewMode === 'focus') {
+      // Focus: High priority OR Overdue OR Due Today
+      const todayStr = new Date().toISOString().split('T')[0];
+      return tasks.filter(t => {
+        if (t.status === 'completed') return false;
+        const isHigh = t.priority === 'high';
+        const isOverdue = t.dueDate && t.dueDate < todayStr;
+        const isDueToday = t.dueDate === todayStr;
+        return isHigh || isOverdue || isDueToday;
+      });
+    }
 
-          <div className="flex bg-white/50 backdrop-blur-md p-1 rounded-full border border-white/50">
-            {(['all', 'completed'] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-1 text-[10px] font-bold rounded-full uppercase transition-all ${filter === f ? 'bg-slate-800 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'
-                  }`}
-              >
-                {f === 'all' ? 'Focus' : 'Done'}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+    // All: Everything pending
+    return tasks.filter(t => t.status !== 'completed');
+  }, [tasks, viewMode]);
 
-      <div className="flex flex-col md:flex-row gap-4 mb-8 animate-slide-up">
-        <div className="flex-1 relative group">
-          <input
-            type="text"
-            placeholder="What needs to be done?"
-            value={title} // Assuming 'title' is the new task input
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full glass-input text-lg pl-12 transition-all group-hover:bg-white/60"
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)} // Assuming handleSubmit handles adding
-          />
-          <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-600 transition-colors" size={24} />
-        </div>
+  // --- GROUPING LOGIC ---
+  const groupedTasks = useMemo(() => {
+    const today = getLocalToday();
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    const offset = d.getTimezoneOffset() * 60000;
+    const tomorrow = new Date(d.getTime() - offset).toISOString().split('T')[0];
+
+    const groups = {
+      overdue: [] as Task[],
+      today: [] as Task[],
+      tomorrow: [] as Task[],
+      upcoming: [] as Task[],
+      someday: [] as Task[]
+    };
+
+    filteredTasks.forEach(task => {
+      if (!task.dueDate) {
+        groups.someday.push(task);
+      } else if (task.dueDate < today) {
+        groups.overdue.push(task);
+      } else if (task.dueDate === today) {
+        groups.today.push(task);
+      } else if (task.dueDate === tomorrow) {
+        groups.tomorrow.push(task);
+      } else {
+        groups.upcoming.push(task);
+      }
+    });
+
+    // ... sortFn ...
+    const sortFn = (a: Task, b: Task) => {
+      // High priority first
+      const pMap = { high: 3, medium: 2, low: 1 };
+      if (pMap[a.priority] !== pMap[b.priority]) return pMap[b.priority] - pMap[a.priority];
+      return 0;
+    };
+
+    return {
+      overdue: groups.overdue.sort(sortFn),
+      today: groups.today.sort(sortFn),
+      tomorrow: groups.tomorrow.sort(sortFn),
+      upcoming: groups.upcoming.sort(sortFn),
+      someday: groups.someday.sort(sortFn)
+    };
+  }, [filteredTasks]);
+
+  // Section Component
+  const TaskSection = ({ title, tasks, defaultOpen = false, color = "text-zinc-900" }: { title: string, tasks: Task[], defaultOpen?: boolean, color?: string }) => {
+    // ... kept same ...
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+    if (tasks.length === 0) return null;
+
+    return (
+      <div className="mb-6 animate-in-fade">
         <button
-          onClick={openAddModal} // Changed to openAddModal
-          className="btn-primary whitespace-nowrap"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 mb-3 w-full text-left group"
         >
-          <Plus size={20} />
-          <span>New Task</span>
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        {tasks.length === 0 ? ( // Removed loading state, assuming tasks is always available
-          <div className="glass-card text-center py-20 animate-fade-in">
-            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-400">
-              <Zap size={40} /> {/* Changed to Zap icon */}
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">All Caught Up!</h3>
-            <p className="text-slate-500 max-w-sm mx-auto leading-relaxed">
-              Your mind is clear. Use the input above to capture new tasks or ask the Assistant to help you plan.
-            </p>
+          <div className={`p-1 rounded-lg hover:bg-zinc-100 transition-colors ${isOpen ? 'rotate-90' : ''}`}>
+            <ChevronRight size={16} className="text-zinc-400" />
           </div>
-        ) : (
-          sortedTasks.map((task, index) => (
-            <div
-              key={task.id}
-              className="glass-card group relative p-6 hover:border-indigo-200 animate-slide-up cursor-pointer"
-              style={{ animationDelay: `${index * 0.05}s` }}
-              onClick={() => openEditModal(task)}
-            >
-              <button
-                onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors p-2"
-              >
-                <Trash2 size={16} />
-              </button>
+          <h3 className={`text-sm font-black uppercase tracking-widest ${color}`}>{title}</h3>
+          <span className="text-xs font-bold text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded-full">{tasks.length}</span>
+          <div className="flex-1 h-px bg-zinc-100 ml-4 hidden group-hover:block transition-all" />
+        </button>
 
-              <div className="flex items-center gap-4">
+        {isOpen && (
+          <div className="space-y-3 pl-2 md:pl-0">
+            {tasks.map((task, index) => (
+              <div
+                key={task.id}
+                className={`group relative bg-white border border-zinc-100 p-4 md:p-5 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 rounded-[1.5rem] transition-all cursor-pointer animate-slide-up flex items-center gap-4 ${task.status === 'completed' ? 'opacity-40 grayscale' : ''}`}
+                style={{ animationDelay: `${index * 0.05}s` }}
+                onClick={() => openEditModal(task)}
+              >
                 <button
-                  onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
-                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all checkbox-spring ${task.status === 'completed'
-                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-500'
-                    : 'border-slate-200 hover:border-indigo-300'
-                    }`}
+                  onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                  className="absolute top-4 right-4 text-zinc-300 hover:text-rose-500 hover:bg-rose-50 rounded-full p-2 transition-all opacity-0 group-hover:opacity-100"
                 >
-                  {task.status === 'completed' && <Check size={16} className="text-white" strokeWidth={3} />}
+                  <Trash2 size={16} />
                 </button>
 
-                <div className="flex-1">
-                  <h3 className={`text-lg font-bold ${task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                {/* CHECKBOX */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${task.status === 'completed'
+                    ? 'bg-emerald-500 border-emerald-500 text-white scale-110'
+                    : 'border-zinc-200 hover:border-indigo-400 bg-zinc-50'
+                    }`}
+                >
+                  <Check size={14} className={task.status === 'completed' ? 'opacity-100' : 'opacity-0'} strokeWidth={3} />
+                </button>
+
+                <div className="flex-1 min-w-0 pr-8">
+                  <h3 className={`text-base font-bold truncate leading-snug ${task.status === 'completed' ? 'line-through text-zinc-400 decoration-zinc-300' : 'text-zinc-800 group-hover:text-indigo-900 transition-colors'}`}>
                     {task.title}
                   </h3>
-                  <div className="flex items-center gap-3 mt-1">
+
+                  <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                     {task.priority && (
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${task.priority === 'high' ? 'bg-rose-100 text-rose-600' :
-                        task.priority === 'medium' ? 'bg-indigo-100 text-indigo-600' :
-                          'bg-slate-100 text-slate-500'
+                      <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${task.priority === 'high' ? 'bg-rose-50 text-rose-500' :
+                        task.priority === 'medium' ? 'bg-indigo-50 text-indigo-500' :
+                          'bg-zinc-100 text-zinc-500'
                         }`}>
                         {task.priority}
                       </span>
                     )}
-                    {task.dueDate && (
-                      <span className="text-xs text-slate-400 flex items-center gap-1">
-                        <Calendar size={12} />
-                        {task.dueDate}
-                      </span>
-                    )}
                     {task.dueTime && (
-                      <span className="text-xs text-slate-400 flex items-center gap-1">
-                        <Clock size={12} />
+                      <span className="text-[10px] font-bold text-zinc-400 flex items-center gap-1 bg-zinc-50 px-2 py-1 rounded-md border border-zinc-100">
+                        <Clock size={10} />
                         {task.dueTime}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
+  return (
+    <div className="min-h-screen pb-32 pt-6 px-2 relative font-sans animate-in-fade">
+
+      {/* --- HEADER --- */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 px-4 gap-4">
+        <div>
+          <h1 className="text-4xl font-display font-black text-zinc-900 tracking-tight mb-2">My Tasks</h1>
+          <p className="text-zinc-500 font-medium">Capture ideas, plan your day.</p>
+        </div>
+
+        {/* --- SMART TABS --- */}
+        <div className="flex bg-white p-1.5 rounded-[1.2rem] self-start border border-zinc-100 shadow-sm">
+          <button
+            onClick={() => setViewMode('focus')}
+            className={`px-5 py-2 text-xs font-bold rounded-xl flex items-center gap-2 transition-all ${viewMode === 'focus' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 scale-105' : 'text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50'
+              }`}
+          >
+            <Sparkles size={14} /> Focus
+          </button>
+          <button
+            onClick={() => setViewMode('all')}
+            className={`px-5 py-2 text-xs font-bold rounded-xl flex items-center gap-2 transition-all ${viewMode === 'all' ? 'bg-zinc-100 text-zinc-900 shadow-inner' : 'text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50'
+              }`}
+          >
+            <Layers size={14} /> All
+          </button>
+          <button
+            onClick={() => setViewMode('completed')}
+            className={`px-5 py-2 text-xs font-bold rounded-xl flex items-center gap-2 transition-all ${viewMode === 'completed' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 scale-105' : 'text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50'
+              }`}
+          >
+            <Check size={14} /> Done
+          </button>
+        </div>
+      </div>
+
+      {/* --- QUICK INPUT --- */}
+      <div className="flex flex-col md:flex-row gap-4 mb-10 px-2">
+        <div className="flex-1 relative group">
+          <input
+            type="text"
+            placeholder={viewMode === 'focus' ? "Add a critical task..." : "Add a new task..."}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full atelier-input pl-14 shadow-sm group-hover:shadow-md transition-all rounded-[1.5rem] bg-white text-zinc-900 placeholder:text-zinc-400 border border-zinc-100 focus:border-indigo-500"
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)}
+          />
+          <button
+            onClick={handleSubmit}
+            className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-indigo-600 transition-colors"
+          >
+            <Plus size={24} />
+          </button>
+        </div>
+      </div>
+
+      <div className="px-2">
+        {filteredTasks.length === 0 ? (
+          <div className="text-center py-24 border border-dashed border-zinc-200 rounded-[2rem] bg-white/50">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-zinc-100 ${viewMode === 'focus' ? 'bg-indigo-50 text-indigo-500' : 'bg-zinc-50 text-zinc-400'}`}>
+              {viewMode === 'focus' ? <Sparkles size={32} /> : <Zap size={32} />}
             </div>
-          ))
+            <h3 className="text-lg font-bold text-zinc-900 mb-1">
+              {viewMode === 'focus' ? 'No urgent tasks!' : 'All caught up!'}
+            </h3>
+            <p className="text-zinc-500 text-sm max-w-xs mx-auto">
+              {viewMode === 'focus' ? 'Switch to "All" to see the rest of your list.' : 'Enjoy your free time.'}
+            </p>
+          </div>
+        ) : (
+          <>
+            {viewMode === 'completed' ? (
+              <TaskSection title="Completed" tasks={filteredTasks} defaultOpen={true} color="text-emerald-500" />
+            ) : (
+              <>
+                <TaskSection title="Overdue" tasks={groupedTasks.overdue} defaultOpen={true} color="text-rose-600" />
+                <TaskSection title="Today" tasks={groupedTasks.today} defaultOpen={true} color="text-indigo-500" />
+                <TaskSection title="Tomorrow" tasks={groupedTasks.tomorrow} defaultOpen={false} color="text-amber-500" />
+                <TaskSection title="Upcoming" tasks={groupedTasks.upcoming} defaultOpen={false} color="text-zinc-400" />
+                <TaskSection title="Someday / No Date" tasks={groupedTasks.someday} defaultOpen={false} color="text-zinc-300" />
+              </>
+            )}
+          </>
         )}
       </div>
 
       {/* --- FLOATING ACTION BUTTON --- */}
       <button
         onClick={openAddModal}
-        className="fixed right-6 bottom-24 md:bottom-10 md:right-10 w-16 h-16 bg-slate-900 rounded-[24px] text-white shadow-2xl shadow-slate-900/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40 group"
+        className="fixed right-6 bottom-24 md:bottom-10 md:right-10 w-14 h-14 bg-indigo-600 rounded-[1.2rem] text-white shadow-xl shadow-indigo-500/30 flex items-center justify-center hover:-translate-y-1 hover:scale-105 active:scale-95 transition-all z-40 group border border-white/10"
       >
-        <Plus size={32} className="group-hover:rotate-90 transition-transform duration-300" />
+        <Plus size={28} className="group-hover:rotate-90 transition-transform duration-300" />
       </button>
 
       {/* --- MODAL --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/40 backdrop-blur-sm animate-in-fade p-4">
           <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
-          <form onSubmit={handleSubmit} className="relative w-full md:max-w-md bg-white md:rounded-[40px] rounded-t-[40px] p-8 shadow-2xl animate-slide-up">
-
-            <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6 md:hidden" />
+          <form onSubmit={handleSubmit} className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-8 shadow-2xl animate-in-up border border-zinc-100">
 
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">{editingTask ? 'Edit Flow' : 'New Flow'}</h2>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors">
+              <h2 className="text-2xl font-display font-black text-zinc-900 tracking-tight">{editingTask ? 'Edit Task' : 'New Task'}</h2>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-zinc-500 transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -327,52 +395,52 @@ export const Tasks = () => {
                 <input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full py-4 bg-transparent border-b-2 border-slate-100 text-2xl font-bold text-slate-800 focus:border-indigo-500 focus:outline-none placeholder:text-slate-300 transition-colors"
-                  placeholder="What's the focus?"
+                  className="w-full py-4 bg-transparent border-b-2 border-zinc-100 text-xl font-bold text-zinc-900 focus:border-indigo-500 focus:outline-none placeholder:text-zinc-300 transition-colors"
+                  placeholder="Task title..."
                   autoFocus
                 />
               </div>
 
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Deadline</label>
-                  <div className="bg-slate-50 rounded-2xl p-2 flex items-center">
-                    <Calendar size={18} className="text-slate-400 ml-2" />
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">Deadline</label>
+                  <div className="bg-zinc-50 rounded-2xl p-3 flex items-center transition-colors hover:bg-zinc-100 border border-zinc-100">
+                    <Calendar size={18} className="text-zinc-400 mr-2" />
                     <input
                       type="date"
                       value={dueDate}
                       onChange={e => setDueDate(e.target.value)}
-                      className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 w-full"
+                      className="bg-transparent border-none focus:ring-0 text-sm font-bold text-zinc-700 w-full p-0 outline-none"
                     />
                   </div>
                 </div>
                 <div className="w-1/3">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Time</label>
-                  <div className="bg-slate-50 rounded-2xl p-2 flex items-center">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">Time</label>
+                  <div className="bg-zinc-50 rounded-2xl p-3 flex items-center transition-colors hover:bg-zinc-100 border border-zinc-100">
                     <input
                       type="time"
                       value={dueTime}
                       onChange={e => setDueTime(e.target.value)}
-                      className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 w-full text-center"
+                      className="bg-transparent border-none focus:ring-0 text-sm font-bold text-zinc-700 w-full text-center p-0 outline-none"
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 block">Energy Level</label>
-                <div className="flex gap-3">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3 block">Priority</label>
+                <div className="flex gap-2">
                   {(['low', 'medium', 'high'] as const).map(p => (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setPriority(p)}
-                      className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase transition-all border-2 flex flex-col items-center gap-2 ${priority === p
-                        ? p === 'high' ? 'border-rose-500 bg-rose-50 text-rose-600 shadow-lg shadow-rose-200' : p === 'medium' ? 'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-lg shadow-indigo-200' : 'border-emerald-500 bg-emerald-50 text-emerald-600 shadow-lg shadow-emerald-200'
-                        : 'border-slate-100 bg-white text-slate-300 hover:border-slate-200'
+                      className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all border flex flex-col items-center gap-1.5 ${priority === p
+                        ? p === 'high' ? 'border-rose-500/50 bg-rose-50 text-rose-500 shadow-md' : p === 'medium' ? 'border-indigo-500/50 bg-indigo-50 text-indigo-500 shadow-md' : 'border-emerald-500/50 bg-emerald-50 text-emerald-500 shadow-md'
+                        : 'border-zinc-100 bg-white text-zinc-400 hover:bg-zinc-50'
                         }`}
                     >
-                      <Circle size={10} fill={priority === p ? "currentColor" : "transparent"} />
+                      <Circle size={8} fill={priority === p ? "currentColor" : "transparent"} />
                       {p}
                     </button>
                   ))}
@@ -380,8 +448,8 @@ export const Tasks = () => {
               </div>
             </div>
 
-            <button className="w-full mt-10 bg-slate-900 text-white py-5 rounded-[24px] font-bold text-lg shadow-xl shadow-indigo-200 hover:scale-[1.02] active:scale-95 transition-all">
-              {editingTask ? 'Update Flow' : 'Add to Stream'}
+            <button className="w-full mt-10 bg-indigo-600 text-white py-4 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-indigo-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all">
+              {editingTask ? 'Save Changes' : 'Create Task'}
             </button>
           </form>
         </div>

@@ -74,79 +74,76 @@ const parseSingleIntent = (text: string): BrainDumpResult | null => {
         };
     }
 
-    // 3. TASKS
-    // Expanded Verbs: "Call", "Buy", "Get", "Pay", "Check", "Email", "Text"
-    if (/remind me|add task|remember to|i want to|need to|call|buy|get|pay|check|email|text|msg|message|write/i.test(lower)) {
-        let cleanText = lower.replace(/remind me to |remind me |add task |remember to |i want to |need to |call |buy |get |pay |check |email |text |msg |message |write /gi, "");
+    // 3. TASKS (Fallback for everything else)
+    // Relaxed Logic: "Study history", "Go for a run", "Call mom" -> All Tasks.
+    // Restriction: Block profanity/vulgarity.
 
-        // ... (existing date logic) ...
-        // Note: We need to preserve the verb in the title if it wasn't a "command" verb like "add task".
-        // Logic: specific verbs like "Call" should probably stay in the title? "Call Mom" vs "Mom".
-        // The regex above strips them. Let's be careful.
-        // Actually, for "Call Mom", replacing "Call" leaves "Mom". Not ideal.
-        // Better: Don't strip the actionable verbs, only the "system verbs".
-
-        // Re-refining the replace list:
-        cleanText = lower.replace(/^(?:remind me to|remind me|add task|remember to|i want to|need to|to|please)\s+/i, "");
-
-        // ... (rest of logic) ...
-
-        let dueDate: string | undefined = undefined;
-        let dueTime: string | undefined = undefined;
-        let title = cleanText;
-
-        // Detect Time (Robust Regex)
-        // Matches: "at 5pm", "5pm", "11:20PM", "11:20 pm", "09:20AM"
-        const timeRegex = /\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b/i;
-        const timeMatch = title.match(timeRegex);
-
-        if (timeMatch) {
-            let hours = parseInt(timeMatch[1]);
-            const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
-            const meridian = timeMatch[3]?.trim().toLowerCase().replace(/\./g, '');
-            if (meridian === 'pm' && hours < 12) hours += 12;
-            if (meridian === 'am' && hours === 12) hours = 0;
-            dueTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-            title = title.replace(timeRegex, "").trim();
-
-            // INTELLIGENT DEFAULT: If time is set, assume Today unless specified
-            if (!dueDate) {
-                dueDate = getLocalDateString();
-            }
-        }
-
-        // RUN-ON SENTENCE DETECTOR
-        // If the remaining title STILL contains action verbs like "Call", "Buy", "Remind",
-        // then the user likely chained commands without "AND".
-        // Example: "Buy coffee Call mom" -> Title: "coffee Call mom".
-        // Action: Fail to null -> Cloud AI handles sophisticated splitting.
-        const runOnRegex = /\b(remind me|add task|remember to|call|buy|get|pay|check|email|text|msg|message|write)\b/i;
-
-        const match = title.match(runOnRegex);
-        // If match found, AND it is NOT at the very start (index 0), then it's a run-on.
-        if (match && match.index! > 0) {
-            return null;
-        }
-
-        // Detect Date
-        if (/\btomorrow\b/i.test(title)) {
-            const d = new Date(); d.setDate(d.getDate() + 1);
-            dueDate = getLocalDateString(d);
-            title = title.replace("tomorrow", "");
-        } else if (title.includes("today")) {
-            dueDate = getLocalDateString();
-            title = title.replace("today", "");
-        }
-
-        return {
-            entities: [{
-                type: 'task',
-                confidence: 0.9,
-                data: { title: capitalize(title.trim()), priority: 'medium', dueDate, dueTime }
-            }],
-            summary: "Task created."
-        };
+    const badWords = ["fuck", "shit", "bitch", "cunt", "asshole", "dick", "pussy", "whore", "slut", "bastard"];
+    if (badWords.some(w => lower.includes(w))) {
+        return null; // Silent reject for now, or could return specific error.
     }
+
+    // Clean common prefixes if they exist, but don't require them.
+    let cleanText = lower.replace(/^(?:remind me to|remind me|add task|remember to|i want to|need to|to|please)\s+/i, "");
+
+    // Capitalize first letter
+    cleanText = cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
+
+    let dueDate: string | undefined = undefined;
+    let dueTime: string | undefined = undefined;
+    let title = cleanText;
+
+    // Detect Time (Robust Regex)
+    // Matches: "at 5pm", "5pm", "11:20PM", "11:20 pm", "09:20AM"
+    const timeRegex = /\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b/i;
+    const timeMatch = title.match(timeRegex);
+
+    if (timeMatch) {
+        let hours = parseInt(timeMatch[1]);
+        const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+        const meridian = timeMatch[3]?.trim().toLowerCase().replace(/\./g, '');
+        if (meridian === 'pm' && hours < 12) hours += 12;
+        if (meridian === 'am' && hours === 12) hours = 0;
+        dueTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        title = title.replace(timeRegex, "").trim();
+
+        // INTELLIGENT DEFAULT: If time is set, assume Today unless specified
+        if (!dueDate) {
+            dueDate = getLocalDateString();
+        }
+    }
+
+    // RUN-ON SENTENCE DETECTOR
+    // If the remaining title STILL contains action verbs like "Call", "Buy", "Remind",
+    // then the user likely chained commands without "AND".
+    // Example: "Buy coffee Call mom" -> Title: "coffee Call mom".
+    // Action: Fail to null -> Cloud AI handles sophisticated splitting.
+    const runOnRegex = /\b(remind me|add task|remember to|call|buy|get|pay|check|email|text|msg|message|write)\b/i;
+
+    const match = title.match(runOnRegex);
+    // If match found, AND it is NOT at the very start (index 0), then it's a run-on.
+    if (match && match.index! > 0) {
+        return null;
+    }
+
+    // Detect Date
+    if (/\btomorrow\b/i.test(title)) {
+        const d = new Date(); d.setDate(d.getDate() + 1);
+        dueDate = getLocalDateString(d);
+        title = title.replace("tomorrow", "");
+    } else if (title.includes("today")) {
+        dueDate = getLocalDateString();
+        title = title.replace("today", "");
+    }
+
+    return {
+        entities: [{
+            type: 'task',
+            confidence: 0.9,
+            data: { title: capitalize(title.trim()), priority: 'medium', dueDate, dueTime }
+        }],
+        summary: "Task created."
+    };
 
     // 4. FALLBACK: RETURN NULL
     return null;
@@ -181,7 +178,7 @@ export const emergencyParse = (text: string): BrainDumpResult => {
         // Also add the rest of the text as separate tasks if they exist
         // e.g. "Buy milk and Afterpay..."
         return {
-            entities: entities.map(e => ({ type: 'task', confidence: 0.5, data: e.data })),
+            entities: entities.map(e => ({ type: 'task' as const, confidence: 0.5, data: e.data })),
             summary: "Emergency Split (Offline Mode)"
         };
     }
@@ -191,7 +188,7 @@ export const emergencyParse = (text: string): BrainDumpResult => {
     const segments = rawLower.split(/(?:[\.\?!]+|(?:\s+)(?:and|also|then)(?:\s+))/).map(s => s.trim()).filter(s => s.length > 2);
 
     const entities = segments.map(seg => ({
-        type: 'task',
+        type: 'task' as const,
         confidence: 0.8,
         data: {
             title: seg.charAt(0).toUpperCase() + seg.slice(1),

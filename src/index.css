@@ -4,66 +4,97 @@
 
 @layer base {
     :root {
-        /* FAANG PALETTE - Royal Indigo */
-        --color-canvas: #FFFFFF;
-        --color-canvas-muted: #F8FAFC;
-        /* neutral-50 */
-        --color-canvas-subtle: #E2E8F0;
-        /* neutral-200 */
+        /* "Pastel Light" Palette */
+        --color-bg: #FDFBF7;
+        /* Warm soft white */
+        --color-surface: #FFFFFF;
+        /* Pure white cards */
+        --color-text-main: #18181B;
+        /* Zinc 900 */
+        --color-text-muted: #71717A;
+        /* Zinc 500 */
 
-        --color-ink: #0F172A;
-        /* neutral-900 */
-        --color-ink-muted: #64748B;
-        /* neutral-500 */
-        --color-ink-faint: #94A3B8;
-        /* neutral-400 */
-
-        --color-primary: #4F46E5;
-        /* primary-600 */
-        --color-primary-glow: rgba(79, 70, 229, 0.3);
-
-        --color-axiom-orange: #6366F1;
-        /* Remapped to Primary-500 for consistency if used as accent, or amber if warning */
+        /* Pastel Accents */
+        --color-rose: #F43F5E;
+        /* Rose 500 */
+        --color-blue: #3B82F6;
+        /* Blue 500 */
+        --color-mint: #10B981;
+        /* Emerald 500 */
+        --color-purple: #A855F7;
+        /* Purple 500 */
+        --color-orange: #F97316;
+        /* Orange 500 */
     }
 
     body {
-        @apply font-sans antialiased text-neutral-900 bg-white overflow-x-hidden selection:bg-primary-200 selection:text-primary-900;
+        @apply font-sans md:antialiased text-zinc-900 selection:bg-rose-200 selection:text-rose-900;
+        background-color: var(--color-bg);
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 
+    /* Clean Modern Typography */
     h1,
     h2,
     h3,
     h4,
     h5,
     h6 {
-        @apply font-display tracking-tight font-semibold text-neutral-900;
+        @apply font-sans tracking-tight text-zinc-900 font-bold;
     }
 }
 
 @layer components {
-    .atelier-card {
-        @apply bg-white border border-neutral-200 p-6 transition-all duration-300 hover:shadow-soft rounded-2xl;
+
+    /* Minimalist Card */
+    .struct-card {
+        @apply bg-white rounded-3xl p-6 shadow-sm border border-black/5 transition-transform active:scale-[0.98];
     }
 
-    .atelier-input {
-        @apply bg-neutral-50 border border-neutral-300 rounded-lg px-4 py-3 text-neutral-900 focus:border-primary-500 focus:ring-4 focus:ring-primary-50 outline-none transition-all placeholder:text-neutral-400;
+    /* Task Block - The core visual element */
+    .task-block {
+        @apply rounded-2xl p-4 mb-3 border-l-4 transition-all active:scale-[0.98] shadow-sm;
     }
 
-    .btn-primary {
-        @apply bg-primary-gradient text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all text-center flex items-center justify-center gap-2 shadow-md shadow-primary-500/20;
+    .task-rose {
+        @apply bg-rose-50 border-rose-400 text-rose-900;
     }
 
-    .btn-secondary {
-        @apply bg-transparent text-primary-700 font-semibold py-3 px-6 rounded-xl border border-primary-200 hover:bg-primary-50 active:scale-95 transition-all text-center flex items-center justify-center gap-2;
+    .task-blue {
+        @apply bg-blue-50 border-blue-400 text-blue-900;
     }
 
-    /* Animations */
-    .fade-in {
-        animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .task-mint {
+        @apply bg-[#86EFAC]/10 border-[#86EFAC] text-[#86EFAC];
     }
 
-    .animate-scale-in {
-        animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .task-purple {
+        @apply bg-[#D8B4FE]/10 border-[#D8B4FE] text-[#D8B4FE];
+    }
+
+    .task-orange {
+        @apply bg-[#FDBA74]/10 border-[#FDBA74] text-[#FDBA74];
+    }
+
+    /* FAB / Hero Button */
+    .hero-mic-button {
+        @apply w-16 h-16 rounded-full bg-white text-black flex items-center justify-center transition-all hover:scale-110 active:scale-95;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .bottom-nav-item {
+        @apply flex flex-col items-center justify-center text-zinc-500 transition-colors gap-1;
+    }
+
+    .bottom-nav-item.active {
+        @apply text-white;
+    }
+
+    /* Animation Utilities */
+    .animate-in-fade {
+        animation: fadeIn 0.4s ease-out forwards;
     }
 
     @keyframes fadeIn {
@@ -75,18 +106,6 @@
         to {
             opacity: 1;
             transform: translateY(0);
-        }
-    }
-
-    @keyframes scaleIn {
-        from {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1);
         }
     }
 }

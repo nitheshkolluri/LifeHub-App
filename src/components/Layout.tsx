@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ViewState } from '../types';
 import { useApp } from '../store/AppContext';
@@ -7,191 +6,82 @@ import {
   CheckSquare,
   Repeat,
   Wallet,
-  Menu,
-  X,
-  LogOut,
-  User
+  Mic,
+  User,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../store/AuthContext';
-import { Logo } from './Logo';
+import { VoiceOverlay } from './VoiceOverlay';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { currentView, setView } = useApp();
-  const { logout: signOut } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
 
+  // New Minimal Mobile-First Navigation
   const navItems = [
-    { view: ViewState.DASHBOARD, icon: <LayoutDashboard size={20} />, label: 'Home' },
-    { view: ViewState.TASKS, icon: <CheckSquare size={20} />, label: 'Tasks' },
-    { view: ViewState.HABITS, icon: <Repeat size={20} />, label: 'Habits' },
-    { view: ViewState.FINANCE, icon: <Wallet size={20} />, label: 'Finance' },
+    { view: ViewState.DASHBOARD, icon: <LayoutDashboard size={24} strokeWidth={2.5} />, label: 'Day' },
+    { view: ViewState.TASKS, icon: <CheckSquare size={24} strokeWidth={2.5} />, label: 'Tasks' },
+    // Middle is Mic
+    { view: ViewState.HABITS, icon: <Repeat size={24} strokeWidth={2.5} />, label: 'Habits' },
+    { view: ViewState.PROFILE, icon: <User size={24} strokeWidth={2.5} />, label: 'Me' },
   ];
 
-  const handleNav = (view: ViewState) => {
-    setView(view);
-    setIsSidebarOpen(false);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col md:flex-row relative bg-white text-slate-800 font-sans">
 
-      {/* DESKTOP SIDEBAR - ELITE WHITE */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-white border-r border-slate-100 h-screen sticky top-0 p-6 z-50">
+    <div className="min-h-screen bg-[var(--color-bg)] text-zinc-900 font-sans flex flex-col overflow-hidden max-w-md mx-auto md:max-w-full md:border-x md:border-zinc-200 shadow-2xl">
 
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-12 px-2 pt-2">
-          <Logo size={32} />
-          <span className="text-xl font-black text-slate-900 tracking-tight">LifeHub</span>
-        </div>
+      {/* 1. VOICE OVERLAY (Global) */}
+      <VoiceOverlay isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} />
 
-        {/* Nav Links */}
-        <nav className="flex-1 space-y-2">
-          {navItems.map((item) => {
-            const isActive = currentView === item.view;
-            let activeClass = 'bg-indigo-50 text-indigo-600';
-            let barClass = 'bg-indigo-600';
-
-            if (item.view === ViewState.HABITS) {
-              activeClass = 'bg-emerald-50 text-emerald-600';
-              barClass = 'bg-emerald-500';
-            } else if (item.view === ViewState.FINANCE) {
-              activeClass = 'bg-violet-50 text-violet-600';
-              barClass = 'bg-violet-500';
-            }
-
-            return (
-              <button
-                key={item.label}
-                onClick={() => handleNav(item.view)}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative overflow-hidden
-                ${isActive
-                    ? `${activeClass} font-bold shadow-sm`
-                    : 'text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-              >
-                {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 ${barClass} rounded-r-full`} />}
-                <div className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
-                  {item.icon}
-                </div>
-                <span className="text-sm tracking-wide">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* User / Logout */}
-        <div className="pt-6 border-t border-slate-100 mt-4 space-y-2">
-          <button
-            onClick={() => handleNav(ViewState.PROFILE)}
-            className="w-full px-4 py-2 flex items-center gap-3 mb-2 hover:bg-slate-50 rounded-xl transition-colors group text-left"
-          >
-            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center group-hover:bg-white group-hover:border-indigo-200 transition-colors">
-              <User size={16} className="text-slate-500 group-hover:text-indigo-500" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-700">My Account</span>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Free Plan</span>
-            </div>
-          </button>
-
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
-            onClick={signOut}
-          >
-            <LogOut size={18} />
-            <span className="text-xs font-bold uppercase tracking-wider">Sign Out</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* MOBILE HEADER */}
-      <header className="md:hidden bg-white/80 backdrop-blur-md sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-neutral-100">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center transition-transform active:scale-95">
-            <Logo size={32} />
-          </div>
-          <span className="font-black text-xl text-neutral-900 tracking-tight">LifeHub</span>
-        </div>
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors"
-        >
-          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </header>
-
-      {/* MOBILE DRAWER (Full Screen Overlay) */}
-      {
-        isSidebarOpen && (
-          <div className="md:hidden fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)}>
-            <div className="absolute top-0 right-0 w-[80%] max-w-sm h-full bg-white shadow-2xl p-8 animate-slide-left flex flex-col" onClick={e => e.stopPropagation()}>
-
-              <div className="flex justify-between items-center mb-10">
-                <span className="font-black text-2xl text-slate-900">Menu</span>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-slate-50 rounded-full"><X className="text-slate-500" /></button>
-              </div>
-
-              <div className="space-y-4">
-                {navItems.map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => handleNav(item.view)}
-                    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-lg
-                        ${currentView === item.view
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 translate-x-2'
-                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                      }`}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-
-                {/* Mobile Profile Link */}
-                <button
-                  onClick={() => handleNav(ViewState.PROFILE)}
-                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-lg
-                        ${currentView === ViewState.PROFILE
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 translate-x-2'
-                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                    }`}
-                >
-                  <User size={20} />
-                  <span>My Account</span>
-                </button>
-              </div>
-
-              <div className="mt-auto">
-                <button onClick={signOut} className="w-full py-4 border-2 border-slate-100 rounded-2xl text-slate-500 font-bold hover:text-rose-500 hover:border-rose-100 transition-colors flex items-center justify-center gap-2">
-                  <LogOut size={20} /> Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
-
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 px-4 py-8 md:p-12 overflow-x-hidden w-full max-w-6xl mx-auto">
+      {/* 2. MAIN CONTENT SCROLLABLE AREA */}
+      <main className="flex-1 overflow-y-auto scrollbar-hide pb-32 pt-6 px-6 relative z-10 w-full md:max-w-2xl md:mx-auto">
         {children}
       </main>
 
-      {/* MOBILE BOTTOM NAV */}
-      <nav className="md:hidden fixed bottom-6 left-6 right-6 h-16 bg-white/90 backdrop-blur-xl rounded-[24px] shadow-2xl shadow-indigo-500/10 border border-white/50 z-40 flex items-center justify-around px-4">
-        {navItems.map((item) => (
+      {/* 3. BOTTOM NAVIGATION (Structured Style) */}
+      <nav className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white via-white/80 to-transparent z-40 flex items-end justify-center pb-6 md:max-w-2xl md:mx-auto pointer-events-none">
+        {/* Functional Bar Container */}
+        <div className="bg-white border border-zinc-200 rounded-full px-6 py-3 flex items-center gap-8 shadow-xl shadow-zinc-200/50 pointer-events-auto">
+          {/* Left Items */}
           <button
-            key={item.label}
-            onClick={() => handleNav(item.view)}
-            className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300
-                ${currentView === item.view
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 -translate-y-4 scale-110'
-                : 'text-slate-500 hover:text-slate-600'
-              }`}
+            onClick={() => setView(ViewState.DASHBOARD)}
+            className={`bottom-nav-item ${currentView === ViewState.DASHBOARD ? 'active' : ''}`}
           >
-            {item.icon}
+            <LayoutDashboard size={24} className={currentView === ViewState.DASHBOARD ? 'text-rose-500' : 'text-zinc-400'} />
           </button>
-        ))}
+
+          <button
+            onClick={() => setView(ViewState.TASKS)}
+            className={`bottom-nav-item ${currentView === ViewState.TASKS ? 'active' : ''}`}
+          >
+            <CheckSquare size={24} className={currentView === ViewState.TASKS ? 'text-blue-500' : 'text-zinc-400'} />
+          </button>
+
+          {/* HERO MIC BUTTON */}
+          <button
+            onClick={() => setIsVoiceOpen(true)}
+            className="hero-mic-button -mt-8 bg-zinc-900 text-white hover:bg-black"
+          >
+            <Mic size={28} className="text-white" strokeWidth={3} />
+          </button>
+
+          {/* Right Items */}
+          <button
+            onClick={() => setView(ViewState.HABITS)}
+            className={`bottom-nav-item ${currentView === ViewState.HABITS ? 'active' : ''}`}
+          >
+            <Repeat size={24} className={currentView === ViewState.HABITS ? 'text-emerald-500' : 'text-zinc-400'} />
+          </button>
+
+          <button
+            onClick={() => setView(ViewState.PROFILE)}
+            className={`bottom-nav-item ${currentView === ViewState.PROFILE ? 'active' : ''}`}
+          >
+            <User size={24} className={currentView === ViewState.PROFILE ? 'text-purple-500' : 'text-zinc-400'} />
+          </button>
+        </div>
       </nav>
 
-    </div >
+    </div>
   );
 };

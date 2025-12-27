@@ -31,10 +31,16 @@ const LoadingView = () => (
   </div>
 );
 
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use';
+
+// ... (previous imports)
+
 const AppContent = () => {
-  const { currentView, showUpsell, setShowUpsell, setView } = useApp();
+  const { currentView, showUpsell, setShowUpsell, setView, showConfetti } = useApp();
   const { user, loading } = useAuth();
-  const { showPaywall, setShowPaywall } = React.useContext(UsageContext) || { showPaywall: false, setShowPaywall: () => { } }; // Hack to get Usage context here
+  const { width, height } = useWindowSize();
+  const { showPaywall, setShowPaywall } = React.useContext(UsageContext) || { showPaywall: false, setShowPaywall: () => { } };
 
   // Onboarding Logic
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -98,6 +104,7 @@ const AppContent = () => {
 
   return (
     <Layout>
+      {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={500} gravity={0.2} />}
       <Suspense fallback={<LoadingView />}>
         {renderView()}
 
@@ -124,10 +131,12 @@ const Toast = () => {
   if (!toastMessage) return null;
 
   return (
-    <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="bg-slate-900/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
-        <span className="text-xl">🤖</span>
-        <p className="text-sm font-medium pr-1">{toastMessage}</p>
+    <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[9999] animate-in fade-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-neutral-900/95 backdrop-blur-2xl text-white pl-4 pr-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-4 border border-white/10 ring-1 ring-white/5">
+        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+          <span className="text-xl">🤖</span>
+        </div>
+        <p className="text-sm font-bold tracking-wide">{toastMessage}</p>
       </div>
     </div>
   );

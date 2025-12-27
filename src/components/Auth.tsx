@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../store/AuthContext';
 import { Logo } from './Logo';
-import { ArrowRight, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowRight, Loader2, Sparkles, AlertCircle, Mail, Lock, User as UserIcon, CheckCircle } from 'lucide-react';
 import { PrivacyModal, TermsModal } from '../pages/Legal';
+import { motion } from 'framer-motion';
 
 export const VerificationScreen = () => {
-  // ... kept same logic ...
   const { user, resendVerification, checkVerification, logout } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -24,22 +24,22 @@ export const VerificationScreen = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-canvas p-4 text-ink">
-      <div className="max-w-md w-full bg-white rounded-3xl p-10 border border-slate-100 shadow-2xl text-center relative overflow-hidden">
-        <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6 transform rotate-3">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-50 p-4 text-neutral-900 font-sans">
+      <div className="max-w-md w-full bg-white rounded-[2rem] p-10 border border-neutral-100/50 shadow-soft text-center relative overflow-hidden">
+        <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-indigo-50/50">
           <Sparkles className="text-indigo-600" size={32} />
         </div>
-        <h2 className="text-2xl font-black mb-2 text-slate-800 tracking-tight">Check your email</h2>
-        <p className="text-slate-500 mb-8 font-medium">Link sent to <span className="text-indigo-600 font-bold">{user?.email}</span></p>
+        <h2 className="text-3xl font-display font-bold mb-3 text-neutral-900 tracking-tight">Check your email</h2>
+        <p className="text-neutral-500 mb-10 font-medium leading-relaxed">We sent a verification link to <br /><span className="text-neutral-900 font-bold">{user?.email}</span></p>
 
-        <button onClick={async () => { setLoading(true); await checkVerification(); setLoading(false); }} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2 mb-3">
+        <button onClick={async () => { setLoading(true); await checkVerification(); setLoading(false); }} className="w-full bg-neutral-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all shadow-lg shadow-neutral-500/20 flex items-center justify-center gap-2 mb-4 hover:-translate-y-1">
           {loading && <Loader2 className="animate-spin" size={18} />}
           I've Verified
         </button>
-        <button onClick={handleResend} className="w-full text-slate-500 font-bold text-sm hover:text-indigo-600 transition-colors">Resend Email</button>
+        <button onClick={handleResend} className="w-full py-4 text-neutral-500 font-bold text-sm hover:text-indigo-600 hover:bg-neutral-50 rounded-2xl transition-all">Resend Email</button>
 
-        {message && <div className="mt-4 p-3 bg-emerald-50 text-emerald-600 font-bold text-xs rounded-lg">{message}</div>}
-        <button onClick={logout} className="mt-8 text-xs font-bold text-slate-300 hover:text-rose-500 transition-colors">Sign Out</button>
+        {message && <div className="mt-4 p-3 bg-emerald-50 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-2"><CheckCircle size={14} /> {message}</div>}
+        <button onClick={logout} className="mt-8 text-xs font-bold text-neutral-400 hover:text-rose-500 transition-colors uppercase tracking-widest">Sign Out</button>
       </div>
     </div>
   );
@@ -71,54 +71,62 @@ export const AuthScreen = () => {
   };
 
   return (
-    <div className="min-h-screen flex font-sans bg-[#0F1117]">
-      {/* ELITE LEFT PANEL - CINEMATIC */}
-      <div className="hidden lg:flex w-[50%] relative items-center justify-center overflow-hidden">
-        {/* Radial Gradient Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-[#0F1117] to-[#0F1117] z-0" />
+    <div className="min-h-screen flex font-sans bg-white text-neutral-900 selection:bg-indigo-100 selection:text-indigo-900">
+      {/* ELITE LEFT PANEL - PASTEL THEME */}
+      <div className="hidden lg:flex w-[45%] relative items-center justify-center overflow-hidden bg-[#FDFBF7]">
+
+        {/* Abstract Shapes */}
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-500/10 rounded-full blur-[100px]" />
+        <div className="absolute top-[40%] left-[20%] w-[300px] h-[300px] bg-emerald-500/10 rounded-full blur-[80px]" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center text-center max-w-lg p-12">
-          {/* Logo with Blend Mode "Screen" removed, standard display */}
-          <div className="mb-8 animate-fade-in">
-            <Logo size={100} />
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="mb-8 p-6 bg-white rounded-[2.5rem] border border-zinc-100 shadow-xl relative"
+          >
+            <div className="relative z-10">
+              <Logo size={80} />
+            </div>
+          </motion.div>
 
-          <h1 className="text-6xl font-black tracking-tighter text-white mb-6 drop-shadow-2xl">
-            LifeHub.
+          <h1 className="text-5xl font-display font-black tracking-tight text-zinc-900 mb-6">
+            LifeHub
           </h1>
-          <p className="text-xl text-slate-500 font-medium leading-relaxed">
-            Master your <span className="text-primary-400">chaos</span>. <br />
-            An intelligent OS for your life, habits, and wallet.
+          <p className="text-lg text-zinc-500 font-medium leading-relaxed max-w-sm">
+            The intelligent operating system for your daily life. <span className="text-indigo-600 font-bold">Focus on what matters.</span>
           </p>
         </div>
       </div>
 
       {/* RIGHT PANEL - FORM */}
-      <div className="w-full lg:w-[50%] bg-white flex items-center justify-center p-6 sm:p-12 relative">
+      <div className="w-full lg:w-[55%] bg-white flex items-center justify-center p-6 sm:p-12 relative">
 
-        <div className="w-full max-w-md animate-slide-up">
-          {/* Mobile Header - IN FLOW (Fixed Overlap) */}
-          <div className="lg:hidden flex flex-col items-center mb-8">
-            <div className="mb-4">
-              <Logo size={48} />
+        <div className="w-full max-w-[420px] animate-in-fade">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex flex-col items-center mb-10">
+            <div className="mb-4 p-3 bg-neutral-50 rounded-2xl">
+              <Logo size={40} />
             </div>
-            <h2 className="text-2xl font-black text-neutral-900 tracking-tight">LifeHub</h2>
+            <h2 className="text-2xl font-display font-bold text-neutral-900 tracking-tight">LifeHub</h2>
           </div>
 
           <div className="text-center mb-10">
-            <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-2">
-              {isLogin ? 'Welcome Back' : 'Join LifeHub'}
+            <h2 className="text-3xl font-display font-bold text-neutral-900 tracking-tight mb-3">
+              {isLogin ? 'Welcome back' : 'Create account'}
             </h2>
-            <p className="text-slate-500 font-medium">
-              {isLogin ? 'Continue to your dashboard.' : 'Start your journey today.'}
+            <p className="text-neutral-500 font-medium text-base">
+              {isLogin ? 'Enter your details to access your workspace.' : 'Start your organized journey today.'}
             </p>
           </div>
 
-          {/* Google Button - Fixed Icon */}
+          {/* Social Auth */}
           <button
             onClick={async () => { setLoading(true); await loginWithGoogle(); setLoading(false); }}
-            className="w-full py-4 bg-white border border-slate-200 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-300 transition-all mb-8 group shadow-sm"
+            className="w-full py-3.5 bg-white border border-neutral-200 rounded-2xl flex items-center justify-center gap-3 hover:bg-neutral-50 hover:border-neutral-300 transition-all mb-8 group shadow-sm active:scale-[0.98]"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -126,48 +134,57 @@ export const AuthScreen = () => {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            <span className="text-slate-700 font-bold">Continue with Google</span>
+            <span className="text-neutral-600 font-bold text-sm">Continue with Google</span>
           </button>
 
           <div className="relative flex items-center justify-center mb-8">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-            <span className="relative bg-white px-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Or with email</span>
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-neutral-100"></div></div>
+            <span className="relative bg-white px-4 text-xs font-bold text-neutral-400 uppercase tracking-widest">Or continue with</span>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 ml-1">FULL NAME</label>
-                <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-300" placeholder="John Doe" />
+              <div className="relative group">
+                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+                <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full pl-12 pr-4 py-4 bg-neutral-50 border border-transparent rounded-2xl font-bold text-neutral-900 outline-none focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-neutral-400"
+                  placeholder="Full Name"
+                />
               </div>
             )}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 ml-1">EMAIL ADDRESS</label>
-              <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-300" placeholder="name@example.com" />
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+              <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })}
+                className="w-full pl-12 pr-4 py-4 bg-neutral-50 border border-transparent rounded-2xl font-bold text-neutral-900 outline-none focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-neutral-400"
+                placeholder="Email Address" />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 ml-1">PASSWORD</label>
-              <input type="password" required value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-300" placeholder="••••••••" />
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+              <input type="password" required value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })}
+                className="w-full pl-12 pr-4 py-4 bg-neutral-50 border border-transparent rounded-2xl font-bold text-neutral-900 outline-none focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-neutral-400"
+                placeholder="Password" />
             </div>
 
-            {error && <div className="p-4 rounded-xl bg-rose-50 text-rose-500 text-sm font-bold flex items-center gap-2"><AlertCircle size={16} />{error}</div>}
+            {error && <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-sm font-bold flex items-center gap-3 animate-in-fade"><AlertCircle size={18} />{error}</div>}
 
-            <button disabled={loading} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-indigo-600 hover:shadow-xl hover:shadow-indigo-200 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 mt-4">
+            <button disabled={loading} className="w-full bg-neutral-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-neutral-800 hover:shadow-xl hover:shadow-neutral-500/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2">
               {loading ? <Loader2 className="animate-spin" /> : <><span>{isLogin ? 'Sign In' : 'Create Account'}</span><ArrowRight size={20} /></>}
             </button>
 
-            <p className="text-center text-[10px] text-slate-500 mt-4 leading-relaxed">
-              By continuing, you agree to LifeHub's <br />
-              <button type='button' onClick={() => setShowTerms(true)} className="underline hover:text-indigo-600">Terms of Service</button> and <button type='button' onClick={() => setShowPrivacy(true)} className="underline hover:text-indigo-600">Privacy Policy</button>.
+            <p className="text-center text-[10px] text-neutral-400 mt-6 leading-relaxed">
+              By continuing, you acknowledge that you have read and understood our <br />
+              <button type='button' onClick={() => setShowTerms(true)} className="underline decoration-neutral-300 hover:text-indigo-600 font-semibold">Terms</button> and <button type='button' onClick={() => setShowPrivacy(true)} className="underline decoration-neutral-300 hover:text-indigo-600 font-semibold">Privacy Policy</button>.
             </p>
           </form>
 
-          <p className="mt-8 text-center text-slate-500 font-medium text-sm">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
-            <button onClick={() => setIsLogin(!isLogin)} className="ml-2 text-indigo-600 font-bold hover:underline">
-              {isLogin ? "Join now" : "Log in"}
-            </button>
-          </p>
+          <div className="mt-8 text-center bg-neutral-50 rounded-2xl py-4">
+            <p className="text-neutral-500 font-medium text-sm">
+              {isLogin ? "New to LifeHub?" : "Already have an account?"}
+              <button onClick={() => setIsLogin(!isLogin)} className="ml-2 text-indigo-600 font-bold hover:underline">
+                {isLogin ? "Create account" : "Sign in"}
+              </button>
+            </p>
+          </div>
         </div>
       </div>
 
